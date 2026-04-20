@@ -76,6 +76,13 @@ Gemma Tavern 区分“角色是谁”和“你是谁”。
 - 模型入口：保留本地模型库与模型切换能力
 - 多语言支持：当前资源已覆盖简体中文、英文、日文、韩文等
 
+## 参考与致谢
+
+本项目在设计与实现过程中参考了以下开源项目，感谢原项目及其贡献者的持续投入：
+
+- [google-ai-edge/gallery](https://github.com/google-ai-edge/gallery)
+- [SillyTavern/SillyTavern](https://github.com/SillyTavern/SillyTavern)
+
 ## 许可证
 
 项目当前保留 Apache 2.0 许可证，详见 [LICENSE](./LICENSE)。
