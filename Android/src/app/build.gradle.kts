@@ -50,8 +50,8 @@ android {
     applicationId = "selfgemma.talk"
     minSdk = 31
     targetSdk = 35
-    versionCode = 23
-    versionName = "1.0.11"
+    versionCode = 24
+    versionName = "0.1.0"
 
     buildConfigField(
       "String",

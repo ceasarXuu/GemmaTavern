@@ -44,3 +44,14 @@ For Android device verification, prefer an in-place install that preserves app d
 - Do not commit Android build outputs or backup artifacts.
 - Keep `Android/src/build-backups/` out of version control.
 - Make sure release notes explain any optional integrations or known limitations in the attached APK.
+
+## GitHub release tooling fallback
+
+If `gh` is not installed in the local environment, a maintainer may still create the GitHub Release
+through the GitHub REST API after pushing the release tag.
+
+Practical rule:
+
+- treat `git push origin <tag>` as the required source-of-truth step,
+- then create the hosted release entry and upload the APK with either GitHub CLI or an authenticated API call,
+- keep the release notes aligned with the exact APK that passed local checks and side-load verification.
