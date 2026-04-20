@@ -1,105 +1,107 @@
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 # Gemma Tavern
 
-Gemma Tavern 是一款面向 Android 的本地角色扮演聊天应用。它希望把 Tavern / SillyTavern 风格的体验带到手机上，让你直接在设备里完成角色卡管理、Persona 配置和多轮沉浸式对话。
+Gemma Tavern is a local roleplay chat app for Android. It aims to bring a Tavern / SillyTavern-style experience onto mobile devices, so you can manage character cards, configure personas, and run immersive multi-turn conversations directly on-device.
 
-这个项目的核心方向很简单：
-让本地模型不只是“能跑起来”，而是真的能进入角色扮演聊天场景。
+The core direction of this project is simple:
+make local models not just "runnable," but genuinely usable in long-form roleplay chat scenarios.
 
-## 产品亮点
+## Highlights
 
-### 1. 本地运行，更私密
+### 1. Local-first and privacy-friendly
 
-Gemma Tavern 以设备侧模型运行为核心，重点不是云端聊天，而是尽可能把角色扮演体验放到本机完成。
+Gemma Tavern is built around on-device model execution. The focus is not cloud chat, but pushing as much of the roleplay experience as possible onto the device itself.
 
-- 对话更接近离线使用场景
-- 个人设定、聊天记录、角色资料更容易留在本地
-- 更适合重视隐私、响应速度和可控性的用户
+- Conversations are closer to an offline usage model
+- Personal settings, chat history, and character data stay on-device more easily
+- Better suited for users who care about privacy, responsiveness, and control
 
-### 2. 手机上的 Tavern 体验
+### 2. A Tavern-style experience on mobile
 
-这不是一个只会“发一条消息”的演示应用，而是围绕长期角色扮演聊天来设计的移动端产品形态。
+This is not a simple demo that only sends a single message. It is a mobile product shape designed around persistent roleplay chat.
 
-- 支持持续多轮聊天
-- 支持会话管理、置顶、继续聊、切换模型
-- 支持角色页、会话页、Persona 页分工清晰的使用流程
+- Supports continuous multi-turn conversations
+- Supports session management, pinning, resuming chats, and model switching
+- Supports a clear workflow across character, session, and persona pages
 
-### 3. 支持多模态聊天
+### 3. Multimodal chat support
 
-Gemma Tavern 支持图片和音频进入聊天链路，不只限于纯文本对话。
+Gemma Tavern supports images and audio in the chat pipeline, not just plain text conversations.
 
-- 支持图片消息
-- 支持音频消息
-- 支持围绕素材继续对话
+- Image messages
+- Audio messages
+- Continued conversations around shared media
 
-### 4. 面向角色扮演，而不是通用聊天壳子
+### 4. Built for roleplay, not a generic AI shell
 
-Gemma Tavern 的重点是角色、设定、上下文和沉浸感，而不是一个泛用 AI 工具箱。
+Gemma Tavern prioritizes characters, settings, context, and immersion rather than acting as a generic AI toolbox.
 
-- 角色卡创建与编辑是主路径之一
-- Persona 会直接参与聊天上下文
-- 对话体验围绕“你和角色如何互动”来组织，而不是围绕任务列表或模型展示页
+- Character card creation and editing are first-class paths
+- Personas directly participate in chat context
+- The experience is organized around how you interact with a character, not around task lists or model showcase screens
 
-### 5. 兼容 SillyTavern 生态
+### 5. Compatible with the SillyTavern ecosystem
 
-如果你已经有 ST 角色卡或聊天记录，这个项目不是要你从零开始。
+If you already have ST character cards or chat logs, this project is not asking you to start from scratch.
 
-- 支持 ST v2 角色卡相关兼容能力
-- 支持 ST PNG 角色卡编解码
-- 支持 `jsonl` 聊天记录导入导出
-- 为后续与现有 Tavern 工作流衔接预留了明确架构
+- Supports ST v2 character-card related compatibility
+- Supports ST PNG character card encoding and decoding
+- Supports `jsonl` chat import and export
+- Leaves clear architectural space for connecting with existing Tavern workflows
 
-### 6. 角色与 Persona 都能认真管理
+### 6. Characters and personas are both treated seriously
 
-Gemma Tavern 区分“角色是谁”和“你是谁”。
+Gemma Tavern separates "who the character is" from "who you are."
 
-- 角色可以独立创建、编辑、导入和导出
-- 用户 Persona 可以维护多个版本
-- 默认 Persona、头像、描述、插入位置、深度等都可以配置
+- Characters can be created, edited, imported, and exported independently
+- User personas can be managed in multiple versions
+- Default persona, avatar, description, insertion position, and depth are all configurable
 
-## 你可以用它做什么
+## What You Can Use It For
 
-- 在手机上和本地角色进行持续多轮对话
-- 在聊天里结合图片或音频素材继续互动
-- 创建自己的角色卡，并反复调整设定
-- 导入现有 ST 角色卡继续使用
-- 为不同题材准备不同 Persona，切换不同扮演风格
-- 维护长期会话，而不是每次都从空白 prompt 开始
+- Have persistent multi-turn conversations with local characters on your phone
+- Continue interactions around images or audio inside chat
+- Create your own character cards and iterate on them repeatedly
+- Import existing ST character cards and keep using them
+- Prepare different personas for different themes and switch roleplay styles
+- Maintain long-lived sessions instead of starting from an empty prompt every time
 
-## 核心功能
+## Core Features
 
-- 角色扮演聊天：围绕本地模型进行多轮对话
-- 多模态消息：支持图片、音频等消息素材进入聊天链路
-- 会话管理：新建、继续、置顶、删除、导入、导出
-- 角色系统：内置角色、自定义角色、角色编辑器、媒体资源管理
-- Persona 系统：多 Persona、默认 Persona、头像编辑、文本注入策略
-- ST 兼容：角色卡解析、PNG 角色卡支持、聊天记录互操作
-- 模型入口：保留本地模型库与模型切换能力
-- 多语言支持：当前资源已覆盖简体中文、英文、日文、韩文等
+- Roleplay chat: multi-turn conversations powered by local models
+- Multimodal messages: images, audio, and other media can enter the chat pipeline
+- Session management: create, resume, pin, delete, import, and export sessions
+- Character system: built-in characters, custom characters, character editor, and media asset management
+- Persona system: multiple personas, default persona, avatar editing, and text injection strategies
+- ST interoperability: character card parsing, PNG character card support, and chat-log interop
+- Model access: retained local model library and model switching capabilities
+- Multi-language support: current resources cover Simplified Chinese, English, Japanese, Korean, and more
 
-## 参考与致谢
+## References and Acknowledgements
 
-本项目在设计与实现过程中参考了以下开源项目，感谢原项目及其贡献者的持续投入：
+This project draws inspiration from the following open-source projects. Thanks to the original projects and their contributors for their work:
 
 - [google-ai-edge/gallery](https://github.com/google-ai-edge/gallery)
 - [SillyTavern/SillyTavern](https://github.com/SillyTavern/SillyTavern)
 
-## 许可证
+## License
 
-项目当前保留 Apache 2.0 许可证，详见 [LICENSE](./LICENSE)。
+This project currently uses the Apache 2.0 license. See [LICENSE](./LICENSE) for details.
 
-## Git 分发
+## Git Distribution
 
-本项目当前只通过 Git 仓库与 Git Release 进行开源分发，不面向任何应用商店。
+This project is currently distributed only through the Git repository and GitHub Releases. It is not currently distributed through any app store.
 
-- 源码构建与本地开发说明见 [DEVELOPMENT.md](./DEVELOPMENT.md)
-- Git 发布前检查与侧载说明见 [RELEASING.md](./RELEASING.md)
-- Android release APK 默认用于源码仓库分发与真机侧载验证，不等同于应用商店发行包
+- Source build and local development instructions: [DEVELOPMENT.md](./DEVELOPMENT.md)
+- Pre-release checks and sideloading notes: [RELEASING.md](./RELEASING.md)
+- The Android release APK is intended for source distribution and real-device sideload verification, not as an app-store release package
 
-## 文档导航
+## Documentation
 
-- 贡献流程见 [CONTRIBUTING.md](./CONTRIBUTING.md)
-- Bug 反馈指引见 [Bug_Reporting_Guide.md](./Bug_Reporting_Guide.md)
-- 技能与函数扩展见 [Function_Calling_Guide.md](./Function_Calling_Guide.md) 与 [skills/README.md](./skills/README.md)
-- 架构与验证文档索引见 [docs/README.md](./docs/README.md)
+- Contribution workflow: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Bug reporting guide: [Bug_Reporting_Guide.md](./Bug_Reporting_Guide.md)
+- Skills and function extension: [Function_Calling_Guide.md](./Function_Calling_Guide.md) and [skills/README.md](./skills/README.md)
+- Architecture and verification document index: [docs/README.md](./docs/README.md)
 
-仓库中的公开文档只保留稳定、可复用、适合开源协作的内容；内部计划、运维记录和一次性报告不再作为仓库文档的一部分。
+Public documents in this repository are intentionally limited to stable, reusable content that is suitable for open-source collaboration. Internal plans, ops notes, and one-off reports are no longer treated as part of the public repository docs.
