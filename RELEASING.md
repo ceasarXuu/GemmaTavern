@@ -1,0 +1,46 @@
+# Releasing for Git Distribution
+
+This project is distributed through Git and Git-hosted release assets only.
+
+It is not prepared for Play Store or other app store submission, so the release process here focuses on source hygiene, reproducible builds, and side-load verification.
+
+## Release scope
+
+- Source repository on Git
+- Optional Android APK attached to a Git release
+- No store metadata, store signing, or store review requirements
+
+## Required checks
+
+Run from the repository root:
+
+1. `Set-Location .\Android\src`
+2. `./gradlew.bat :app:testDebugUnitTest`
+3. `./gradlew.bat :app:lintRelease`
+4. `./gradlew.bat :app:assembleRelease`
+
+Expected APK output:
+
+- `Android/src/app/build/outputs/apk/release/app-release.apk`
+
+## Optional integration caveats
+
+The repository intentionally does not ship private service credentials.
+
+- Hugging Face OAuth is disabled by default unless `HUGGINGFACE_CLIENT_ID` and `HUGGINGFACE_REDIRECT_URI` are configured in `Android/src/gradle.properties`.
+- Firebase and FCM remain optional integration points; `google-services.json` is not included and `ENABLE_FIREBASE` should stay `false` for the default OSS build.
+- A Git-distributed APK should document which optional cloud features are unavailable in the published binary.
+
+## Side-load verification
+
+For Android device verification, prefer an in-place install that preserves app data:
+
+1. `adb devices`
+2. `adb install -r .\app\build\outputs\apk\release\app-release.apk`
+3. `adb shell am start -W -n selfgemma.talk/.MainActivity`
+
+## Repository hygiene before tagging
+
+- Do not commit Android build outputs or backup artifacts.
+- Keep `Android/src/build-backups/` out of version control.
+- Make sure release notes explain any optional integrations or known limitations in the attached APK.

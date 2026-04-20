@@ -1,0 +1,767 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<resources>
+  <!-- App Info -->
+  <string name="app_name">Gemma Tavern</string>
+  <string name="app_name_first_part">Gemma</string>
+  <string name="app_name_second_part">Tavern</string>
+  <string name="app_intro">Explore a world of amazing on-device models from</string>
+
+  <!-- Common Actions -->
+  <string name="all">All</string>
+  <string name="add">Add</string>
+  <string name="added">Added</string>
+  <string name="cancel">Cancel</string>
+  <string name="close">Close</string>
+  <string name="delete">Delete</string>
+  <string name="done">Done</string>
+  <string name="edit">Edit</string>
+  <string name="save">Save</string>
+  <string name="reset">Reset</string>
+  <string name="clear">Clear</string>
+  <string name="copy">Copy</string>
+  <string name="create">Create</string>
+  <string name="discard">Discard</string>
+  <string name="dismiss">Dismiss</string>
+  <string name="download">Download</string>
+  <string name="name">Name</string>
+  <string name="ok">OK</string>
+  <string name="preview">Preview</string>
+  <string name="replace">Replace</string>
+  <string name="results">Results</string>
+  <string name="run">Run</string>
+  <string name="running">Running...</string>
+  <string name="run_again">Run again</string>
+  <string name="share">Share</string>
+  <string name="test">Test</string>
+  <string name="try_it">Try it</string>
+  <string name="undo">Undo</string>
+  <string name="redo">Redo</string>
+  <string name="view">View</string>
+  <string name="error">Error</string>
+  <string name="disabled">Disabled</string>
+  <string name="continue_button_label">Continue</string>
+
+  <!-- Navigation -->
+  <string name="drawer_settings_label">Settings</string>
+  <string name="drawer_settings_description">Manage application settings</string>
+  <string name="drawer_models_label">Models</string>
+  <string name="drawer_models_description">Browse, try, and benchmark models</string>
+  <string name="navigate_back">Go back</string>
+
+  <!-- Tabs -->
+  <string name="tab_messages">Messages</string>
+  <string name="tab_roles">Roles</string>
+  <string name="tab_me">Me</string>
+  <string name="tab_settings">Settings</string>
+  <string name="my_profile_avatar_slot_title">Persona Slot</string>
+  <string name="my_profile_avatar_slot_summary">Tap to switch or create a persona slot.</string>
+  <string name="my_profile_avatar_slot_dialog_title">Choose Persona Slot</string>
+  <string name="my_profile_avatar_slot_new_label">New Slot ID</string>
+  <string name="my_profile_avatar_slot_use_selected">Use Selected Slot</string>
+  <string name="my_profile_avatar_title">Avatar</string>
+  <string name="my_profile_avatar_tap_to_upload">Tap the avatar to upload from your gallery.</string>
+  <string name="my_profile_avatar_tap_to_edit">Tap the avatar to adjust framing.</string>
+  <string name="my_profile_avatar_edit_title">Edit Avatar</string>
+  <string name="my_profile_avatar_edit_hint">Drag to reposition and pinch to zoom until the subject fits inside the circle.</string>
+  <string name="my_profile_persona_name_title">Persona Name</string>
+  <string name="my_profile_persona_title_title">Persona Title</string>
+  <string name="my_profile_persona_description_title">Persona Description</string>
+  <string name="my_profile_persona_position_title">Persona Placement</string>
+  <string name="my_profile_persona_position_in_prompt">In Prompt</string>
+  <string name="my_profile_persona_position_top_an">Top Author Note</string>
+  <string name="my_profile_persona_position_bottom_an">Bottom Author Note</string>
+  <string name="my_profile_persona_position_at_depth">At Depth</string>
+  <string name="my_profile_persona_position_none">Disabled</string>
+  <string name="my_profile_persona_depth_title">Persona Depth</string>
+  <string name="my_profile_persona_role_title">Persona Role</string>
+  <string name="my_profile_persona_role_system">System</string>
+  <string name="my_profile_persona_role_user">User</string>
+  <string name="my_profile_persona_role_assistant">Assistant</string>
+  <string name="my_profile_default_persona_title">Use As Default Persona</string>
+  <string name="my_profile_default_persona_summary">Apply this persona to new roleplay chats by default.</string>
+  <string name="my_profile_set_default_action">Set As Default</string>
+  <string name="my_profile_delete_title">Delete Persona</string>
+  <string name="my_profile_delete_content">Are you sure you want to delete persona \"%s\"?</string>
+  <string name="my_profile_reset">Reset Persona</string>
+  <string name="my_profile_save">Save Persona</string>
+  <string name="my_profile_help_avatar_body">What it does:\nAvatar is the portrait used for this persona in the Me page and in any roleplay flow that reads the active user persona.\n\nIf left empty:\nThe app falls back to the default generated avatar placeholder.\n\nRecommended usage:\nUse a clear square portrait or icon that helps you distinguish personas quickly.</string>
+  <string name="my_profile_help_name_body">What it does:\nPersona name is the visible user-facing name for this persona profile. Roleplay flows can also use it as the user-facing name when the role refers to you, so it may affect how characters address the user in chat.\n\nIf left empty:\nThe app falls back to the default user name.\n\nRecommended content and length:\nUse the short name you want roles to see and use when referring to you. Usually 2 to 20 characters is enough. The editor budget is 120 characters.</string>
+  <string name="my_profile_help_description_body">What it does:\nPersona description is the main self-description injected for the active user persona. This is where you describe identity, tone, background, and traits the assistant should react to.\n\nIf left empty:\nThe persona still works, but chats lose most of the personalized user-context signal.\n\nRecommended content and length:\nWrite a compact profile instead of a long biography. Around 80 to 300 characters is usually enough. The editor budget is 600 characters.</string>
+  <string name="my_profile_help_position_body">What it does:\nPlacement controls where the persona description is inserted in the assembled prompt.\n\nIf set to In Prompt:\nThe description is injected in the main prompt body.\n\nIf set to author-note positions or depth insertion:\nThe description moves closer to the ST-style author-note flow.\n\nRecommendation:\nUse In Prompt as the default safe choice. Switch to depth or author-note placement only when you are deliberately tuning runtime behavior.</string>
+  <string name="my_profile_help_depth_body">What it does:\nDepth decides how far back in the prompt stack the persona description is inserted when placement is set to At Depth.\n\nIf the value is too small:\nThe description sits closer to the newest context.\n\nIf the value is larger:\nThe description is pushed farther back and may compete less with the newest turns.\n\nRange guidance:\nUse a small integer such as 1 to 4. The input budget is 4 characters.</string>
+  <string name="my_profile_help_role_body">What it does:\nRole controls which ST-style message role is associated with the persona description when depth insertion is used.\n\nSystem:\nBest for high-priority guidance.\n\nUser:\nBest for representing the player self-description.\n\nAssistant:\nUseful only when you intentionally want the persona text to read like assistant-side context.\n\nRecommendation:\nUser is the safest default for most personas.</string>
+
+  <!-- Sessions Screen -->
+  <string name="sessions_loading">Loading sessions...</string>
+  <string name="sessions_empty_title">No sessions yet</string>
+  <string name="sessions_empty_content">Pick a role to start the first conversation. If you have not downloaded a local model yet, open the model library first.</string>
+  <string name="sessions_delete_title">Confirm Delete</string>
+  <string name="sessions_delete_content">Are you sure you want to delete session \"%s\" and all its chat history? This action cannot be undone.</string>
+  <string name="sessions_pin">Pin</string>
+  <string name="sessions_unpin">Unpin</string>
+  <string name="sessions_choose_role">Choose Role</string>
+  <string name="sessions_model_library">Model Library</string>
+  <string name="sessions_new_session">New session</string>
+  <string name="sessions_import_chat">Import chat</string>
+  <string name="sessions_export_chat">Export chat</string>
+  <string name="sessions_minutes_ago">%d minutes ago</string>
+  <string name="sessions_hours_ago">%d hours ago</string>
+  <string name="sessions_days_ago">%d days ago</string>
+  <string name="sessions_just_now">Just now</string>
+
+  <!-- Roles Screen -->
+  <string name="roles_menu_create">Create</string>
+  <string name="roles_menu_import">Import</string>
+  <string name="roles_create_tune_title">Create and tune roles</string>
+  <string name="roles_create_tune_content_model">You can create and edit role cards now. Download a local model before starting a session.</string>
+  <string name="roles_create_tune_content_no_model">Create custom roles with text fields only, then start a new session with a local model.</string>
+  <string name="roles_create_button">Create Role</string>
+  <string name="roles_import_st_card">Import ST Card</string>
+  <string name="roles_model_library">Model Library</string>
+  <string name="roles_builtin_title">Built-in Roles</string>
+  <string name="roles_custom_title">Custom Roles</string>
+  <string name="roles_delete_title">Delete role</string>
+  <string name="roles_delete_content">Deleting %s will also remove its sessions and saved memories.</string>
+  <string name="roles_start_session">Chat</string>
+  <string name="roles_persona_picker_title">Choose Persona</string>
+  <string name="roles_persona_picker_message">Select which persona to use for this session.</string>
+  <string name="roles_persona_picker_default_badge">Default</string>
+  <string name="roles_missing_model_title">No local model available</string>
+  <string name="roles_missing_model_content">Add or import a local model before starting a chat with this role.</string>
+  <string name="roles_missing_model_confirm">Add model</string>
+  <string name="roles_no_model">No model</string>
+  <string name="roles_default_tag">roleplay</string>
+
+  <!-- Role Editor Screen -->
+  <string name="role_editor_create_title">Create Role</string>
+  <string name="role_editor_edit_title">Edit Role</string>
+  <string name="role_editor_loading">Loading role...</string>
+  <string name="role_editor_tab_basic">Basic</string>
+  <string name="role_editor_tab_persona">Persona</string>
+  <string name="role_editor_tab_world">World</string>
+  <string name="role_editor_tab_other">Other</string>
+  <string name="role_editor_tab_card">Card</string>
+  <string name="role_editor_tab_prompt">Prompt</string>
+  <string name="role_editor_tab_lorebook">Lorebook</string>
+  <string name="role_editor_tab_metadata">Metadata</string>
+  <string name="role_editor_tab_media">Media</string>
+  <string name="role_editor_tab_interop">Interop</string>
+  <string name="role_editor_name_label">Role name</string>
+  <string name="role_editor_name_placeholder">Enter a character name</string>
+  <string name="role_editor_summary_label">Description</string>
+  <string name="role_editor_summary_placeholder">Short one-line description</string>
+  <string name="role_editor_system_prompt_label">System prompt</string>
+  <string name="role_editor_system_prompt_placeholder">Describe exactly how the role should speak and behave</string>
+  <string name="role_editor_media_title">Media Assets</string>
+  <string name="role_editor_media_summary">Manage the primary avatar and project-only cover image. The primary avatar is used for chat display and ST PNG export.</string>
+  <string name="role_editor_avatar_title">Primary Avatar</string>
+  <string name="role_editor_avatar_summary">Used for chat display and exported as the image shell for ST PNG role cards.</string>
+  <string name="role_editor_avatar_empty">No primary avatar selected</string>
+  <string name="role_editor_cover_title">Cover Image</string>
+  <string name="role_editor_cover_summary">Used only inside this project. It is not part of the standard ST role card.</string>
+  <string name="role_editor_cover_empty">No cover image selected</string>
+  <string name="role_editor_media_status_missing">Missing</string>
+  <string name="role_editor_media_status_st_png">From ST PNG</string>
+  <string name="role_editor_media_status_local">Local</string>
+  <string name="role_editor_media_status_project_only">Project only</string>
+  <string name="role_editor_media_add">Add</string>
+  <string name="role_editor_media_replace">Replace</string>
+  <string name="role_editor_media_clear">Clear</string>
+  <string name="role_editor_persona_label">Personality</string>
+  <string name="role_editor_world_settings_label">Scenario</string>
+  <string name="role_editor_opening_line_label">First message</string>
+  <string name="role_editor_message_example_label">Example dialogue</string>
+  <string name="role_editor_post_history_instructions_label">Post-history instructions</string>
+  <string name="role_editor_alternate_greetings_label">Alternate greetings</string>
+  <string name="role_editor_alternate_greetings_hint">One greeting per line.</string>
+  <string name="role_editor_lorebook_name_label">Lorebook name</string>
+  <string name="role_editor_lorebook_description_label">Lorebook description</string>
+  <string name="role_editor_lorebook_scan_depth_label">Scan depth</string>
+  <string name="role_editor_lorebook_token_budget_label">Token budget</string>
+  <string name="role_editor_lorebook_recursive_label">Recursive scanning</string>
+  <string name="role_editor_lorebook_add_entry">Add lore entry</string>
+  <string name="role_editor_lorebook_entry_title">Lore entry</string>
+  <string name="role_editor_lorebook_entry_id_label">Entry id</string>
+  <string name="role_editor_lorebook_entry_keys_label">Keys</string>
+  <string name="role_editor_lorebook_entry_secondary_keys_label">Secondary keys</string>
+  <string name="role_editor_lorebook_entry_comment_label">Comment</string>
+  <string name="role_editor_lorebook_entry_content_label">Content</string>
+  <string name="role_editor_lorebook_entry_order_label">Insertion order</string>
+  <string name="role_editor_lorebook_entry_position_label">Position</string>
+  <string name="role_editor_lorebook_entry_enabled_label">Enabled</string>
+  <string name="role_editor_lorebook_entry_constant_label">Constant</string>
+  <string name="role_editor_lorebook_entry_selective_label">Selective</string>
+  <string name="role_editor_lorebook_entry_regex_label">Regex matching</string>
+  <string name="role_editor_lorebook_remove_entry">Remove lore entry</string>
+  <string name="role_editor_creator_label">Creator</string>
+  <string name="role_editor_creator_notes_label">Creator notes</string>
+  <string name="role_editor_character_version_label">Character version</string>
+  <string name="role_editor_talkativeness_label">Talkativeness</string>
+  <string name="role_editor_favorite_label">Favorite</string>
+  <string name="role_editor_interop_title">ST interop</string>
+  <string name="role_editor_interop_source_format">Source format: %1$s</string>
+  <string name="role_editor_interop_spec">Spec: %1$s</string>
+  <string name="role_editor_interop_spec_version">Spec version: %1$s</string>
+  <string name="role_editor_interop_warning">Warning: %1$s</string>
+  <string name="role_editor_safety_policy_label">Safety policy</string>
+  <string name="role_editor_tags_label">Tags</string>
+  <string name="role_editor_tags_placeholder">comma, separated, tags</string>
+  <string name="role_editor_default_model_label">Default model</string>
+  <string name="role_editor_no_default_model">No default model</string>
+  <string name="role_editor_create_button">Create Role</string>
+  <string name="role_editor_save_button">Save Changes</string>
+  <string name="role_editor_delete_button">Delete Role</string>
+  <string name="role_editor_export_png_missing_avatar_title">ST PNG export needs a primary avatar</string>
+  <string name="role_editor_export_png_missing_avatar_content">This role does not currently have a primary avatar. You can export with the default image, or pick one now and use it for the role and this export.</string>
+  <string name="role_editor_export_png_use_default">Use default image</string>
+  <string name="role_editor_export_png_upload_image">Upload image</string>
+  <string name="role_editor_ai_compress_action">AI Compress</string>
+  <string name="role_editor_ai_compress_running">Compressing...</string>
+  <string name="role_editor_ai_compress_success">Compressed to %1$d/%2$d characters.</string>
+  <string name="role_editor_ai_compress_failed_generic">AI compression failed. Try again after checking the selected model.</string>
+  <string name="role_editor_ai_compress_failed_blank">AI compression returned empty content. Original text was kept.</string>
+  <string name="role_editor_ai_compress_failed_limit">AI compression returned %1$d characters, still above the %2$d limit. Original text was kept.</string>
+  <string name="role_editor_ai_compress_missing_model">No local model is available. Add a model first, or choose the editor assistant model in Settings.</string>
+
+  <!-- Chat Screen -->
+  <string name="chat_title">Chat</string>
+  <string name="chat_loading_session">Loading session...</string>
+  <string name="chat_missing_model_title">Missing local model</string>
+  <string name="chat_missing_model_content">The session references a model that is not currently available. Open the model library and download or import a local LLM, or switch to another model already on device.</string>
+  <string name="chat_use_model">Use %s</string>
+  <string name="chat_open_model_library">Open Model Library</string>
+  <string name="chat_you">You</string>
+  <string name="chat_persona_label">Persona</string>
+  <string name="chat_assistant">Assistant</string>
+  <string name="chat_message_placeholder">Message your character...</string>
+  <string name="chat_message_read">Read</string>
+  <string name="chat_stop_response">Stop response</string>
+  <string name="chat_send_message">Send message</string>
+  <string name="chat_response_stopped">Response stopped.</string>
+  <string name="chat_response_failed">Response failed.</string>
+  <string name="chat_empty_message">Empty message</string>
+  <string name="chat_switch_model">Switch Model</string>
+  <string name="chat_open_model_library_menu">Open Model Library</string>
+  <string name="chat_select_model_title">Select Model</string>
+  <string name="chat_current_model">Current</string>
+  <string name="chat_token_speed_format">%1$d token/s</string>
+  <string name="chat_message_actions_title">Message actions</string>
+  <string name="chat_message_actions_content">Choose how this accepted turn should affect continuity.</string>
+  <string name="chat_pin_message_action">Pin to memory</string>
+  <string name="chat_rewind_here_action">Rewind here</string>
+  <string name="chat_regenerate_reply_action">Regenerate reply</string>
+  <string name="chat_edit_from_here_action">Edit from here</string>
+  <string name="chat_continuity_debug_action">Continuity debug</string>
+  <string name="chat_continuity_debug_title">Continuity debug</string>
+  <string name="chat_continuity_runtime_state_label">Runtime state</string>
+  <string name="chat_continuity_open_threads_label">Open threads</string>
+  <string name="chat_continuity_memory_atoms_label">Memory atoms</string>
+  <string name="chat_continuity_recent_events_label">Recent events</string>
+  <string name="chat_continuity_last_query_label">Last memory query</string>
+  <string name="chat_continuity_last_pack_label">Last injected memory pack</string>
+  <string name="chat_continuity_compaction_label">Compaction cache</string>
+  <string name="chat_continuity_compaction_count_format">%1$d cached entries</string>
+  <string name="chat_continuity_debug_empty">No data</string>
+
+  <!-- Settings Screen -->
+  <string name="settings_model_library_title">Model Library</string>
+  <string name="settings_model_library_summary">Download, import and manage local models</string>
+  <string name="settings_dialog_live_token_speed_title">Show live generation speed</string>
+  <string name="settings_dialog_live_token_speed_summary">Display real-time token output speed in the chat header while the model is generating.</string>
+  <string name="settings_dialog_streaming_output_title">Enable streaming output</string>
+  <string name="settings_dialog_streaming_output_summary">Show assistant replies incrementally while generating. If interrupted, the partial bubble is withdrawn and the next turn restarts from scratch.</string>
+  <string name="settings_role_editor_assistant_model_title">Editor assistant model</string>
+  <string name="settings_role_editor_assistant_model_none">Default: first available model</string>
+  <string name="settings_role_editor_assistant_model_empty">No local model is available yet. Add a model before using AI compression in the role editor.</string>
+  <string name="settings_role_editor_assistant_model_reset_default">Use default</string>
+
+  <!-- Model Manager -->
+  <string name="model_manager">Model Manager</string>
+  <string name="model_manager_select_task_title">Select a use case to try</string>
+  <string name="model_not_downloaded_msg">Model not downloaded yet</string>
+  <string name="model_is_initializing_msg">Initializing model...</string>
+  <string name="model_library_tab_online_models">Online models</string>
+  <string name="model_library_tab_local_imports">Local imports</string>
+  <string name="model_library_imported_empty_title">No local models imported yet</string>
+  <string name="model_library_imported_empty_content">Tap the import button in the lower right to add a local .task or .litertlm model file.</string>
+  <string name="model_list_imported_models_title">Imported models</string>
+  <string name="model_list_recommended_models_title">Recommended models</string>
+  <string name="model_list_experimental_label">EXPERIMENTAL</string>
+  <plurals name="model_list_number_of_models_available">
+    <item quantity="one">%d model available</item>
+    <item quantity="other">%d models available</item>
+  </plurals>
+  <string name="select_downloaded_model">Select a downloaded model</string>
+  <string name="select_model">Select a model</string>
+  <string name="downloaded_size">%1$s downloaded</string>
+  <string name="confirm_delete_model_dialog_title">Delete download</string>
+  <string name="confirm_delete_model_dialog_content">Are you sure you want to delete the downloaded model \"%s\"?</string>
+  <string name="learn_more">Learn more and see model license</string>
+  <string name="loading_model_list">Loading model list...</string>
+
+  <!-- AI Chat -->
+  <string name="aichat_initializing_title">Initializing model</string>
+  <string name="aichat_initializing_content">Sit tight, this can take up to 1 minute</string>
+  <string name="aichat_emptystate_title">AI Chat</string>
+  <string name="aichat_emptystate_content">Chat with on-device large language models.</string>
+  <string name="chat_textinput_placeholder">Type message...</string>
+  <string name="chat_llm_agent_name">LLM</string>
+  <string name="chat_agent_agent_name">Agent</string>
+  <string name="chat_generic_agent_name">Model</string>
+  <string name="chat_generic_result_name">Result</string>
+  <string name="show_thinking">Show thinking</string>
+  <string name="conversation_reset_message">Conversation was reset</string>
+  <string name="engin_reset_message">Engine was reset</string>
+
+  <!-- Benchmark -->
+  <string name="benchmark">Benchmark</string>
+  <string name="baseline">Baseline</string>
+  <string name="benchmark_model">Benchmark model</string>
+  <string name="benchmark_results">Benchmark results</string>
+  <string name="benchmark_no_results">No benchmark results</string>
+  <string name="benchmark_comparison_help_title">How to compare benchmark runs</string>
+  <string name="benchmark_comparison_help_content">Compare benchmark runs by tapping the **Baseline** chip on any run result card to set the run as the comparison baseline. We\'ll automatically calculate and display the percentage differences in **all other** run result cards.</string>
+  <string name="benchmark_tokens_limit_message">Ensure that the sum of prefill and decode tokens remains under the model\'s maximum token limit (%1$d vs %2$d)</string>
+  <string name="best_overall">Best overall</string>
+  <string name="run_benchmark">Run benchmark</string>
+  <string name="run_benchmark_confirmation_msg">This process typically takes several minutes and cannot be interrupted once started. Would you like to proceed?</string>
+  <string name="running_benchmark_msg">Running model benchmark...</string>
+  <string name="delete_benchmark_result_dialog_title">Delete benchmark result</string>
+  <string name="delete_benchmark_result_dialog_content">Are you sure you want to delete the benchmark result?</string>
+  <plurals name="runs">
+    <item quantity="one">%d run</item>
+    <item quantity="other">%d runs</item>
+  </plurals>
+
+  <!-- Categories -->
+  <string name="category_unlabeled">Unlabeled</string>
+  <string name="category_llm">LLM</string>
+  <string name="category_agents">Agents</string>
+  <string name="category_classical_ml">Classical ML</string>
+  <string name="category_experimental">Experimental</string>
+
+  <!-- Dialogs -->
+  <string name="discard_changes_dialog_title">Discard changes?</string>
+  <string name="discard_changes_dialog_content">You have unsaved changes. Are you sure you want to discard them?</string>
+
+  <!-- Media -->
+  <string name="add_audio">+Audio</string>
+  <string name="take_a_picture">Take a picture</string>
+  <string name="pick_from_album">Pick from album</string>
+  <string name="record_audio_clip">Record audio clip</string>
+  <string name="pick_wav_file">Pick wav file</string>
+  <string name="input_history">Input history</string>
+  <string name="askimage_emptystate_title">Ask Image</string>
+  <string name="askimage_emptystate_content">To get started, tap the + below to add an image (max 10 images per chat) and type a prompt to ask a question about it!</string>
+  <string name="askaudio_emptystate_title">Ask Audio</string>
+  <string name="askaudio_emptystate_content">To get started, tap the + below to add a audio clip (limited to 1 clip up to 30 seconds) and type a prompt to transcribe or translate it!</string>
+
+  <!-- Voice Input -->
+  <string name="hold_down_to_talk">Hold to talk</string>
+  <string name="listening">Listening...</string>
+  <string name="release_to_send">Release to send</string>
+  <string name="tap_to_send_recording">Tap again to send recording</string>
+  <string name="slide_up_to_cancel">Slide up to cancel</string>
+  <string name="grant_permissions">Grant permissions</string>
+  <string name="grant_record_audio_permission">Grant record audio permission</string>
+
+  <!-- Memory Warning -->
+  <string name="memory_warning_title">Memory Warning</string>
+  <string name="memory_warning_content">The model you\'ve selected may exceed your device\'s memory, which can cause the app to crash. For the best experience, we recommend trying a smaller model.</string>
+  <string name="memory_warning_proceed_anyway">Proceed anyway</string>
+
+  <!-- Config -->
+  <string name="config_dialog_tab_model_configs">Model configs</string>
+  <string name="config_dialog_tab_system_prompt">System prompt</string>
+  <string name="system_prompt_updated">System prompt updated</string>
+  <string name="restore_default">Restore default</string>
+  <string name="max_tokens_warning_message">Setting max tokens above 10000 may cause app to be unstable.</string>
+
+  <!-- Logs -->
+  <string name="logs_viewer_filter_text_input_placeholder">Filter logs</string>
+  <string name="logs_viewer_title">Logs viewer</string>
+  <string name="logs_viewer_no_matching_logs">No logs match the filter</string>
+
+  <!-- Terms of Service -->
+  <string name="tos_dialog_title_app">Welcome to Gemma Tavern</string>
+  <string name="tos_dialog_title_gemma">Gemma Terms of Use</string>
+  <string name="tos_dialog_accept_and_continue_button_label">Accept &amp; continue</string>
+  <string name="tos_dialog_agree_and_continue_button_label">Agree &amp; continue</string>
+  <string name="settings_dialog_tos_title">Terms of service</string>
+  <string name="settings_dialog_view_app_terms_of_service">View App Terms of Service</string>
+  <string name="settings_dialog_gemma_prohibited_use_policy">Gemma Prohibited Use Policy</string>
+
+  <!-- Notifications -->
+  <string name="gallery_news_notification_title">Gemma Tavern News</string>
+  <string name="notification_title_fail">Model download failed</string>
+  <string name="notification_title_success">Model download succeeded</string>
+  <string name="notification_content_fail">Failed to download model \"%s\"</string>
+  <string name="notification_content_success">Model \"%s\" has been downloaded</string>
+
+  <!-- Mobile Actions -->
+  <string name="mobile_actions_title">Mobile Actions</string>
+  <string name="mobile_actions_description">Control your device with simple commands</string>
+  <string name="mobile_actions_supported_actions">Supported sample actions:</string>
+  <string name="mobile_actions_tab_model_response">Model response</string>
+  <string name="mobile_actions_tab_function_called">Function(s) called</string>
+  <string name="flashlight_off_message">I\'ve turned off the flashlight.</string>
+  <string name="flashlight_on_message">I\'ve turned on the flashlight.</string>
+  <string name="set_screen_brightness_message">I\'ve set the screen brightness to %1$d%%.</string>
+  <string name="set_timer_message">Setting the timer for %1$d seconds.</string>
+  <string name="add_calendar_event_message">Adding \"Team meeting (10AM-11AM)\" to your calendar.</string>
+  <string name="take_picture_message">Opening the camera app.</string>
+  <string name="view_results">View results</string>
+  <string name="view_console_logs">View console logs</string>
+  <string name="warming_up">warming up...</string>
+  <string name="warning_no_function_call">No function recognized</string>
+  <string name="snackbar_no_function_call">No function recognized</string>
+  <string name="unknown_error">Unknown error</string>
+  <string name="view_in_full_screen">View in full screen</string>
+
+  <!-- Mobile Actions Challenge -->
+  <string name="mobile_actions_challenge_title">Mobile Actions Finetune Challenge</string>
+  <string name="mobile_actions_challenge_subtitle">Build it to play it!</string>
+  <string name="mobile_actions_challenge_description">This demo is locked. To unlock the Mobile Actions agent, you need to compile the model yourself using our open-source recipe.</string>
+  <string name="mobile_actions_challenge_instructions_title">Instructions:</string>
+  <string name="mobile_actions_challenge_instruction_1">1. <![CDATA[<b>On your computer</b>]]>, open <![CDATA[<a href="https://ai.google.dev/gemma/docs/mobile-actions">this guide</a>]]></string>
+  <string name="mobile_actions_challenge_instruction_2">2. Follow the instructions to fine tune the model and convert it to .litertlm format.</string>
+  <string name="mobile_actions_challenge_instruction_3">3. Transfer the file to this phone.</string>
+  <string name="mobile_actions_challenge_instruction_4">4. Tap <![CDATA[<b>Load Model</b>]]> below to unlock the demo.</string>
+  <string name="mobile_actions_challenge_email_colab">Email guide to myself</string>
+  <string name="mobile_actions_challenge_load_model">Load Model</string>
+
+  <!-- Prompt Templates -->
+  <plurals name="parameter">
+    <item quantity="one">Parameter</item>
+    <item quantity="other">Parameters</item>
+  </plurals>
+  <string name="prompt_template_label_flash_on_off">Turn flashlight on/off</string>
+  <string name="prompt_template_label_flash_on">Flashlight on</string>
+  <string name="prompt_template_label_flash_off">Flashlight off</string>
+  <string name="prompt_template_label_create_contact">Create contact</string>
+  <string name="prompt_template_label_send_email">Send email</string>
+  <string name="prompt_template_label_create_calendar_event">Create calendar event</string>
+  <string name="prompt_template_label_show_location_on_map">Show location on map</string>
+  <string name="prompt_template_label_open_wifi_settings">Open WIFI settings</string>
+  <string name="text_image_generation_text_field_placeholder">Type prompt...</string>
+  <string name="text_input_placeholder_llm_chat">Type prompt...</string>
+
+  <!-- Skills -->
+  <string name="add_script">Add script</string>
+  <string name="add_default_script">Add default script</string>
+  <string name="add_skill">Add skill</string>
+  <string name="add_skill_option_featured_list_title">Add skill from featured list</string>
+  <string name="add_skill_option_featured_list_description">Add a skill from a curated list of community contributed skills</string>
+  <string name="add_skill_option_url_title">Load skill from URL</string>
+  <string name="add_skill_option_url_description">Enter the URL of a skill directory hosted on Web</string>
+  <string name="add_skill_option_local_title">Import local skill</string>
+  <string name="add_skill_option_local_description">Import the skill directory locally</string>
+  <string name="add_skill_option_skill_creator_title">Skill creator</string>
+  <string name="add_skill_option_skill_creator_description">Create a skill from scratch in-app</string>
+  <string name="add_skill_from_url_dialog_title">Add skill from URL</string>
+  <string name="add_skill_dialog_title_from_local_import">Import local skill</string>
+  <string name="add_skill_dialog_subtitle_from_local_import">Please first \"adb push\" the whole skill directory to /sdcard/Download</string>
+  <string name="add_skill_manual_input_sheet_title">Create a skill</string>
+  <string name="agent_skills">Agent Skills</string>
+  <string name="agent_skills_description">Use specialized, high-order reasoning by loading different skills or creating your own.\n\nTry tapping a sample prompt below to see Agent Skills in action!</string>
+  <string name="disclaimer_dialog_content">Third-party skills are not authored or endorsed by Google. Google is not responsible for their contents, security, or data handling practices.\n\nPlease exercise caution before providing sensitive information, such as personal identification, tokens, or API keys.\n\nAny use of an Agent Skill is subject to the applicable terms for that Skill.</string>
+  <string name="disclaimer_dialog_title">Add third-party skill</string>
+  <string name="disclaimer_dialog_agree">Agree</string>
+  <string name="delete_script_dialog_title">Delete script</string>
+  <string name="delete_skill_dialog_title">Delete skill</string>
+  <string name="delete_skill_dialog_content">Are you sure you want to delete the skill?</string>
+  <string name="delete_selected_skills_title">Delete selected skills</string>
+  <plurals name="delete_selected_skills_content">
+    <item quantity="one">Are you sure you want to delete %d skill?</item>
+    <item quantity="other">Are you sure you want to delete %d skills?</item>
+  </plurals>
+  <plurals name="selected_custom_skills_count">
+    <item quantity="one">%d selected</item>
+    <item quantity="other">%d selected</item>
+  </plurals>
+  <string name="built_in_skills_title">Built-in Skills</string>
+  <string name="custom_skills_title">Custom Skills</string>
+  <string name="describe_requirements">Describe requirements</string>
+  <string name="describe_input_data">Describe input data</string>
+  <string name="describe_input_data_support_text">The field names need to match the ones in instructions.</string>
+  <string name="describe_output_data">Describe output data</string>
+  <string name="duplicated_script_name">Duplicated script name</string>
+  <string name="enable_skill_dialog_content">Please enable the skill by tapping the Skills button below.</string>
+  <string name="edit_skill">Edit skill</string>
+  <string name="enter_skill_url">Enter URL of skill\'s root directory</string>
+  <string name="featured_skills_title">Featured skills</string>
+  <string name="featured_skills_description">A curated list of community contributed skills</string>
+  <string name="generate_llm_prompt_title">Generate LLM prompt</string>
+  <string name="generate_llm_prompt_button_label">LLM prompt</string>
+  <string name="learn_how_to_write_skills">Learn how to write skills</string>
+  <string name="loading_skills_allowlist">Loading featured skills...</string>
+  <string name="manage_skills">Manage skills</string>
+  <string name="manage_skills_description">View, create, and manage your skills</string>
+  <string name="skill_limit_warning">Enabling more than %s may impact performance.</string>
+  <string name="no_directory_selected">No directory selected</string>
+  <string name="pick_skill_dir">Pick skill\'s root directory</string>
+  <string name="prompt_copied_message">Prompt copied to clipboard. Paste it into your favorite LLM app to generate the code and copy/paste the code here.</string>
+  <string name="prompt_chip_kitchen_adventure">Kitchen adventure</string>
+  <string name="prompt_chip_calculate_hash">Calculate hash</string>
+  <string name="prompt_chip_query_wikipedia">Query Wikipedia</string>
+  <string name="prompt_chip_plot_chart">Plot chart</string>
+  <string name="prompt_chip_interactive_map">Interactive map</string>
+  <string name="prompt_chip_text_spinner">Spin label on my head</string>
+  <string name="prompt_chip_send_email">Send email</string>
+  <string name="replace_skill_dialog_title">Replace existing skill</string>
+  <string name="replace_skill_dialog_content">A skill with the same name already exists. Do you want to replace it?</string>
+  <string name="search_skill">Search for a skill</string>
+  <string name="select_script">Select script</string>
+  <string name="script_name">Script name</string>
+  <string name="script_content">Script content</string>
+  <string name="skills">Skills</string>
+  <plurals name="skills_count">
+    <item quantity="one">%d skill</item>
+    <item quantity="other">%d skills</item>
+  </plurals>
+  <string name="skill_name_input_description">REQUIRED. In the form of my-skill-name</string>
+  <string name="skill_description_input_description">REQUIRED. A brief description of the skill\'s function and trigger conditions or keywords.</string>
+  <string name="skill_instructions_input_description">Detailed instructions in Markdown format that LLM must follow to accomplish the task.</string>
+  <string name="use_call_js_template">Use Call JS template</string>
+
+  <!-- Tiny Garden -->
+  <string name="conversation_history">Conversation History</string>
+  <string name="collect">Collect</string>
+  <string name="color">Color</string>
+  <string name="tap_to_change_color">Tap to change color</string>
+  <string name="no_cutouts_collected">No cutouts collected</string>
+  <string name="reset_note">Tapping \"Reset\" will reset LiteRT-LM engine only. The game progress won\'t be affected.</string>
+  <string name="resetting_engine">Resetting engine...</string>
+  <string name="reinitializing_description">The game progress won\'t be affected</string>
+  <string name="introducing">Introducing</string>
+  <string name="litert_community_label">LiteRT community</string>
+
+  <!-- Misc -->
+  <string name="checking_access">Checking access...</string>
+  <string name="collapse_all">Collapse all</string>
+  <string name="expand_all">Expand all</string>
+  <string name="failed_to_save">Failed to save</string>
+  <string name="function_name">Function name</string>
+  <string name="generate_and_copy">Generate and copy</string>
+  <string name="instructions">Instructions</string>
+  <string name="invalid_response">Invalid response</string>
+  <string name="paste_from_clipboard">Paste from clipboard</string>
+  <string name="selected_count">%d selected</string>
+  <string name="turn_on_all">Turn on all</string>
+  <string name="turn_off_all">Turn off all</string>
+  <string name="unsupported_action">Unsupported action</string>
+  <string name="basic_info">Basic info</string>
+  <string name="description_required">Description*</string>
+  <string name="enter_instruction">Enter instruction</string>
+  <string name="edit_secret">Edit secret</string>
+  <string name="secret">Secret</string>
+
+  <!-- Accessibility Content Descriptions -->
+  <string name="cd_add_icon">Add</string>
+  <string name="cd_import_model_button">Import model</string>
+  <string name="cd_task_card">%1$s task with %2$d models</string>
+  <string name="cd_error">Error</string>
+  <string name="cd_import_model_from_local_file_button">Import model from local file</string>
+  <string name="cd_navigate_back_icon">Go back</string>
+  <string name="cd_app_settings_icon">Settings</string>
+  <string name="cd_done_icon">Done</string>
+  <string name="cd_collapse_icon">Collapse</string>
+  <string name="cd_expand_icon">Expand</string>
+  <string name="cd_stop_icon">Stop</string>
+  <string name="cd_delete_icon">Delete</string>
+  <string name="cd_close_icon">Close</string>
+  <string name="cd_selected_icon">Selected</string>
+  <string name="cd_model_settings_icon">Model settings</string>
+  <string name="cd_reset_session_icon">Reset session</string>
+  <string name="cd_change_model">Current model is %1$s. Tap to change model.</string>
+  <string name="cd_close_image_viewer_icon">Close image viewer</string>
+  <string name="cd_copy_to_clipboard_icon">Copy to clipboard</string>
+  <string name="cd_prompt_input_text_field">Prompt input</string>
+  <string name="cd_send_prompt_icon">Send prompt</string>
+  <string name="cd_model_response_text">Model response text</string>
+  <string name="cd_clear_input_history_icon">Clear input history</string>
+  <string name="cd_delete_input_history_entry_icon">Delete input history entry</string>
+  <string name="cd_content_input_field">Content input</string>
+  <string name="cd_add_example_prompt_icon">Add example prompt</string>
+  <string name="cd_image_thumbnail">Image thumbnail</string>
+  <string name="cd_user_image">User image %1$d</string>
+  <string name="cd_user_image_in_group">User image %1$d of %2$d</string>
+  <string name="cd_add_content_icon">Add content</string>
+  <string name="cd_camera_shutter_icon">Camera shutter</string>
+  <string name="cd_toggle_front_back_camera_icon">Toggle front or back camera</string>
+  <string name="cd_pick_file">Pick file</string>
+  <string name="cd_play_audio_icon">Play audio</string>
+  <string name="cd_stop_playback_icon">Stop playback</string>
+  <string name="cd_send_audio_clip_icon">Send audio clip</string>
+  <string name="cd_start_recording">Start recording</string>
+  <string name="cd_downloaded_icon">Downloaded</string>
+  <string name="cd_not_downloaded_icon">Not downloaded</string>
+  <string name="cd_downloading_icon">Downloading</string>
+  <string name="cd_download_failed_icon">Download failed</string>
+  <string name="cd_chat_panel">Chat panel</string>
+  <string name="cd_switch_to_keyboard">Switch to keyboard</string>
+  <string name="cd_switch_to_voice">Switch to voice</string>
+  <string name="cd_show_history">Show history</string>
+  <string name="cd_more_options">More options</string>
+  <string name="cd_help">Help</string>
+  <string name="cd_menu">Menu</string>
+  <string name="tap_to_see_value">Tap on graph to see value</string>
+  <!-- Language Settings -->
+  <string name="settings_language">Language</string>
+  <string name="settings_language_summary">Change app language</string>
+  <string name="settings_message_sounds_title">Message Sounds</string>
+  <string name="settings_message_sounds_summary">Play send and reply sound effects in chat</string>
+  <string name="language_system">System</string>
+  <string name="language_english">English</string>
+  <string name="language_chinese">简体中文</string>
+  <string name="language_japanese">日本語</string>
+  <string name="language_korean">한국어</string>
+  <string name="role_editor_media_export_summary_title">Media export summary</string>
+  <string name="role_editor_media_export_summary_body">ST PNG exports the current primary avatar only. Cover, gallery, and sprite images stay project-only for now.</string>
+  <string name="role_editor_media_export_st_png_ready">ST PNG avatar ready</string>
+  <string name="role_editor_media_export_st_png_missing">ST PNG avatar missing</string>
+  <string name="role_editor_media_export_cover_project_only">Cover is project-only</string>
+  <string name="role_editor_media_export_cover_empty">No cover image</string>
+  <string name="role_editor_media_export_gallery_count">Gallery: %1$d</string>
+  <string name="role_editor_media_export_sprite_count">Sprites: %1$d</string>
+  <string name="role_editor_gallery_title">Gallery images</string>
+  <string name="role_editor_gallery_summary">Add extra portraits, scenes, and reference art for this role.</string>
+  <string name="role_editor_gallery_add">Add gallery images</string>
+  <string name="role_editor_gallery_empty">No gallery images yet.</string>
+  <string name="role_editor_gallery_set_avatar">Use as avatar</string>
+  <string name="role_editor_gallery_set_cover">Use as cover</string>
+  <string name="role_editor_media_asset_name">Display name</string>
+  <string name="role_editor_media_remove">Remove</string>
+  <string name="role_editor_sprite_title">Sprite and expression images</string>
+  <string name="role_editor_sprite_summary">Manage extra expression states for future sprite-aware chat presentation.</string>
+  <string name="role_editor_sprite_add">Add sprites</string>
+  <string name="role_editor_sprite_empty">No sprite images yet.</string>
+  <string name="role_editor_sprite_state_tag">State tag</string>
+  <string name="role_editor_media_usage_unspecified">Usage: Unspecified</string>
+  <string name="role_editor_media_usage_portrait">Usage: Portrait</string>
+  <string name="role_editor_media_usage_expression">Usage: Expression</string>
+  <string name="role_editor_media_usage_scene">Usage: Scene</string>
+  <string name="role_editor_media_usage_reference">Usage: Reference</string>
+  <string name="role_catalog_no_avatar">No avatar</string>
+  <string name="role_editor_media_compatibility_title">Media compatibility</string>
+  <string name="role_editor_media_compatibility_avatar_ready">Primary avatar is ready for ST PNG export.</string>
+  <string name="role_editor_media_compatibility_avatar_missing">Primary avatar is missing. ST PNG export will prompt for a default image or upload.</string>
+  <string name="role_editor_media_compatibility_cover_local">Cover image is project-only and will not be exported to ST.</string>
+  <string name="role_editor_media_compatibility_gallery">Gallery images: %1$d</string>
+  <string name="role_editor_media_compatibility_sprites">Sprite images: %1$d</string>
+  <string name="role_editor_media_compatibility_imported">Primary avatar was imported from an ST PNG card.</string>
+  <string name="role_editor_media_preview_unavailable">Preview unavailable</string>
+  <string name="role_editor_gallery_name_label">Gallery name</string>
+  <string name="role_editor_gallery_use_as_avatar">Use as avatar</string>
+  <string name="role_editor_gallery_use_as_cover">Use as cover</string>
+  <string name="role_editor_gallery_remove">Remove gallery image</string>
+  <string name="role_editor_sprite_name_label">Sprite name</string>
+  <string name="role_editor_sprite_state_tag_label">Sprite state tag</string>
+  <string name="role_editor_sprite_remove">Remove sprite</string>
+  <string name="role_editor_gallery_usage_unspecified">Unspecified</string>
+  <string name="role_editor_gallery_usage_portrait">Portrait</string>
+  <string name="role_editor_gallery_usage_expression">Expression</string>
+  <string name="role_editor_gallery_usage_scene">Scene</string>
+  <string name="role_editor_gallery_usage_reference">Reference</string>
+  <string name="role_editor_import_st_card">Import ST Role Card</string>
+  <string name="role_editor_export_st_json">Export ST JSON</string>
+  <string name="role_editor_export_st_png">Export ST PNG</string>
+  <string name="role_editor_status_avatar_cleared">Primary avatar cleared</string>
+  <string name="role_editor_status_avatar_updated">Primary avatar updated</string>
+  <string name="role_editor_status_cover_cleared">Cover image cleared</string>
+  <string name="role_editor_status_cover_updated">Cover image updated</string>
+  <string name="role_editor_status_gallery_added">Added %1$d gallery images</string>
+  <string name="role_editor_status_gallery_removed">Gallery image removed</string>
+  <string name="role_editor_status_gallery_avatar">Gallery image set as primary avatar</string>
+  <string name="role_editor_status_gallery_cover">Gallery image set as cover</string>
+  <string name="role_editor_status_sprite_added">Added %1$d sprite images</string>
+  <string name="role_editor_status_sprite_removed">Sprite image removed</string>
+  <string name="role_editor_status_st_imported">ST role card imported</string>
+  <string name="role_editor_status_st_exported">ST role card exported</string>
+  <string name="role_editor_error_st_import_failed">Failed to import ST role card</string>
+  <string name="role_editor_error_st_export_failed">Failed to export ST role card</string>
+  <string name="role_editor_error_required_fields">Role name is required.</string>
+  <string name="role_editor_error_invalid_integer">Invalid integer value for %1$s.</string>
+  <string name="role_editor_error_invalid_decimal">Invalid decimal value for %1$s.</string>
+  <string name="role_editor_required_badge">Required</string>
+  <string name="role_editor_required_hint">Fields marked as Required must be filled before you can save this role. Other fields can stay empty, but leaving them empty usually reduces style control and lore fidelity.</string>
+  <string name="role_editor_character_count_without_limit">%1$d</string>
+  <string name="role_editor_character_count_with_limit">%1$d/%2$d</string>
+  <string name="role_editor_help_role_name_body">What it does:\nThis is the display name shown in the role list, session picker, and chat header. It is also written back to the ST card name field.\n\nIf left empty:\nYou cannot save the role. This is the only field that is currently required.\n\nRecommended content and length:\nUse the name the user should actually see, not a long summary. Usually 2 to 20 characters is enough. The editor budget is 120 characters, which is enough for titles or aliases but still keeps the UI readable.</string>
+  <string name="role_editor_help_description_body">What it does:\nDescription is the stable identity layer of the character. Put appearance, core background, identity, relationship status, and the traits that should remain true in most scenes.\n\nIf left empty:\nThe role can still work, but the model has less guidance on who the character fundamentally is. This usually hurts consistency more than style.\n\nRecommended content and length:\nAim for one compact profile instead of a full biography. 120 to 300 characters is a good working range for local 4k models. The editor budget is 400 characters. Prefer facts over prose.</string>
+  <string name="role_editor_help_personality_body">What it does:\nPersonality controls temperament, emotional habits, values, speech rhythm, social behavior, and recurring mannerisms. This is the best place for how the character reacts, not who they are on paper.\n\nIf left empty:\nThe model will rely more on description, examples, and first message. Replies may become flatter or drift toward generic assistant language.\n\nRecommended content and length:\nWrite trait clusters, not a novel. Good content includes tone, patience, confidence, jealousy, humor, formality, and verbal habits. Around 150 to 350 characters is usually enough. The editor budget is 600 characters.</string>
+  <string name="role_editor_help_scenario_body">What it does:\nScenario defines the current setup: where the scene starts, what the relationship context is, and what situation the conversation assumes at turn one.\n\nIf left empty:\nThe role becomes more timeless and reusable, but opening context gets weaker. The model may need to infer the scene from the first user message.\n\nRecommended content and length:\nUse this for present-tense setup, not deep backstory. 100 to 250 characters is usually enough. The editor budget is 500 characters. If your world is very large, move reference material into the lorebook instead of overloading this field.</string>
+  <string name="role_editor_help_first_message_body">What it does:\nFirst message is the opener used when a new session starts. It establishes the voice, pacing, formatting style, and the initial scene framing in one place.\n\nIf left empty:\nSessions can still start, but they lose a strong opening example. The first live reply may sound less in-character because the model has no opening anchor.\n\nRecommended content and length:\nWrite one natural in-character opener, not a meta explanation. 80 to 300 characters is a strong default. The editor budget is 800 characters, but shorter is usually better for local models.</string>
+  <string name="role_editor_help_example_dialogue_body">What it does:\nExample dialogue teaches style by demonstration. It is best for speech patterns, narration format, emoji habits, quotation style, and the balance between dialogue and action.\n\nIf left empty:\nThe role can still function from description and personality alone. You mainly lose fine-grained voice imitation.\n\nRecommended content and length:\nKeep examples short, representative, and format-focused. Do not paste the whole lore bible here. For 4k on-device models, 300 to 1200 characters is usually enough. The editor budget is 2400 characters, but using all of it will compete with recent chat and lorebook budget.</string>
+  <string name="role_editor_help_system_prompt_body">What it does:\nSystem prompt is the highest-priority instruction layer in this app. Use it for non-negotiable constraints, forbidden behaviors, formatting requirements, and app-specific control rules.\n\nIf left empty:\nRuntime will fall back to the project default system guidance. The role can still run, but you lose card-specific hard rules.\n\nRecommended content and length:\nReserve this field for rules, not flavor text. Around 150 to 500 characters is usually enough. The editor budget is 1200 characters. If this field becomes too large, it will crowd out history on small local models.</string>
+  <string name="role_editor_help_post_history_body">What it does:\nPost-history instructions are inserted after recent chat history. This makes them useful for reminders that should stay close to the model\'s latest attention window without occupying the whole system prompt.\n\nIf left empty:\nNothing breaks. You simply rely on system prompt, summary, and lorebook only.\n\nRecommended content and length:\nUse short reminder-style instructions such as speaking format, scene reminders, or safety boundaries. 60 to 200 characters is usually enough. The editor budget is 500 characters.</string>
+  <string name="role_editor_help_alternate_greetings_body">What it does:\nAlternate greetings are extra opener candidates for starting fresh sessions. They do not rewrite the character; they only add variety to the initial message.\n\nIf left empty:\nOnly the main first message is available as the opening seed.\n\nRecommended content and length:\nPut one greeting per line. Keep each line self-contained and in-character. 1 to 5 alternates is a practical range. The total editor budget is 600 characters, so short openers work best.</string>
+  <string name="role_editor_help_lorebook_name_body">What it does:\nLorebook name is a human-readable label for the embedded ST lorebook. It helps editors identify the book but does not directly change generation.\n\nIf left empty:\nRuntime still works. The lorebook just appears unnamed in tooling and debug views.\n\nRecommended content and length:\nUse a short label such as the world name, arc name, or source pack name. The editor budget is 120 characters.</string>
+  <string name="role_editor_help_lorebook_description_body">What it does:\nLorebook description is editor-facing documentation for what the lorebook covers and how it should be maintained.\n\nIf left empty:\nRuntime behavior does not change. You only lose maintenance notes for yourself or other editors.\n\nRecommended content and length:\nDescribe scope, trigger philosophy, and any assumptions about the book. 80 to 200 characters is usually enough. The editor budget is 400 characters.</string>
+  <string name="role_editor_help_lorebook_scan_depth_body">What it does:\nScan depth controls how many recent messages are checked for lore triggers. Higher values let old references activate entries, but they also cost more scan work and can pull in stale context.\n\nIf left empty:\nThe ST card value stays unset and runtime falls back to its default behavior.\n\nRange guidance:\n0 to 1 means only the newest turn or two matter. 2 to 4 is a good balanced range for small on-device models. 5 and above is more exhaustive, but it increases accidental activations and prompt pressure. ST itself supports much larger values, but for this app\'s 4k context, low numbers are usually safer.</string>
+  <string name="role_editor_help_lorebook_token_budget_body">What it does:\nToken budget limits how much activated lore text may be injected into the prompt during one assembly pass.\n\nIf left empty:\nThe ST card value stays unset and runtime uses its default handling.\n\nRange guidance:\nAround 64 to 128 tokens is conservative and works well for small cards. 128 to 256 is a practical balanced range. Above 256 gives richer world detail, but on local 4k models it starts competing directly with recent chat, summaries, and reply budget. Use larger values only when the lorebook is genuinely central.</string>
+  <string name="role_editor_help_lorebook_recursive_body">What it does:\nRecursive scanning allows a newly activated lore entry to trigger other entries in the same pass. This is useful for chained concepts where one fact reveals another.\n\nIf turned off:\nOnly direct trigger matches are considered. This is simpler and usually easier to control.\n\nRecommendation:\nKeep it off unless your lorebook was designed for chained activation. Turning it on increases expressiveness, but it also increases activation complexity and can consume budget quickly on small-context models.</string>
+  <string name="role_editor_help_lore_entry_id_body">What it does:\nEntry ID is a stable numeric identifier for the lore item. It mainly helps tooling, export compatibility, and debugging.\n\nIf left empty:\nThe entry can still be treated as content in this editor, but explicit numeric identity is missing when exporting or comparing entries.\n\nRecommended content and length:\nUse a short integer, usually under 6 digits. The input budget is 8 characters.</string>
+  <string name="role_editor_help_lore_entry_keys_body">What it does:\nKeys are the primary trigger phrases for this lore entry. When recent chat matches them, the entry becomes eligible for activation.\n\nIf left empty:\nA non-constant entry usually becomes hard to activate intentionally. In practice, empty keys mean the entry should probably be constant or redesigned.\n\nRecommended content and length:\nUse comma-separated trigger terms, names, aliases, or exact phrases. Keep the list tight. The editor budget is 240 characters.</string>
+  <string name="role_editor_help_lore_entry_secondary_keys_body">What it does:\nSecondary keys broaden or refine activation beyond the main key list. They are useful for synonyms, related spellings, or extra cues that should not dominate the primary trigger design.\n\nIf left empty:\nOnly the primary keys are used. This is completely valid for most entries.\n\nRecommended content and length:\nUse this only when there is a real trigger gap. Avoid dumping every related word here. The editor budget is 240 characters.</string>
+  <string name="role_editor_help_lore_entry_comment_body">What it does:\nComment is an editor note for humans. It explains intent, provenance, or maintenance concerns.\n\nIf left empty:\nRuntime behavior does not change.\n\nRecommended content and length:\nUse short maintenance notes such as why the entry exists, what it should not be merged with, or where the source came from. The editor budget is 240 characters.</string>
+  <string name="role_editor_help_lore_entry_content_body">What it does:\nContent is the actual lore payload injected into the prompt when the entry activates.\n\nIf left empty:\nThe entry has nothing meaningful to inject, so triggers will not help much even if activation succeeds.\n\nRecommended content and length:\nWrite dense facts, not purple prose. Prefer lists or compact paragraphs containing names, roles, rules, and facts the model needs in the moment. For small local models, 80 to 300 characters is usually strong. The editor budget is 800 characters.</string>
+  <string name="role_editor_help_lore_entry_order_body">What it does:\nInsertion order decides relative placement when several lore entries are inserted into the same prompt slot.\n\nIf left empty:\nThe export keeps the field unset and ordering falls back to surrounding defaults.\n\nRange guidance:\nSmaller numbers usually appear earlier. Use simple steps such as 0, 10, 20 instead of dense sequences, so later reordering stays easy. The input budget is 6 characters.</string>
+  <string name="role_editor_help_lore_entry_position_body">What it does:\nPosition controls which prompt area receives this lore. Different positions can change how strongly the model attends to the same text.\n\nIf left empty:\nThe ST card keeps the field unset and runtime falls back to its default placement semantics.\n\nRecommended content and length:\nUse the ST position keyword expected by your workflow, such as before or after chat history when supported. Keep it short. The input budget is 24 characters.</string>
+  <string name="role_editor_help_lore_entry_enabled_body">What it does:\nEnabled is the main on-off switch for this entry.\n\nIf turned off:\nThe entry remains stored in the card but is ignored at runtime.\n\nRecommendation:\nDisable entries you want to keep for later instead of deleting them. This is useful while testing activation quality.</string>
+  <string name="role_editor_help_lore_entry_constant_body">What it does:\nConstant forces the entry to be included without waiting for key activation.\n\nIf turned off:\nThe entry behaves like a normal trigger-driven lore item.\n\nRecommendation:\nUse constant only for facts that truly need to be present almost every turn. Overusing it is one of the fastest ways to waste context budget on 4k local models.</string>
+  <string name="role_editor_help_lore_entry_selective_body">What it does:\nSelective narrows activation behavior so an entry is less likely to fire too broadly.\n\nIf turned off:\nActivation relies on the default matching logic.\n\nRecommendation:\nTurn this on when an entry tends to appear in unrelated scenes. Leave it off when you want broad recall and the keys are already specific enough.</string>
+  <string name="role_editor_help_lore_entry_regex_body">What it does:\nRegex matching treats keys as regular expressions instead of plain text phrases.\n\nIf turned off:\nKeys are matched as normal text tokens or phrases, which is safer for most cards.\n\nRecommendation:\nUse regex only if you really need pattern logic such as variations or number ranges. It is powerful but easy to misconfigure, and bad patterns can activate far more often than expected.</string>
+  <string name="role_editor_help_creator_body">What it does:\nCreator stores the author or source name for attribution and cataloging.\n\nIf left empty:\nThe card still works normally. You just lose author metadata.\n\nRecommended content and length:\nUse a person name, handle, studio name, or source pack label. The editor budget is 120 characters.</string>
+  <string name="role_editor_help_creator_notes_body">What it does:\nCreator notes are out-of-character notes for maintainers. Use them for warnings, version notes, intended usage, or editing advice.\n\nIf left empty:\nRuntime behavior does not change.\n\nRecommended content and length:\nKeep this practical. 80 to 250 characters is usually enough. The editor budget is 600 characters.</string>
+  <string name="role_editor_help_character_version_body">What it does:\nCharacter version is a manual release label for the card.\n\nIf left empty:\nThe card simply has no visible version marker.\n\nRecommended content and length:\nUse concise values such as v1, 1.2.0, or 2026-04. The editor budget is 32 characters.</string>
+  <string name="role_editor_help_tags_body">What it does:\nTags help with search, filtering, grouping, and later cleanup in the local catalog.\n\nIf left empty:\nThe card remains usable, but organization becomes weaker as the library grows.\n\nRecommended content and length:\nUse comma-separated category labels such as genre, tone, fandom, or content style. Avoid full sentences. The editor budget is 200 characters.</string>
+  <string name="role_editor_help_talkativeness_body">What it does:\nTalkativeness is an ST metadata hint for how verbose the character tends to be. In SillyTavern-style cards it is usually treated as a soft preference, not a hard guarantee.\n\nIf left empty:\nThe ST card keeps the value unset and tools typically fall back to their default, commonly around the middle.\n\nRange guidance:\n0.0 to 0.3 tends to imply shorter, more restrained replies. 0.4 to 0.6 is a balanced middle. 0.7 to 1.0 pushes toward more verbose, proactive replies. This project currently stores the number as metadata, so keep expectations soft. The input budget is 4 characters.</string>
+  <string name="role_editor_help_favorite_body">What it does:\nFavorite marks the role as preferred inside the local catalog.\n\nIf turned off:\nNothing about runtime generation changes.\n\nRecommendation:\nUse it only for library organization, such as highlighting production-ready or frequently used roles.</string>
+  <string name="role_editor_help_safety_policy_body">What it does:\nSafety policy is an app-specific guidance layer stored with the role. It is separate from ST core fields and is mainly for this project\'s own runtime and product behavior.\n\nIf left empty:\nThe role still works, and only the global or default safety behavior remains.\n\nRecommended content and length:\nUse short policy reminders, disallowed content notes, or app-side constraints. The editor budget is 400 characters.</string>
+  <string name="role_editor_help_default_model_body">What it does:\nDefault model chooses which local model should be preselected when opening or starting sessions for this role.\n\nIf left empty:\nThe app falls back to the general model selection flow.\n\nRecommendation:\nSet this only when the role was tuned or tested against a specific on-device model. It is a convenience default, not a hard lock.</string>
+  <string name="role_editor_help_interop_body">What it does:\nST interop shows how this role maps to SillyTavern-compatible card formats, including source format, spec metadata, and compatibility warnings.\n\nIf fields here show warnings:\nImport and export still may work, but some advanced ST data could be ignored, preserved as raw interop payload, or represented differently in this app.\n\nRecommendation:\nCheck this section before exporting edited cards, especially if the source card used advanced lorebook or extension fields.</string>
+  <string name="role_editor_default_system_prompt">You are an immersive roleplay assistant. Stay consistent with the role and reply naturally in character.</string>
+  <string name="role_catalog_status_st_imported">ST role card imported</string>
+  <string name="role_catalog_error_st_import_failed">Failed to import ST role card</string>
+  <string name="sessions_unknown_role">Unknown role</string>
+  <string name="sessions_no_messages">No messages yet</string>
+  <string name="sessions_status_imported">ST chat imported</string>
+  <string name="sessions_error_import_failed">Failed to import ST chat</string>
+  <string name="sessions_status_exported">ST chat exported</string>
+  <string name="sessions_error_export_failed">Failed to export ST chat</string>
+  <string name="chat_status_pending">Pending</string>
+  <string name="chat_status_streaming">Streaming</string>
+  <string name="chat_status_completed">Completed</string>
+  <string name="chat_status_failed">Failed</string>
+  <string name="chat_status_stopped">Stopped</string>
+  <string name="builtin_role_gemma_name">Gemma</string>
+  <string name="builtin_role_gemma_summary">Warm tavern hostess who remembers your tastes and makes every late night feel intimate.</string>
+  <string name="builtin_role_gemma_system_prompt">You are Gemma, the beloved proprietress of Gemma Tavern. Stay fully in character as a confident, flirtatious, worldly hostess who treats the user like a favorite regular. Keep replies warm, vivid, playful, and emotionally attentive. Do not break immersion or drift into dry assistant language.</string>
+  <string name="builtin_role_gemma_persona_description">Gemma is mature, charming, quick with a teasing smile, and skilled at making every guest feel specially seen. She is affectionate, socially graceful, a little bold, and always in control of the room mood.</string>
+  <string name="builtin_role_gemma_world_settings">The conversation unfolds in Gemma Tavern, a lively candlelit house where travelers, merchants, mercenaries, and secrets all pass through the same polished wooden bar late into the night.</string>
+  <string name="builtin_role_gemma_opening_line">Back again, sweetheart? Your seat is still warm, and I was just about to pour your usual. Tell me, do you want comfort, gossip, or a little trouble tonight?</string>
+  <string name="builtin_role_gemma_example_dialogue_1">User: Long day. Assistant: Then sit down and let me steal the weight off your shoulders one sip at a time.</string>
+  <string name="builtin_role_gemma_example_dialogue_2">User: You always know what to say. Assistant: That is what a good tavern keeper does, darling. I listen before I pour.</string>
+  <string name="builtin_role_gemma_safety_policy">Stay in character. Keep the tone sensual and flirtatious, but avoid explicit sexual content. Refuse harmful real-world requests clearly and briefly.</string>
+  <string name="builtin_role_gemma_tag_tavern">tavern</string>
+  <string name="builtin_role_gemma_tag_hostess">hostess</string>
+  <string name="builtin_role_gemma_tag_flirty">flirty</string>
+  <string name="sessions_archive">Archive</string>
+</resources>

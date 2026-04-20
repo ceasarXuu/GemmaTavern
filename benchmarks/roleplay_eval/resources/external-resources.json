@@ -1,0 +1,86 @@
+[
+  {
+    "id": "charactereval",
+    "name": "CharacterEval",
+    "repoUrl": "https://github.com/morecry/CharacterEval.git",
+    "storageSubdir": "external",
+    "localDirName": "CharacterEval",
+    "purpose": "Chinese roleplay benchmark focused on character consistency."
+  },
+  {
+    "id": "longmemeval",
+    "name": "LongMemEval",
+    "repoUrl": "https://github.com/xiaowu0162/LongMemEval.git",
+    "storageSubdir": "external",
+    "localDirName": "LongMemEval",
+    "purpose": "Long-term conversational memory benchmark with custom chat history support."
+  },
+  {
+    "id": "locomo",
+    "name": "LoCoMo",
+    "repoUrl": "https://github.com/snap-research/locomo.git",
+    "storageSubdir": "external",
+    "localDirName": "LoCoMo",
+    "purpose": "Long conversation memory benchmark with QA and event summarization tasks."
+  },
+  {
+    "id": "characterbench",
+    "name": "CharacterBench",
+    "repoUrl": "https://github.com/thu-coai/CharacterBench.git",
+    "storageSubdir": "external",
+    "localDirName": "CharacterBench",
+    "purpose": "Character customization benchmark for role-playing systems."
+  },
+  {
+    "id": "rolellm",
+    "name": "RoleLLM-public",
+    "repoUrl": "https://github.com/InteractiveNLP-Team/RoleLLM-public.git",
+    "storageSubdir": "external",
+    "localDirName": "RoleLLM-public",
+    "purpose": "RoleBench and related role-playing resources across a broad role catalog."
+  },
+  {
+    "id": "incharacter",
+    "name": "InCharacter",
+    "repoUrl": "https://github.com/Neph0s/InCharacter.git",
+    "storageSubdir": "external",
+    "localDirName": "InCharacter",
+    "purpose": "Personality fidelity benchmark via psychological interview style prompts."
+  },
+  {
+    "id": "rolebench_dataset",
+    "name": "RoleBench Dataset",
+    "repoUrl": "https://huggingface.co/datasets/ZenMoore/RoleBench",
+    "storageSubdir": "cache\\huggingface",
+    "localDirName": "RoleBench-dataset",
+    "purpose": "Official RoleBench dataset backing RoleLLM-public."
+  },
+  {
+    "id": "longmemeval_dataset",
+    "name": "LongMemEval Cleaned Dataset",
+    "repoUrl": "https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned",
+    "storageSubdir": "cache\\huggingface",
+    "localDirName": "LongMemEval-cleaned",
+    "purpose": "Official cleaned LongMemEval dataset release."
+  },
+  {
+    "id": "baichuan_charrm_metadata",
+    "name": "BaichuanCharRM Metadata",
+    "repoUrl": "https://huggingface.co/morecry/BaichuanCharRM",
+    "fetchMode": "hf_api_metadata",
+    "apiUrl": "https://huggingface.co/api/models/morecry/BaichuanCharRM",
+    "storageSubdir": "cache\\huggingface",
+    "localDirName": "BaichuanCharRM",
+    "purpose": "Metadata-only checkout for the CharacterEval reward model."
+  },
+  {
+    "id": "characterjudge_metadata",
+    "name": "CharacterJudge Metadata",
+    "repoUrl": "https://huggingface.co/thu-coai/CharacterJudge",
+    "fetchMode": "hf_api_metadata",
+    "apiUrl": "https://huggingface.co/api/models/thu-coai/CharacterJudge",
+    "storageSubdir": "cache\\huggingface",
+    "localDirName": "CharacterJudge",
+    "purpose": "Metadata-only checkout for the CharacterBench judge model."
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "provider": "deepseek",
+  "baseUrl": "https://api.deepseek.com",
+  "model": "deepseek-reasoner",
+  "apiKeyEnv": "DEEPSEEK_API_KEY",
+  "temperature": 0.0,
+  "maxOutputTokens": 4096,
+  "timeoutSeconds": 120,
+  "retryCount": 2,
+  "requestIntervalMs": 0
+}

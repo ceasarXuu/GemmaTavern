@@ -1,0 +1,54 @@
+{
+  "catalogVersion": 1,
+  "generatedAtUtc": "2026-04-15T10:08:06.716641+00:00",
+  "suites": [
+    {
+      "suiteId": "characterbench_memory_consistency_public_mini",
+      "dataset": "CharacterBench",
+      "source": "eval_data/raw_data/memory_consistency_test.json",
+      "language": "zh",
+      "manifestPath": "benchmarks/roleplay_eval/scenarios/public/characterbench_memory_consistency_public_mini.json",
+      "caseCount": 8,
+      "scorers": [
+        "reference_token_f1"
+      ],
+      "notes": "Public persona-memory suite derived from CharacterBench memory consistency raw data."
+    },
+    {
+      "suiteId": "characterbench_fact_accuracy_public_mini",
+      "dataset": "CharacterBench",
+      "source": "eval_data/raw_data/fact_accuracy_test.json",
+      "language": "zh",
+      "manifestPath": "benchmarks/roleplay_eval/scenarios/public/characterbench_fact_accuracy_public_mini.json",
+      "caseCount": 8,
+      "scorers": [
+        "qa_em_f1"
+      ],
+      "notes": "Public persona factual QA suite derived from CharacterBench fact accuracy raw data."
+    },
+    {
+      "suiteId": "longmemeval_s_public_mini",
+      "dataset": "LongMemEval",
+      "source": "cache/huggingface/LongMemEval-cleaned/longmemeval_s_cleaned.json",
+      "language": "en",
+      "manifestPath": "benchmarks/roleplay_eval/scenarios/public/longmemeval_s_public_mini.json",
+      "caseCount": 8,
+      "scorers": [
+        "qa_em_f1"
+      ],
+      "notes": "Balanced long-memory QA suite from LongMemEval single-model cleaned split using evidence-anchored session windows for on-device feasibility."
+    },
+    {
+      "suiteId": "locomo_qa_public_mini",
+      "dataset": "LoCoMo",
+      "source": "external/LoCoMo/data/locomo10.json",
+      "language": "en",
+      "manifestPath": "benchmarks/roleplay_eval/scenarios/public/locomo_qa_public_mini.json",
+      "caseCount": 8,
+      "scorers": [
+        "qa_em_f1"
+      ],
+      "notes": "Balanced LoCoMo long-conversation QA suite across categories."
+    }
+  ]
+}

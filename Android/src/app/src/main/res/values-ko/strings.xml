@@ -1,0 +1,743 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<resources>
+  <!-- App Info -->
+  <string name="app_name">Gemma Tavern</string>
+  <string name="app_name_first_part">Gemma</string>
+  <string name="app_name_second_part">Tavern</string>
+  <string name="app_intro">놀라운 온디바이스 모델의 세계를 탐험하세요</string>
+
+  <!-- Common Actions -->
+  <string name="all">전체</string>
+  <string name="add">추가</string>
+  <string name="added">추가됨</string>
+  <string name="cancel">취소</string>
+  <string name="close">닫기</string>
+  <string name="delete">삭제</string>
+  <string name="done">완료</string>
+  <string name="edit">편집</string>
+  <string name="save">저장</string>
+  <string name="reset">재설정</string>
+  <string name="clear">지우기</string>
+  <string name="copy">복사</string>
+  <string name="create">생성</string>
+  <string name="discard">취소</string>
+  <string name="dismiss">닫기</string>
+  <string name="download">다운로드</string>
+  <string name="name">이름</string>
+  <string name="ok">확인</string>
+  <string name="preview">미리보기</string>
+  <string name="replace">교체</string>
+  <string name="results">결과</string>
+  <string name="run">실행</string>
+  <string name="running">실행 중...</string>
+  <string name="run_again">다시 실행</string>
+  <string name="share">공유</string>
+  <string name="test">테스트</string>
+  <string name="try_it">사용해 보기</string>
+  <string name="undo">실행 취소</string>
+  <string name="redo">다시 실행</string>
+  <string name="view">보기</string>
+  <string name="error">오류</string>
+  <string name="disabled">비활성화됨</string>
+  <string name="continue_button_label">계속</string>
+
+  <!-- Navigation -->
+  <string name="drawer_settings_label">설정</string>
+  <string name="drawer_settings_description">애플리케이션 설정 관리</string>
+  <string name="drawer_models_label">모델</string>
+  <string name="drawer_models_description">모델 찾아보기, 체험 및 벤치마크</string>
+  <string name="navigate_back">뒤로 가기</string>
+
+  <!-- Tabs -->
+  <string name="tab_messages">메시지</string>
+  <string name="tab_roles">역할</string>
+  <string name="tab_me">내 정보</string>
+  <string name="tab_settings">설정</string>
+  <string name="my_profile_avatar_slot_title">페르소나 슬롯</string>
+  <string name="my_profile_persona_name_title">페르소나 이름</string>
+  <string name="my_profile_persona_title_title">페르소나 제목</string>
+  <string name="my_profile_persona_description_title">페르소나 설명</string>
+  <string name="my_profile_persona_position_title">페르소나 배치</string>
+  <string name="my_profile_persona_position_in_prompt">프롬프트에 포함</string>
+  <string name="my_profile_persona_position_top_an">작성자 노트 앞</string>
+  <string name="my_profile_persona_position_bottom_an">작성자 노트 뒤</string>
+  <string name="my_profile_persona_position_at_depth">깊이 삽입</string>
+  <string name="my_profile_persona_position_none">사용 안 함</string>
+  <string name="my_profile_persona_depth_title">페르소나 깊이</string>
+  <string name="my_profile_persona_role_title">페르소나 역할</string>
+  <string name="my_profile_persona_role_system">시스템</string>
+  <string name="my_profile_persona_role_user">사용자</string>
+  <string name="my_profile_persona_role_assistant">어시스턴트</string>
+  <string name="my_profile_default_persona_title">기본 페르소나로 사용</string>
+  <string name="my_profile_default_persona_summary">새 역할극 채팅에 이 페르소나를 기본값으로 적용합니다.</string>
+  <string name="my_profile_reset">페르소나 초기화</string>
+  <string name="my_profile_save">페르소나 저장</string>
+
+  <string name="my_profile_set_default_action">기본으로 설정</string>
+  <string name="my_profile_delete_title">페르소나 삭제</string>
+  <string name="my_profile_delete_content">페르소나 "%s"을(를) 삭제하시겠습니까?</string>
+  <string name="my_profile_avatar_title">아바타</string>
+  <string name="my_profile_help_avatar_body">역할:\n아바타는 `나` 페이지와 현재 사용자 페르소나를 읽는 롤플레이 흐름에서 이 페르소나의 표시 이미지로 사용됩니다.\n\n비어 있을 때:\n앱은 기본 플레이스홀더 아바타로 돌아갑니다.\n\n권장:\n페르소나를 빠르게 구분할 수 있도록 선명한 정사각형 초상화나 아이콘을 사용하세요.</string>
+  <string name="my_profile_help_name_body">역할:\n페르소나 이름은 이 프로필에 대해 사용자에게 보이는 이름입니다. 롤플레이 중 캐릭터가 당신을 부를 때 이 이름이 그대로 사용될 수 있으므로, 대화에서 사용자를 어떻게 부르는지에도 영향을 줍니다.\n\n비어 있을 때:\n앱은 기본 사용자 이름으로 돌아갑니다.\n\n권장 내용과 길이:\n캐릭터가 실제로 불러주길 원하는 짧은 이름을 사용하세요. 보통 2~20자면 충분합니다. 편집기 예산은 120자입니다.</string>
+  <string name="my_profile_help_description_body">역할:\n페르소나 설명은 현재 사용자 페르소나에 대해 주입되는 핵심 자기 설명입니다. 정체성, 말투, 배경, 그리고 어시스턴트가 반영해야 할 특성을 여기에 적습니다.\n\n비어 있을 때:\n페르소나는 동작하지만, 대화에서 개인화된 사용자 문맥 신호가 크게 줄어듭니다.\n\n권장 내용과 길이:\n긴 전기보다는 압축된 프로필을 쓰세요. 보통 80~300자면 충분합니다. 편집기 예산은 600자입니다.</string>
+  <string name="my_profile_help_position_body">역할:\n삽입 위치는 페르소나 설명이 최종 프롬프트의 어디에 들어갈지 결정합니다.\n\n`Prompt에 삽입`일 때:\n설명은 메인 프롬프트 본문에 들어갑니다.\n\n작성자 노트 위치나 깊이 삽입을 선택하면:\n설명은 ST 스타일 author note 흐름에 더 가까워집니다.\n\n권장:\n기본값으로는 `Prompt에 삽입`이 가장 안전합니다. 런타임 동작을 의도적으로 조정할 때만 작성자 노트나 깊이 삽입으로 바꾸세요.</string>
+  <string name="my_profile_help_depth_body">역할:\n삽입 위치가 `깊이에 삽입`일 때, 깊이는 페르소나 설명이 프롬프트 스택에서 얼마나 뒤로 밀릴지 결정합니다.\n\n값이 작으면:\n설명이 최신 문맥에 더 가깝게 놓입니다.\n\n값이 크면:\n설명이 더 뒤로 밀려 최근 턴과의 경쟁이 줄어듭니다.\n\n범위 가이드:\n1~4 정도의 작은 정수를 사용하세요. 입력 예산은 4자입니다.</string>
+  <string name="my_profile_help_role_body">역할:\n깊이 삽입을 사용할 때, 역할은 페르소나 설명이 어떤 ST 스타일 메시지 역할로 처리될지를 결정합니다.\n\nSystem:\n우선순위가 높은 지침에 적합합니다.\n\nUser:\n플레이어 자신의 자기 설명을 표현할 때 가장 적합합니다.\n\nAssistant:\n이 텍스트를 어시스턴트 측 문맥처럼 읽히게 하고 싶을 때만 사용하세요.\n\n권장:\n대부분의 페르소나에서는 User가 가장 안전한 기본값입니다.</string>
+  <!-- Sessions Screen -->
+  <string name="sessions_loading">세션 로드 중...</string>
+  <string name="sessions_empty_title">아직 세션이 없습니다</string>
+  <string name="sessions_empty_content">역할을 선택하여 첫 번째 대화를 시작하세요. 아직 로컬 모델을 다운로드하지 않았다면 먼저 모델 라이브러리를 열어주세요.</string>
+  <string name="sessions_delete_title">삭제 확인</string>
+  <string name="sessions_delete_content">세션 \"%s\"과(와) 모든 채팅 기록을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.</string>
+  <string name="sessions_pin">고정</string>
+  <string name="sessions_unpin">고정 해제</string>
+  <string name="sessions_choose_role">역할 선택</string>
+  <string name="sessions_model_library">모델 라이브러리</string>
+  <string name="sessions_new_session">새 세션</string>
+  <string name="sessions_just_now">방금</string>
+  <string name="sessions_minutes_ago">%d분 전</string>
+  <string name="sessions_hours_ago">%d시간 전</string>
+  <string name="sessions_days_ago">%d일 전</string>
+
+  <!-- Roles Screen -->
+  <string name="roles_create_tune_title">역할 생성 및 조정</string>
+  <string name="roles_create_tune_content_model">이제 역할 카드를 생성하고 편집할 수 있습니다. 세션을 시작하기 전에 로컬 모델을 다운로드하세요.</string>
+  <string name="roles_create_tune_content_no_model">텍스트 필드만으로 사용자 지정 역할을 생성한 다음 로컬 모델로 새 세션을 시작하세요.</string>
+  <string name="roles_create_button">역할 생성</string>
+  <string name="roles_model_library">모델 라이브러리</string>
+  <string name="roles_builtin_title">기본 제공 역할</string>
+  <string name="roles_custom_title">사용자 지정 역할</string>
+  <string name="roles_delete_title">역할 삭제</string>
+  <string name="roles_delete_content">%s을(를) 삭제하면 세션과 저장된 메모리도 제거됩니다.</string>
+  <string name="roles_start_session">채팅</string>
+  <string name="roles_persona_picker_title">페르소나 선택</string>
+  <string name="roles_persona_picker_message">이번 세션에 사용할 페르소나를 선택하세요.</string>
+  <string name="roles_persona_picker_default_badge">기본값</string>
+  <string name="roles_missing_model_title">사용 가능한 로컬 모델이 없습니다</string>
+  <string name="roles_missing_model_content">이 역할과 채팅을 시작하기 전에 로컬 모델을 추가하거나 가져오세요.</string>
+  <string name="roles_missing_model_confirm">모델 추가</string>
+  <string name="roles_no_model">모델 없음</string>
+  <string name="roles_default_tag">롤플레이</string>
+
+  <!-- Role Editor Screen -->
+  <string name="role_editor_create_title">역할 생성</string>
+  <string name="role_editor_edit_title">역할 편집</string>
+  <string name="role_editor_loading">역할 로드 중...</string>
+  <string name="role_editor_name_label">역할 이름</string>
+  <string name="role_editor_name_placeholder">캐릭터 이름 입력</string>
+  <string name="role_editor_summary_label">설명</string>
+  <string name="role_editor_summary_placeholder">짧은 한 줄 설명</string>
+  <string name="role_editor_system_prompt_label">시스템 프롬프트</string>
+  <string name="role_editor_system_prompt_placeholder">역할이 어떻게 말하고 행동해야 하는지 정확히 설명</string>
+  <string name="role_editor_persona_label">성격</string>
+  <string name="role_editor_world_settings_label">시나리오</string>
+  <string name="role_editor_opening_line_label">첫 메시지</string>
+  <string name="role_editor_safety_policy_label">안전 정책</string>
+  <string name="role_editor_tags_label">태그</string>
+  <string name="role_editor_tags_placeholder">쉼표, 구분, 태그</string>
+  <string name="role_editor_default_model_label">기본 모델</string>
+  <string name="role_editor_no_default_model">기본 모델 없음</string>
+  <string name="role_editor_create_button">역할 생성</string>
+  <string name="role_editor_save_button">변경 사항 저장</string>
+  <string name="role_editor_delete_button">역할 삭제</string>
+
+  <string name="role_editor_tab_card">카드</string>
+  <string name="role_editor_tab_prompt">프롬프트</string>
+  <string name="role_editor_tab_lorebook">로어북</string>
+  <string name="role_editor_tab_metadata">메타데이터</string>
+  <string name="role_editor_tab_media">미디어</string>
+  <string name="role_editor_tab_interop">상호운용</string>
+  <string name="role_editor_message_example_label">예시 대화</string>
+  <string name="role_editor_post_history_instructions_label">히스토리 이후 지시문</string>
+  <string name="role_editor_alternate_greetings_label">대체 인사말</string>
+  <string name="role_editor_alternate_greetings_hint">한 줄에 인사말 하나씩 입력하세요.</string>
+  <string name="role_editor_lorebook_name_label">로어북 이름</string>
+  <string name="role_editor_lorebook_description_label">로어북 설명</string>
+  <string name="role_editor_lorebook_scan_depth_label">스캔 깊이</string>
+  <string name="role_editor_lorebook_token_budget_label">토큰 예산</string>
+  <string name="role_editor_lorebook_recursive_label">재귀 스캔</string>
+  <string name="role_editor_lorebook_add_entry">로어 항목 추가</string>
+  <string name="role_editor_lorebook_entry_title">로어 항목</string>
+  <string name="role_editor_lorebook_entry_id_label">항목 ID</string>
+  <string name="role_editor_lorebook_entry_keys_label">키</string>
+  <string name="role_editor_lorebook_entry_secondary_keys_label">보조 키</string>
+  <string name="role_editor_lorebook_entry_comment_label">설명</string>
+  <string name="role_editor_lorebook_entry_content_label">내용</string>
+  <string name="role_editor_lorebook_entry_order_label">삽입 순서</string>
+  <string name="role_editor_lorebook_entry_position_label">삽입 위치</string>
+  <string name="role_editor_lorebook_entry_enabled_label">활성화</string>
+  <string name="role_editor_lorebook_entry_constant_label">상시 포함</string>
+  <string name="role_editor_lorebook_entry_selective_label">선택적</string>
+  <string name="role_editor_lorebook_entry_regex_label">정규식 매칭</string>
+  <string name="role_editor_lorebook_remove_entry">로어 항목 삭제</string>
+  <string name="role_editor_creator_label">작성자</string>
+  <string name="role_editor_creator_notes_label">작성자 메모</string>
+  <string name="role_editor_character_version_label">캐릭터 버전</string>
+  <string name="role_editor_talkativeness_label">수다스러움</string>
+  <string name="role_editor_favorite_label">즐겨찾기</string>
+  <string name="role_editor_interop_title">ST 상호운용</string>
+  <string name="role_editor_interop_source_format">소스 형식: %1$s</string>
+  <string name="role_editor_interop_spec">규격: %1$s</string>
+  <string name="role_editor_interop_spec_version">규격 버전: %1$s</string>
+  <string name="role_editor_interop_warning">경고: %1$s</string>
+  <string name="role_editor_error_invalid_integer">%1$s의 정수 값이 올바르지 않습니다.</string>
+  <string name="role_editor_error_invalid_decimal">%1$s의 소수 값이 올바르지 않습니다.</string>
+
+  <!-- Chat Screen -->
+  <string name="chat_title">채팅</string>
+  <string name="chat_loading_session">세션 로드 중...</string>
+  <string name="chat_missing_model_title">로컬 모델 없음</string>
+  <string name="chat_missing_model_content">이 세션에서 참조하는 모델을 현재 사용할 수 없습니다. 모델 라이브러리를 열어 로컬 LLM을 다운로드하거나 가져오거나, 기기에 이미 있는 다른 모델로 전환하세요.</string>
+  <string name="chat_use_model">%s 사용</string>
+  <string name="chat_open_model_library">모델 라이브러리 열기</string>
+  <string name="chat_you">나</string>
+  <string name="chat_persona_label">페르소나</string>
+  <string name="chat_assistant">어시스턴트</string>
+  <string name="chat_message_placeholder">캐릭터에게 메시지 보내기...</string>
+  <string name="chat_stop_response">응답 중지</string>
+  <string name="chat_send_message">메시지 보내기</string>
+  <string name="chat_response_stopped">응답이 중지되었습니다.</string>
+  <string name="chat_response_failed">응답에 실패했습니다.</string>
+  <string name="chat_empty_message">빈 메시지</string>
+  <string name="chat_switch_model">모델 전환</string>
+  <string name="chat_open_model_library_menu">모델 라이브러리 열기</string>
+  <string name="chat_select_model_title">모델 선택</string>
+  <string name="chat_current_model">현재 사용 중</string>
+  <string name="chat_token_speed_format">%1$d토큰/초</string>
+  <string name="chat_message_actions_title">메시지 작업</string>
+  <string name="chat_message_actions_content">승인된 이 대화 턴을 연속성에 어떻게 반영할지 선택하세요.</string>
+  <string name="chat_pin_message_action">기억에 고정</string>
+  <string name="chat_rewind_here_action">여기로 되감기</string>
+  <string name="chat_regenerate_reply_action">답변 다시 생성</string>
+  <string name="chat_edit_from_here_action">여기부터 편집</string>
+
+  <!-- Settings Screen -->
+  <string name="settings_model_library_title">모델 라이브러리</string>
+  <string name="settings_model_library_summary">로컬 모델 다운로드, 가져오기 및 관리</string>
+  <string name="settings_dialog_live_token_speed_title">실시간 생성 속도 표시</string>
+  <string name="settings_dialog_live_token_speed_summary">모델 생성 중 채팅 헤더에 토큰 출력 속도를 실시간으로 표시합니다.</string>
+  <string name="settings_dialog_streaming_output_title">스트리밍 출력 사용</string>
+  <string name="settings_dialog_streaming_output_summary">생성 중인 답변을 순차적으로 표시합니다. 중간에 끊으면 부분 말풍선은 회수되고, 다음 전송에서 처음부터 다시 생성합니다.</string>
+  <string name="settings_role_editor_assistant_model_title">편집 도우미 모델</string>
+  <string name="settings_role_editor_assistant_model_none">기본값: 첫 번째 사용 가능한 모델</string>
+  <string name="settings_role_editor_assistant_model_empty">아직 로컬 모델이 없습니다. 역할 편집기에서 AI 압축을 쓰기 전에 모델을 추가하세요.</string>
+  <string name="settings_role_editor_assistant_model_reset_default">기본값 사용</string>
+  <string name="role_editor_ai_compress_action">AI 압축</string>
+  <string name="role_editor_ai_compress_running">압축 중...</string>
+  <string name="role_editor_ai_compress_success">%1$d/%2$d자로 압축했습니다.</string>
+  <string name="role_editor_ai_compress_failed_generic">AI 압축에 실패했습니다. 선택한 모델을 확인한 뒤 다시 시도하세요.</string>
+  <string name="role_editor_ai_compress_failed_blank">AI 압축 결과가 비어 있습니다. 원본 텍스트를 유지했습니다.</string>
+  <string name="role_editor_ai_compress_failed_limit">AI 압축 결과가 %1$d자로, 제한 %2$d자를 아직 넘습니다. 원본 텍스트를 유지했습니다.</string>
+  <string name="role_editor_ai_compress_missing_model">사용 가능한 로컬 모델이 없습니다. 먼저 모델을 추가하거나 설정에서 편집 도우미 모델을 선택하세요.</string>
+
+  <!-- Model Manager -->
+  <string name="model_manager">모델 관리자</string>
+  <string name="model_manager_select_task_title">체험할 사용 사례 선택</string>
+  <string name="model_not_downloaded_msg">모델이 아직 다운로드되지 않음</string>
+  <string name="model_is_initializing_msg">모델 초기화 중...</string>
+  <string name="model_library_tab_online_models">온라인 모델</string>
+  <string name="model_library_tab_local_imports">로컬 가져온 모델</string>
+  <string name="model_library_imported_empty_title">아직 가져온 로컬 모델이 없습니다</string>
+  <string name="model_library_imported_empty_content">오른쪽 아래의 가져오기 버튼을 눌러 로컬 .task 또는 .litertlm 모델 파일을 추가하세요.</string>
+  <string name="model_list_imported_models_title">가져온 모델</string>
+  <string name="model_list_recommended_models_title">추천 모델</string>
+  <string name="model_list_experimental_label">실험적</string>
+  <plurals name="model_list_number_of_models_available">
+    <item quantity="other">%d개 모델 사용 가능</item>
+  </plurals>
+  <string name="select_downloaded_model">다운로드한 모델 선택</string>
+  <string name="select_model">모델 선택</string>
+  <string name="downloaded_size">%1$s 다운로드됨</string>
+  <string name="confirm_delete_model_dialog_title">다운로드 삭제</string>
+  <string name="confirm_delete_model_dialog_content">다운로드한 모델 \"%s\"을(를) 삭제하시겠습니까?</string>
+  <string name="learn_more">자세히 알아보기 및 모델 라이선스 보기</string>
+  <string name="loading_model_list">모델 목록 로드 중...</string>
+
+  <!-- AI Chat -->
+  <string name="aichat_initializing_title">모델 초기화 중</string>
+  <string name="aichat_initializing_content">잠시 기다려 주세요. 최대 1분이 소요될 수 있습니다</string>
+  <string name="aichat_emptystate_title">AI 채팅</string>
+  <string name="aichat_emptystate_content">온디바이스 대규모 언어 모델과 채팅하세요.</string>
+  <string name="chat_textinput_placeholder">메시지 입력...</string>
+  <string name="chat_llm_agent_name">LLM</string>
+  <string name="chat_agent_agent_name">에이전트</string>
+  <string name="chat_generic_agent_name">모델</string>
+  <string name="chat_generic_result_name">결과</string>
+  <string name="show_thinking">사고 과정 표시</string>
+  <string name="conversation_reset_message">대화가 재설정되었습니다</string>
+  <string name="engin_reset_message">엔진이 재설정되었습니다</string>
+
+  <!-- Benchmark -->
+  <string name="benchmark">벤치마크</string>
+  <string name="baseline">베이스라인</string>
+  <string name="benchmark_model">벤치마크 모델</string>
+  <string name="benchmark_results">벤치마크 결과</string>
+  <string name="benchmark_no_results">벤치마크 결과 없음</string>
+  <string name="benchmark_comparison_help_title">벤치마크 실행 비교 방법</string>
+  <string name="benchmark_comparison_help_content">임의의 실행 결과 카드에서 **베이스라인** 칩을 탭하여 해당 실행을 비교 베이스라인으로 설정합니다. 다른 모든 실행 결과 카드에 백분율 차이가 자동으로 계산되어 표시됩니다.</string>
+  <string name="benchmark_tokens_limit_message">프리필과 디코드 토큰의 합이 모델의 최대 토큰 제한을 초과하지 않도록 하세요 (%1$d vs %2$d)</string>
+  <string name="best_overall">전체 최고</string>
+  <string name="run_benchmark">벤치마크 실행</string>
+  <string name="run_benchmark_confirmation_msg">이 프로세스는 일반적으로 몇 분이 소요되며 시작된 후에는 중단할 수 없습니다. 계속하시겠습니까?</string>
+  <string name="running_benchmark_msg">모델 벤치마크 실행 중...</string>
+  <string name="delete_benchmark_result_dialog_title">벤치마크 결과 삭제</string>
+  <string name="delete_benchmark_result_dialog_content">벤치마크 결과를 삭제하시겠습니까?</string>
+  <plurals name="runs">
+    <item quantity="other">%d회 실행</item>
+  </plurals>
+
+  <!-- Categories -->
+  <string name="category_unlabeled">라벨 없음</string>
+  <string name="category_llm">LLM</string>
+  <string name="category_agents">에이전트</string>
+  <string name="category_classical_ml">클래식 ML</string>
+  <string name="category_experimental">실험적</string>
+
+  <!-- Dialogs -->
+  <string name="discard_changes_dialog_title">변경 사항을 취소하시겠습니까?</string>
+  <string name="discard_changes_dialog_content">저장되지 않은 변경 사항이 있습니다. 취소하시겠습니까?</string>
+
+  <!-- Media -->
+  <string name="add_audio">+오디오</string>
+  <string name="take_a_picture">사진 찍기</string>
+  <string name="pick_from_album">앨범에서 선택</string>
+  <string name="record_audio_clip">오디오 녹음</string>
+  <string name="pick_wav_file">wav 파일 선택</string>
+  <string name="input_history">입력 기록</string>
+  <string name="askimage_emptystate_title">이미지 질문</string>
+  <string name="askimage_emptystate_content">시작하려면 아래 +를 탭하여 이미지를 추가(채팅당 최대 10장)하고 프롬프트를 입력하여 질문하세요!</string>
+  <string name="askaudio_emptystate_title">오디오 질문</string>
+  <string name="askaudio_emptystate_content">시작하려면 아래 +를 탭하여 오디오 클립을 추가(최대 30초의 1개 클립)하고 프롬프트를 입력하여 전사 또는 번역하세요!</string>
+
+  <!-- Voice Input -->
+  <string name="hold_down_to_talk">눌러서 말하기</string>
+  <string name="listening">듣고 있습니다...</string>
+  <string name="release_to_send">놓아서 전송</string>
+  <string name="tap_to_send_recording">한 번 더 눌러 녹음을 전송</string>
+  <string name="slide_up_to_cancel">위로 스와이프하여 취소</string>
+  <string name="grant_permissions">권한 부여</string>
+  <string name="grant_record_audio_permission">녹음 권한 부여</string>
+
+  <!-- Memory Warning -->
+  <string name="memory_warning_title">메모리 경고</string>
+  <string name="memory_warning_content">선택한 모델이 기기의 메모리를 초과할 수 있어 앱이 충돌할 수 있습니다. 최상의 경험을 위해 더 작은 모델을 사용해 보세요.</string>
+  <string name="memory_warning_proceed_anyway">계속 진행</string>
+
+  <!-- Config -->
+  <string name="config_dialog_tab_model_configs">모델 설정</string>
+  <string name="config_dialog_tab_system_prompt">시스템 프롬프트</string>
+  <string name="system_prompt_updated">시스템 프롬프트가 업데이트되었습니다</string>
+  <string name="restore_default">기본값 복원</string>
+  <string name="max_tokens_warning_message">최대 토큰을 10000 이상으로 설정하면 앱이 불안정해질 수 있습니다.</string>
+
+  <!-- Logs -->
+  <string name="logs_viewer_filter_text_input_placeholder">로그 필터</string>
+  <string name="logs_viewer_title">로그 뷰어</string>
+  <string name="logs_viewer_no_matching_logs">필터와 일치하는 로그가 없습니다</string>
+
+  <!-- Terms of Service -->
+  <string name="tos_dialog_title_app">Gemma Tavern에 오신 것을 환영합니다</string>
+  <string name="tos_dialog_title_gemma">Gemma 이용 약관</string>
+  <string name="tos_dialog_accept_and_continue_button_label">수락 및 계속</string>
+  <string name="tos_dialog_agree_and_continue_button_label">동의 및 계속</string>
+  <string name="settings_dialog_tos_title">서비스 약관</string>
+  <string name="settings_dialog_view_app_terms_of_service">앱 서비스 약관 보기</string>
+  <string name="settings_dialog_gemma_prohibited_use_policy">Gemma 금지 사용 정책</string>
+
+  <!-- Notifications -->
+  <string name="gallery_news_notification_title">Gemma Tavern 뉴스</string>
+  <string name="notification_title_fail">모델 다운로드 실패</string>
+  <string name="notification_title_success">모델 다운로드 성공</string>
+  <string name="notification_content_fail">모델 \"%s\" 다운로드에 실패했습니다</string>
+  <string name="notification_content_success">모델 \"%s\"이(가) 다운로드되었습니다</string>
+
+  <!-- Mobile Actions -->
+  <string name="mobile_actions_title">모바일 액션</string>
+  <string name="mobile_actions_description">간단한 명령으로 기기 제어</string>
+  <string name="mobile_actions_supported_actions">지원되는 샘플 액션:</string>
+  <string name="mobile_actions_tab_model_response">모델 응답</string>
+  <string name="mobile_actions_tab_function_called">호출된 함수</string>
+  <string name="flashlight_off_message">손전등을 껐습니다.</string>
+  <string name="flashlight_on_message">손전등을 켰습니다.</string>
+  <string name="set_screen_brightness_message">화면 밝기를 %1$d%%로 설정했습니다.</string>
+  <string name="set_timer_message">%1$d초 타이머를 설정하고 있습니다.</string>
+  <string name="add_calendar_event_message">캘린더에 \"팀 회의 (오전 10시-11시)\"를 추가하고 있습니다.</string>
+  <string name="take_picture_message">카메라 앱을 열고 있습니다.</string>
+  <string name="view_results">결과 보기</string>
+  <string name="view_console_logs">콘솔 로그 보기</string>
+  <string name="warming_up">준비 중...</string>
+  <string name="warning_no_function_call">인식된 함수 없음</string>
+  <string name="snackbar_no_function_call">인식된 함수 없음</string>
+  <string name="unknown_error">알 수 없는 오류</string>
+  <string name="view_in_full_screen">전체 화면으로 보기</string>
+
+  <!-- Mobile Actions Challenge -->
+  <string name="mobile_actions_challenge_title">모바일 액션 파인튜닝 챌린지</string>
+  <string name="mobile_actions_challenge_subtitle">만들어서 플레이하세요!</string>
+  <string name="mobile_actions_challenge_description">이 데모는 잠겨 있습니다. 모바일 액션 에이전트의 잠금을 해제하려면 오픈 소스 레시피를 사용하여 직접 모델을 컴파일해야 합니다.</string>
+  <string name="mobile_actions_challenge_instructions_title">지침:</string>
+  <string name="mobile_actions_challenge_instruction_1">1. <![CDATA[<b>컴퓨터에서</b>]]> <![CDATA[<a href="https://ai.google.dev/gemma/docs/mobile-actions">이 가이드</a>]]>를 엽니다</string>
+  <string name="mobile_actions_challenge_instruction_2">2. 지침에 따라 모델을 파인튜닝하고 .litertlm 형식으로 변환합니다.</string>
+  <string name="mobile_actions_challenge_instruction_3">3. 파일을 이 전화기로 전송합니다.</string>
+  <string name="mobile_actions_challenge_instruction_4">4. 아래 <![CDATA[<b>모델 로드</b>]]>를 탭하여 데모의 잠금을 해제합니다.</string>
+  <string name="mobile_actions_challenge_email_colab">가이드를 이메일로 보내기</string>
+  <string name="mobile_actions_challenge_load_model">모델 로드</string>
+
+  <!-- Prompt Templates -->
+  <plurals name="parameter">
+    <item quantity="other">매개변수</item>
+  </plurals>
+  <string name="prompt_template_label_flash_on_off">손전등 켜기/끄기</string>
+  <string name="prompt_template_label_flash_on">손전등 켜기</string>
+  <string name="prompt_template_label_flash_off">손전등 끄기</string>
+  <string name="prompt_template_label_create_contact">연락처 생성</string>
+  <string name="prompt_template_label_send_email">이메일 보내기</string>
+  <string name="prompt_template_label_create_calendar_event">캘린더 이벤트 생성</string>
+  <string name="prompt_template_label_show_location_on_map">지도에 위치 표시</string>
+  <string name="prompt_template_label_open_wifi_settings">WiFi 설정 열기</string>
+  <string name="text_image_generation_text_field_placeholder">프롬프트 입력...</string>
+  <string name="text_input_placeholder_llm_chat">프롬프트 입력...</string>
+
+  <!-- Skills -->
+  <string name="add_script">스크립트 추가</string>
+  <string name="add_default_script">기본 스크립트 추가</string>
+  <string name="add_skill">스킬 추가</string>
+  <string name="add_skill_option_featured_list_title">추천 목록에서 스킬 추가</string>
+  <string name="add_skill_option_featured_list_description">커뮤니티 기여 추천 스킬 목록에서 스킬 추가</string>
+  <string name="add_skill_option_url_title">URL에서 스킬 로드</string>
+  <string name="add_skill_option_url_description">웹에 호스팅된 스킬 디렉터리의 URL 입력</string>
+  <string name="add_skill_option_local_title">로컬 스킬 가져오기</string>
+  <string name="add_skill_option_local_description">스킬 디렉터리를 로컬에서 가져오기</string>
+  <string name="add_skill_option_skill_creator_title">스킬 생성기</string>
+  <string name="add_skill_option_skill_creator_description">앱 내에서 처음부터 스킬 생성</string>
+  <string name="add_skill_from_url_dialog_title">URL에서 스킬 추가</string>
+  <string name="add_skill_dialog_title_from_local_import">로컬 스킬 가져오기</string>
+  <string name="add_skill_dialog_subtitle_from_local_import">먼저 전체 스킬 디렉터리를 /sdcard/Download로 \"adb push\"하세요</string>
+  <string name="add_skill_manual_input_sheet_title">스킬 생성</string>
+  <string name="agent_skills">에이전트 스킬</string>
+  <string name="agent_skills_description">다양한 스킬을 로드하거나 직접 만들어 전문화된 고차원 추론을 사용하세요.\n\n아래 샘플 프롬프트를 탭하여 에이전트 스킬을 체험해 보세요!</string>
+  <string name="disclaimer_dialog_content">타사 스킬은 Google이 작성하거나 보증하지 않습니다. Google은 해당 콘텐츠, 보안 또는 데이터 처리 방식에 대해 책임을 지지 않습니다.\n\n개인 식별 정보, 토큰 또는 API 키와 같은 민감한 정보를 제공하기 전에 주의하세요.\n\n에이전트 스킬 사용은 해당 스킬의 적용 가능한 약관을 따릅니다.</string>
+  <string name="disclaimer_dialog_title">타사 스킬 추가</string>
+  <string name="disclaimer_dialog_agree">동의</string>
+  <string name="delete_script_dialog_title">스크립트 삭제</string>
+  <string name="delete_skill_dialog_title">스킬 삭제</string>
+  <string name="delete_skill_dialog_content">스킬을 삭제하시겠습니까?</string>
+  <string name="delete_selected_skills_title">선택한 스킬 삭제</string>
+  <plurals name="delete_selected_skills_content">
+    <item quantity="one">%d개 스킬을 삭제하시겠습니까?</item>
+    <item quantity="other">%d개 스킬을 삭제하시겠습니까?</item>
+  </plurals>
+  <plurals name="selected_custom_skills_count">
+    <item quantity="one">%d개 선택됨</item>
+    <item quantity="other">%d개 선택됨</item>
+  </plurals>
+  <string name="built_in_skills_title">기본 제공 스킬</string>
+  <string name="custom_skills_title">사용자 지정 스킬</string>
+  <string name="describe_requirements">요구 사항 설명</string>
+  <string name="describe_input_data">입력 데이터 설명</string>
+  <string name="describe_input_data_support_text">필드 이름은 지침의 이름과 일치해야 합니다.</string>
+  <string name="describe_output_data">출력 데이터 설명</string>
+  <string name="duplicated_script_name">중복된 스크립트 이름</string>
+  <string name="enable_skill_dialog_content">아래 스킬 버튼을 탭하여 스킬을 활성화하세요.</string>
+  <string name="edit_skill">스킬 편집</string>
+  <string name="enter_skill_url">스킬 루트 디렉터리의 URL 입력</string>
+  <string name="featured_skills_title">추천 스킬</string>
+  <string name="featured_skills_description">커뮤니티 기여 추천 스킬 목록</string>
+  <string name="generate_llm_prompt_title">LLM 프롬프트 생성</string>
+  <string name="generate_llm_prompt_button_label">LLM 프롬프트</string>
+  <string name="learn_how_to_write_skills">스킬 작성 방법 배우기</string>
+  <string name="loading_skills_allowlist">추천 스킬 로드 중...</string>
+  <string name="manage_skills">스킬 관리</string>
+  <string name="manage_skills_description">스킬 보기, 생성 및 관리</string>
+  <string name="skill_limit_warning">%s 이상 활성화하면 성능에 영향을 줄 수 있습니다.</string>
+  <string name="no_directory_selected">선택된 디렉터리 없음</string>
+  <string name="pick_skill_dir">스킬 루트 디렉터리 선택</string>
+  <string name="prompt_copied_message">프롬프트가 클립보드에 복사되었습니다. 즐겨 사용하는 LLM 앱에 붙여넣어 코드를 생성한 다음 코드를 여기에 복사/붙여넣기 하세요.</string>
+  <string name="prompt_chip_kitchen_adventure">주방 모험</string>
+  <string name="prompt_chip_calculate_hash">해시 계산</string>
+  <string name="prompt_chip_query_wikipedia">위키백과 검색</string>
+  <string name="prompt_chip_plot_chart">차트 그리기</string>
+  <string name="prompt_chip_interactive_map">인터랙티브 맵</string>
+  <string name="prompt_chip_text_spinner">내 머리의 라벨 회전</string>
+  <string name="prompt_chip_send_email">이메일 보내기</string>
+  <string name="replace_skill_dialog_title">기존 스킬 교체</string>
+  <string name="replace_skill_dialog_content">같은 이름의 스킬이 이미 존재합니다. 교체하시겠습니까?</string>
+  <string name="search_skill">스킬 검색</string>
+  <string name="select_script">스크립트 선택</string>
+  <string name="script_name">스크립트 이름</string>
+  <string name="script_content">스크립트 내용</string>
+  <string name="skills">스킬</string>
+  <plurals name="skills_count">
+    <item quantity="other">%d개 스킬</item>
+  </plurals>
+  <string name="skill_name_input_description">필수. my-skill-name 형식</string>
+  <string name="skill_description_input_description">필수. 스킬의 기능과 트리거 조건 또는 키워드에 대한 간략한 설명.</string>
+  <string name="skill_instructions_input_description">LLM이 작업을 수행하기 위해 따라야 하는 Markdown 형식의 상세 지침.</string>
+  <string name="use_call_js_template">Call JS 템플릿 사용</string>
+
+  <!-- Tiny Garden -->
+  <string name="conversation_history">대화 기록</string>
+  <string name="collect">수집</string>
+  <string name="color">색상</string>
+  <string name="tap_to_change_color">탭하여 색상 변경</string>
+  <string name="no_cutouts_collected">수집된 잘라내기 없음</string>
+  <string name="reset_note">\"재설정\"을 탭하면 LiteRT-LM 엔진만 재설정됩니다. 게임 진행 상황은 영향을 받지 않습니다.</string>
+  <string name="resetting_engine">엔진 재설정 중...</string>
+  <string name="reinitializing_description">게임 진행 상황은 영향을 받지 않습니다</string>
+  <string name="introducing">소개</string>
+  <string name="litert_community_label">LiteRT 커뮤니티</string>
+
+  <!-- Misc -->
+  <string name="checking_access">액세스 확인 중...</string>
+  <string name="collapse_all">모두 접기</string>
+  <string name="expand_all">모두 펼치기</string>
+  <string name="failed_to_save">저장 실패</string>
+  <string name="function_name">함수 이름</string>
+  <string name="generate_and_copy">생성 및 복사</string>
+  <string name="instructions">지침</string>
+  <string name="invalid_response">잘못된 응답</string>
+  <string name="paste_from_clipboard">클립보드에서 붙여넣기</string>
+  <string name="selected_count">%d개 선택됨</string>
+  <string name="turn_on_all">모두 켜기</string>
+  <string name="turn_off_all">모두 끄기</string>
+  <string name="unsupported_action">지원되지 않는 작업</string>
+  <string name="basic_info">기본 정보</string>
+  <string name="description_required">설명*</string>
+  <string name="enter_instruction">지침 입력</string>
+  <string name="edit_secret">비밀 편집</string>
+  <string name="secret">비밀</string>
+
+  <!-- Accessibility Content Descriptions -->
+  <string name="cd_add_icon">추가</string>
+  <string name="cd_import_model_button">모델 가져오기</string>
+  <string name="cd_task_card">%1$s 작업, %2$d개 모델</string>
+  <string name="cd_error">오류</string>
+  <string name="cd_import_model_from_local_file_button">로컬 파일에서 모델 가져오기</string>
+  <string name="cd_navigate_back_icon">뒤로 가기</string>
+  <string name="cd_app_settings_icon">설정</string>
+  <string name="cd_done_icon">완료</string>
+  <string name="cd_collapse_icon">접기</string>
+  <string name="cd_expand_icon">펼치기</string>
+  <string name="cd_stop_icon">중지</string>
+  <string name="cd_delete_icon">삭제</string>
+  <string name="cd_close_icon">닫기</string>
+  <string name="cd_selected_icon">선택됨</string>
+  <string name="cd_model_settings_icon">모델 설정</string>
+  <string name="cd_reset_session_icon">세션 재설정</string>
+  <string name="cd_change_model">현재 모델은 %1$s입니다. 탭하여 모델 변경.</string>
+  <string name="cd_close_image_viewer_icon">이미지 뷰어 닫기</string>
+  <string name="cd_copy_to_clipboard_icon">클립보드에 복사</string>
+  <string name="cd_prompt_input_text_field">프롬프트 입력</string>
+  <string name="cd_send_prompt_icon">프롬프트 보내기</string>
+  <string name="cd_model_response_text">모델 응답 텍스트</string>
+  <string name="cd_clear_input_history_icon">입력 기록 지우기</string>
+  <string name="cd_delete_input_history_entry_icon">입력 기록 항목 삭제</string>
+  <string name="cd_content_input_field">콘텐츠 입력</string>
+  <string name="cd_add_example_prompt_icon">예제 프롬프트 추가</string>
+  <string name="cd_image_thumbnail">이미지 썸네일</string>
+  <string name="cd_user_image">사용자 이미지 %1$d</string>
+  <string name="cd_user_image_in_group">사용자 이미지 %1$d / %2$d</string>
+  <string name="cd_add_content_icon">콘텐츠 추가</string>
+  <string name="cd_camera_shutter_icon">카메라 셔터</string>
+  <string name="cd_toggle_front_back_camera_icon">전면/후면 카메라 전환</string>
+  <string name="cd_pick_file">파일 선택</string>
+  <string name="cd_play_audio_icon">오디오 재생</string>
+  <string name="cd_stop_playback_icon">재생 중지</string>
+  <string name="cd_send_audio_clip_icon">오디오 클립 보내기</string>
+  <string name="cd_start_recording">녹음 시작</string>
+  <string name="cd_downloaded_icon">다운로드됨</string>
+  <string name="cd_not_downloaded_icon">다운로드되지 않음</string>
+  <string name="cd_downloading_icon">다운로드 중</string>
+  <string name="cd_download_failed_icon">다운로드 실패</string>
+  <string name="cd_chat_panel">채팅 패널</string>
+  <string name="cd_switch_to_keyboard">키보드로 전환</string>
+  <string name="cd_switch_to_voice">음성으로 전환</string>
+  <string name="cd_show_history">기록 표시</string>
+  <string name="cd_more_options">더 많은 옵션</string>
+  <string name="cd_help">도움말</string>
+  <string name="cd_menu">메뉴</string>
+  <string name="tap_to_see_value">그래프를 탭하여 값 보기</string>
+  <!-- Language Settings -->
+  <string name="settings_language">언어</string>
+  <string name="settings_language_summary">앱 언어 변경</string>
+  <string name="settings_message_sounds_title">메시지 효과음</string>
+  <string name="settings_message_sounds_summary">채팅에서 전송음과 답장음을 재생</string>
+  <string name="language_system">시스템</string>
+  <string name="language_english">English</string>
+  <string name="language_chinese">简体中文</string>
+  <string name="language_japanese">日本語</string>
+  <string name="language_korean">한국어</string>
+  <string name="role_editor_import_st_card">ST 역할 카드 가져오기</string>
+  <string name="role_editor_export_st_json">ST JSON 내보내기</string>
+  <string name="role_editor_export_st_png">ST PNG 내보내기</string>
+  <string name="role_editor_status_avatar_cleared">주 아바타를 지웠습니다</string>
+  <string name="role_editor_status_avatar_updated">주 아바타를 업데이트했습니다</string>
+  <string name="role_editor_status_cover_cleared">커버 이미지를 지웠습니다</string>
+  <string name="role_editor_status_cover_updated">커버 이미지를 업데이트했습니다</string>
+  <string name="role_editor_status_gallery_added">갤러리 이미지 %1$d개를 추가했습니다</string>
+  <string name="role_editor_status_gallery_removed">갤러리 이미지를 제거했습니다</string>
+  <string name="role_editor_status_gallery_avatar">갤러리 이미지를 주 아바타로 설정했습니다</string>
+  <string name="role_editor_status_gallery_cover">갤러리 이미지를 커버로 설정했습니다</string>
+  <string name="role_editor_status_sprite_added">스프라이트 이미지 %1$d개를 추가했습니다</string>
+  <string name="role_editor_status_sprite_removed">스프라이트 이미지를 제거했습니다</string>
+  <string name="role_editor_status_st_imported">ST 역할 카드를 가져왔습니다</string>
+  <string name="role_editor_status_st_exported">ST 역할 카드를 내보냈습니다</string>
+  <string name="role_editor_error_st_import_failed">ST 역할 카드 가져오기에 실패했습니다</string>
+  <string name="role_editor_error_st_export_failed">ST 역할 카드 내보내기에 실패했습니다</string>
+  <string name="role_editor_error_required_fields">Role name is required.</string>
+  <string name="role_editor_default_system_prompt">당신은 몰입형 롤플레이 보조자입니다. 역할의 일관성을 유지하고 설정에 맞게 자연스럽게 응답하세요.</string>
+  <string name="role_editor_required_badge">필수</string>
+  <string name="role_editor_required_hint">필수로 표시된 항목은 저장 전에 반드시 입력해야 합니다. 다른 항목은 비워둘 수 있지만, 비워둘수록 말투 제어와 설정 재현력이 약해질 수 있습니다.</string>
+  <string name="role_editor_character_count_without_limit">%1$d</string>
+  <string name="role_editor_character_count_with_limit">%1$d/%2$d</string>
+  <string name="role_editor_help_role_name_body">역할:\n역할 목록, 세션 선택 화면, 채팅 상단에 표시되는 이름입니다. ST 카드의 name 필드에도 다시 저장됩니다.\n\n비워둘 때 영향:\n저장할 수 없습니다. 현재 편집기에서 유일한 필수 항목입니다.\n\n권장 내용과 길이:\n설명이 아니라 실제로 보여줄 이름을 넣으세요. 보통 2~20자면 충분합니다. 편집기 상한은 120자입니다.</string>
+  <string name="role_editor_help_description_body">역할:\n캐릭터의 안정적인 정체성 정보를 넣는 칸입니다. 외형, 기본 배경, 관계, 대화 전반에서 유지되어야 하는 사실을 적습니다.\n\n비워둘 때 영향:\n동작은 하지만 “이 캐릭터가 누구인가”에 대한 축이 약해져 일관성이 떨어지기 쉽습니다.\n\n권장 내용과 길이:\n긴 전기보다 압축된 인물 프로필이 좋습니다. 4k 로컬 모델에서는 120~300자 정도가 다루기 쉽고, 편집기 상한은 400자입니다.</string>
+  <string name="role_editor_help_personality_body">역할:\n기질, 감정 습관, 가치관, 말투 리듬, 대인 태도, 버릇 같은 요소를 정의합니다. “무엇인가”보다 “어떻게 반응하는가”를 쓰기에 적합합니다.\n\n비워둘 때 영향:\n설명, 첫 메시지, 예시 대화 의존도가 커져 답변이 평평해지거나 범용 어시스턴트처럼 흐를 수 있습니다.\n\n권장 내용과 길이:\n장문 설정 대신 성격 덩어리를 짧게 쓰는 편이 효과적입니다. 150~350자 정도가 적당하고 상한은 600자입니다.</string>
+  <string name="role_editor_help_scenario_body">역할:\n대화 시작 시점의 상황을 정의합니다. 장소, 관계, 지금 어떤 전제가 깔려 있는지 적는 칸입니다.\n\n비워둘 때 영향:\n역할의 범용성은 올라가지만 시작 문맥은 약해집니다. 첫 사용자 입력에서 장면을 추론하게 됩니다.\n\n권장 내용과 길이:\n깊은 설정집이 아니라 현재 장면을 짧게 쓰세요. 100~250자 정도가 적당하고 상한은 500자입니다. 큰 세계관은 lorebook 으로 분리하는 편이 안전합니다.</string>
+  <string name="role_editor_help_first_message_body">역할:\n새 세션 시작 시 나가는 첫 발화입니다. 목소리, 템포, 포맷, 장면의 시작 분위기를 한 번에 정합니다.\n\n비워둘 때 영향:\n대화는 시작할 수 있지만 강한 스타일 앵커를 잃습니다. 첫 응답이 캐릭터답지 않게 나올 수 있습니다.\n\n권장 내용과 길이:\n설명문이 아니라 자연스러운 캐릭터 내 발화를 쓰세요. 80~300자 정도가 쓰기 좋고 상한은 800자입니다.</string>
+  <string name="role_editor_help_example_dialogue_body">역할:\n예시 대화는 말투와 포맷을 시연으로 가르치는 칸입니다. 대사 톤, 서술 비율, 따옴표 방식, 이모지 습관 등을 보여주기에 좋습니다.\n\n비워둘 때 영향:\n설명과 성격만으로도 동작은 하지만, 세밀한 화법 재현력은 떨어집니다.\n\n권장 내용과 길이:\n세계관 전체를 붙여넣지 말고 짧고 대표적인 샘플만 넣으세요. 4k 로컬 모델에서는 300~1200자 정도가 실용적이며 상한은 2400자입니다.</string>
+  <string name="role_editor_help_system_prompt_body">역할:\n이 앱에서 가장 우선순위가 높은 지시 레이어입니다. 반드시 지켜야 할 제약, 금지 사항, 출력 형식, 앱 측 강한 규칙을 넣는 곳입니다.\n\n비워둘 때 영향:\n프로젝트 기본 system prompt 로 돌아갑니다. 동작은 하지만 카드 전용의 강한 규칙은 줄어듭니다.\n\n권장 내용과 길이:\n분위기 문장보다 규칙을 넣는 용도로 쓰세요. 150~500자 정도면 충분한 경우가 많고 상한은 1200자입니다. 너무 길면 작은 로컬 모델에서 대화 이력이 줄어듭니다.</string>
+  <string name="role_editor_help_post_history_body">역할:\n최근 대화 이력 뒤에 삽입되는 보조 지시입니다. 최신 문맥 가까이에서 작동해야 하는 짧은 리마인더에 적합합니다.\n\n비워둘 때 영향:\n문제는 없습니다. system prompt, 요약, lorebook 만으로 구성됩니다.\n\n권장 내용과 길이:\n형식 재확인, 장면 유지, 짧은 경계 조건 같은 짧은 문장이 잘 맞습니다. 60~200자 정도가 적당하고 상한은 500자입니다.</string>
+  <string name="role_editor_help_alternate_greetings_body">역할:\n새 세션 시작 때 사용할 추가 오프너 후보입니다. 캐릭터 자체를 바꾸는 것이 아니라 시작 패턴에 변화를 줍니다.\n\n비워둘 때 영향:\n메인 first message 만 시작 시드로 사용됩니다.\n\n권장 내용과 길이:\n한 줄에 하나씩, 독립된 자연스러운 오프너를 넣으세요. 1~5개면 충분합니다. 전체 상한은 600자입니다.</string>
+  <string name="role_editor_help_lorebook_name_body">역할:\n내장 lorebook 을 구분하기 위한 사람이 읽는 이름입니다. 생성 결과를 직접 바꾸지는 않습니다.\n\n비워둘 때 영향:\n동작은 유지되지만 도구나 디버그 화면에서는 이름이 없는 책으로 보입니다.\n\n권장 내용과 길이:\n세계 이름, 장 이름, 자료 팩 이름처럼 짧은 라벨이 적합합니다. 상한은 120자입니다.</string>
+  <string name="role_editor_help_lorebook_description_body">역할:\nlorebook 의 범위와 관리 방침을 설명하는 편집자용 메모입니다.\n\n비워둘 때 영향:\n런타임 동작은 변하지 않습니다. 유지보수 메모만 줄어듭니다.\n\n권장 내용과 길이:\n범위, 발화 철학, 관리 규칙을 짧게 적는 것이 좋습니다. 80~200자 정도가 적당하고 상한은 400자입니다.</string>
+  <string name="role_editor_help_lorebook_scan_depth_body">역할:\n최근 몇 개의 메시지까지 lore 발동 검사에 사용할지 정합니다. 값이 클수록 오래된 언급도 잡지만 오발동과 비용도 늘어납니다.\n\n비워둘 때 영향:\nST 카드에서는 미설정 상태로 남고 기본 동작을 사용합니다.\n\n값 가이드:\n0~1은 최신 발화 중심, 2~4는 로컬 소형 모델에서 균형 잡힌 구간, 5 이상은 더 넓게 보지만 4k 문맥에서는 무거워지기 쉽습니다.</string>
+  <string name="role_editor_help_lorebook_token_budget_body">역할:\n한 번의 prompt 조립에서 lore 텍스트에 사용할 수 있는 token 상한입니다.\n\n비워둘 때 영향:\nST 카드에서는 미설정 상태로 남고 기본 처리에 맡깁니다.\n\n값 가이드:\n64~128은 보수적, 128~256은 실용적인 균형, 256 초과는 정보량은 늘지만 4k 로컬 모델에서는 대화 이력과 강하게 경쟁합니다.</string>
+  <string name="role_editor_help_lorebook_recursive_body">역할:\n새로 활성화된 lore 가 다른 lore 를 추가로 발동할 수 있게 합니다. 연쇄 설계의 world info 에 적합합니다.\n\n꺼둘 때 영향:\n직접 일치한 항목만 처리하므로 단순하고 제어하기 쉽습니다.\n\n권장:\n연쇄 발동을 전제로 설계한 lorebook 이 아니라면 기본은 끄는 편이 안전합니다. 켜면 표현력은 올라가지만 복잡도와 문맥 소모도 증가합니다.</string>
+  <string name="role_editor_help_lore_entry_id_body">역할:\nlore 항목의 안정적인 숫자 ID 입니다. 주로 도구, 호환성, 디버그용입니다.\n\n비워둘 때 영향:\n내용은 유지되지만 내보내기 시 명시적인 번호가 없습니다.\n\n권장 내용과 길이:\n짧은 정수를 쓰세요. 보통 6자리 이하이면 충분합니다. 입력 상한은 8자입니다.</string>
+  <string name="role_editor_help_lore_entry_keys_body">역할:\n이 lore 를 발동시키는 주 키워드입니다. 최근 대화와 일치하면 활성화 후보가 됩니다.\n\n비워둘 때 영향:\n상시 항목이 아니라면 의도적으로 발동시키기 매우 어려워집니다.\n\n권장 내용과 길이:\n이름, 별칭, 짧은 구절을 쉼표로 구분해 넣으세요. 지나치게 넓히지 않는 것이 중요합니다. 상한은 240자입니다.</string>
+  <string name="role_editor_help_lore_entry_secondary_keys_body">역할:\n보조 발동어입니다. 동의어, 다른 표기, 추가 단서를 보강할 때 씁니다.\n\n비워둘 때 영향:\n주 키워드만으로 판정합니다. 대부분의 항목에서는 그것으로 충분합니다.\n\n권장 내용과 길이:\n정말 필요할 때만 추가하세요. 관련어를 전부 넣는 용도에는 적합하지 않습니다. 상한은 240자입니다.</string>
+  <string name="role_editor_help_lore_entry_comment_body">역할:\n편집자용 메모입니다. 의도, 출처, 유지보수 주의사항을 적습니다.\n\n비워둘 때 영향:\n런타임에는 영향이 없습니다.\n\n권장 내용과 길이:\n“왜 필요한가”, “어디에서 왔는가” 같은 짧은 메모에 적합합니다. 상한은 240자입니다.</string>
+  <string name="role_editor_help_lore_entry_content_body">역할:\n발동 시 실제로 prompt 에 주입되는 lore 본문입니다.\n\n비워둘 때 영향:\n발동되더라도 넣을 정보가 거의 없어 효과가 약해집니다.\n\n권장 내용과 길이:\n수식적인 문장보다 밀도 높은 사실을 쓰는 편이 좋습니다. 이름, 역할, 규칙, 관계, 핵심 사실 등을 압축하세요. 80~300자 정도가 다루기 쉽고 상한은 800자입니다.</string>
+  <string name="role_editor_help_lore_entry_order_body">역할:\n같은 prompt 슬롯에 들어가는 lore 사이의 앞뒤 순서를 정합니다.\n\n비워둘 때 영향:\n미설정 상태로 남고 주변 기본 순서에 맡깁니다.\n\n값 가이드:\n일반적으로 값이 작을수록 앞에 둡니다. 이후 삽입을 쉽게 하려면 0, 10, 20처럼 간격을 두는 편이 좋습니다. 입력 상한은 6자입니다.</string>
+  <string name="role_editor_help_lore_entry_position_body">역할:\n이 lore 를 prompt 의 어느 영역에 넣을지 나타냅니다. 같은 내용도 위치에 따라 영향이 달라집니다.\n\n비워둘 때 영향:\n미설정 상태로 남고 기본 배치 규칙을 따릅니다.\n\n권장 내용과 길이:\n워크플로가 기대하는 ST 위치 키워드를 짧게 넣으세요. 입력 상한은 24자입니다.</string>
+  <string name="role_editor_help_lore_entry_enabled_body">역할:\n이 lore 항목의 켜기/끄기 스위치입니다.\n\n꺼둘 때 영향:\n카드에는 남아 있지만 런타임에서는 무시됩니다.\n\n권장:\n삭제 전 임시 비활성화나 발동 테스트 비교에 유용합니다.</string>
+  <string name="role_editor_help_lore_entry_constant_body">역할:\n키워드 발동을 기다리지 않고 매 턴 주입되는 상시 lore 로 만듭니다.\n\n꺼둘 때 영향:\n일반 발동형 lore 로 돌아갑니다.\n\n권장:\n매 턴 정말 필요한 사실에만 사용하세요. 4k 로컬 모델에서는 상시 lore 남용이 예산을 가장 빨리 압박합니다.</string>
+  <string name="role_editor_help_lore_entry_selective_body">역할:\n발동 범위를 더 좁혀 과도하게 넓은 일치를 줄이는 설정입니다.\n\n꺼둘 때 영향:\n기본 매칭 로직을 사용합니다.\n\n권장:\n무관한 장면에서 자주 튀어나오는 lore 는 켜고, 키워드가 이미 충분히 구체적이라면 끈 상태로 두면 됩니다.</string>
+  <string name="role_editor_help_lore_entry_regex_body">역할:\n키워드를 일반 문자열이 아니라 정규식으로 처리합니다.\n\n꺼둘 때 영향:\n일반 문자열 일치가 되며 대부분의 경우 이쪽이 더 안전합니다.\n\n권장:\n변형 매칭이나 패턴 매칭이 정말 필요할 때만 사용하세요. 강력하지만 오설정 시 오발동도 많아집니다.</string>
+  <string name="role_editor_help_creator_body">역할:\n작성자명이나 출처명을 저장하는 메타데이터입니다.\n\n비워둘 때 영향:\n런타임에는 영향이 없습니다. 작성자 정보만 빠집니다.\n\n권장 내용과 길이:\n사람 이름, 핸들, 서클명, 배포처명 같은 짧은 식별명이 적합합니다. 상한은 120자입니다.</string>
+  <string name="role_editor_help_creator_notes_body">역할:\n제작자용 메모 칸입니다. 경고, 업데이트 메모, 권장 사용처, 편집 주의사항 등을 적기에 좋습니다.\n\n비워둘 때 영향:\n런타임에는 영향이 없습니다.\n\n권장 내용과 길이:\n실무적인 메모를 짧게 적는 것을 추천합니다. 80~250자 정도가 적당하고 상한은 600자입니다.</string>
+  <string name="role_editor_help_character_version_body">역할:\n카드의 수동 버전 표기입니다.\n\n비워둘 때 영향:\n버전 표시만 사라집니다.\n\n권장 내용과 길이:\nv1, 1.2.0, 2026-04 같은 간결한 표기가 적합합니다. 상한은 32자입니다.</string>
+  <string name="role_editor_help_tags_body">역할:\n검색, 필터링, 분류에 쓰는 태그입니다.\n\n비워둘 때 영향:\n동작에는 영향이 없지만 라이브러리가 커질수록 정리가 어려워집니다.\n\n권장 내용과 길이:\n장르, 작품, 분위기, 용도 같은 짧은 라벨을 쉼표로 구분해 넣으세요. 상한은 200자입니다.</string>
+  <string name="role_editor_help_talkativeness_body">역할:\n얼마나 길고 적극적으로 말하는지 나타내는 ST 메타데이터입니다. 보통 강제 규칙이 아니라 부드러운 경향값입니다.\n\n비워둘 때 영향:\n미설정 상태로 남고 많은 도구에서 가운데 부근의 기본값을 사용합니다.\n\n값 가이드:\n0.0~0.3은 짧고 절제된 편, 0.4~0.6은 중간, 0.7~1.0은 길고 적극적인 편입니다. 이 프로젝트에서는 주로 메타데이터로 저장되므로 반드시 그대로 반영된다고 보기는 어렵습니다. 입력 상한은 4자입니다.</string>
+  <string name="role_editor_help_favorite_body">역할:\n로컬 역할 목록에서 즐겨찾기로 표시합니다.\n\n꺼둘 때 영향:\n생성 결과에는 전혀 영향이 없습니다.\n\n권장:\n자주 쓰는 역할이나 품질이 안정적인 역할을 표시하는 용도로 적합합니다.</string>
+  <string name="role_editor_help_safety_policy_body">역할:\nST 핵심 필드와 별도로, 이 프로젝트가 자체적으로 보관하는 안전/제약 가이드입니다.\n\n비워둘 때 영향:\n역할은 계속 사용할 수 있지만 카드 전용 안전 메모는 사라지고 전체 기본 정책만 남습니다.\n\n권장 내용과 길이:\n금지 사항, 경계 조건, 앱 측 제약 같은 짧은 정책 문구를 쓰기에 적합합니다. 상한은 400자입니다.</string>
+  <string name="role_editor_help_default_model_body">역할:\n이 역할을 열 때 우선 선택할 로컬 모델을 지정합니다.\n\n비워둘 때 영향:\n일반 모델 선택 흐름으로 돌아갑니다.\n\n권장:\n특정 모델에 맞춰 조정하거나 검증한 역할에만 설정하세요. 편의를 위한 기본값이지 강제 고정은 아닙니다.</string>
+  <string name="role_editor_help_interop_body">역할:\nSillyTavern 호환 카드와의 대응 상태, 원본 포맷, spec 정보, 호환 경고를 확인하는 영역입니다.\n\n경고가 있을 때 영향:\n가져오기/내보내기 자체는 성공해도 일부 고급 ST 데이터가 미지원 상태로 보존되거나 다른 표현으로 변환될 수 있습니다.\n\n권장:\n특히 고급 lorebook 이나 extension 필드를 가진 카드를 편집한 뒤에는 내보내기 전에 이 영역을 확인하세요.</string>
+  <string name="role_editor_tab_basic">기본</string>
+  <string name="role_editor_tab_persona">인격</string>
+  <string name="role_editor_tab_world">세계</string>
+  <string name="role_editor_tab_other">기타</string>
+  <string name="role_catalog_status_st_imported">ST 역할 카드를 가져왔습니다</string>
+  <string name="role_catalog_error_st_import_failed">ST 역할 카드 가져오기에 실패했습니다</string>
+  <string name="sessions_unknown_role">알 수 없는 역할</string>
+  <string name="sessions_no_messages">아직 메시지가 없습니다</string>
+  <string name="sessions_status_imported">ST 채팅을 가져왔습니다</string>
+  <string name="sessions_error_import_failed">ST 채팅 가져오기에 실패했습니다</string>
+  <string name="sessions_status_exported">ST 채팅을 내보냈습니다</string>
+  <string name="sessions_error_export_failed">ST 채팅 내보내기에 실패했습니다</string>
+  <string name="chat_status_pending">대기 중</string>
+  <string name="chat_status_streaming">생성 중</string>
+  <string name="chat_status_completed">완료됨</string>
+  <string name="chat_status_failed">실패</string>
+  <string name="chat_status_stopped">중지됨</string>
+  <string name="role_editor_media_title">미디어 자산</string>
+  <string name="role_editor_media_summary">주 아바타와 프로젝트 전용 커버 이미지를 관리합니다. 주 아바타는 채팅 표시와 ST PNG 내보내기에 사용됩니다.</string>
+  <string name="role_editor_avatar_title">주 아바타</string>
+  <string name="role_editor_avatar_summary">채팅 표시용으로 사용되며 ST PNG 역할 카드에서는 이미지 셸로 내보내집니다.</string>
+  <string name="role_editor_avatar_empty">주 아바타가 없습니다</string>
+  <string name="role_editor_cover_title">커버 이미지</string>
+  <string name="role_editor_cover_summary">이 프로젝트 안에서만 사용됩니다. 표준 ST 역할 카드에는 포함되지 않습니다.</string>
+  <string name="role_editor_cover_empty">커버 이미지가 없습니다</string>
+  <string name="role_editor_media_status_missing">없음</string>
+  <string name="role_editor_media_status_st_png">ST PNG에서 가져옴</string>
+  <string name="role_editor_media_status_local">로컬</string>
+  <string name="role_editor_media_status_project_only">프로젝트 전용</string>
+  <string name="role_editor_media_add">추가</string>
+  <string name="role_editor_media_replace">교체</string>
+  <string name="role_editor_media_clear">지우기</string>
+  <string name="role_editor_export_png_missing_avatar_title">ST PNG 내보내기에는 주 아바타가 필요합니다</string>
+  <string name="role_editor_export_png_missing_avatar_content">이 역할에는 현재 주 아바타가 없습니다. 기본 이미지로 내보내거나 지금 이미지를 선택해 이 역할과 이번 내보내기에 사용할 수 있습니다.</string>
+  <string name="role_editor_export_png_use_default">기본 이미지 사용</string>
+  <string name="role_editor_export_png_upload_image">이미지 업로드</string>
+  <string name="role_editor_media_export_summary_title">미디어 내보내기 요약</string>
+  <string name="role_editor_media_export_summary_body">ST PNG에는 현재 주 아바타만 내보내집니다. 커버, 갤러리, 스프라이트 이미지는 현재 프로젝트 전용으로 유지됩니다.</string>
+  <string name="role_editor_media_export_st_png_ready">ST PNG 아바타 준비됨</string>
+  <string name="role_editor_media_export_st_png_missing">ST PNG 아바타 없음</string>
+  <string name="role_editor_media_export_cover_project_only">커버는 프로젝트 전용입니다</string>
+  <string name="role_editor_media_export_cover_empty">커버 이미지 없음</string>
+  <string name="role_editor_media_export_gallery_count">갤러리: %1$d</string>
+  <string name="role_editor_media_export_sprite_count">스프라이트: %1$d</string>
+  <string name="role_editor_gallery_title">갤러리 이미지</string>
+  <string name="role_editor_gallery_summary">이 역할을 위한 추가 초상화, 장면, 참고 이미지를 추가합니다.</string>
+  <string name="role_editor_gallery_add">갤러리 이미지 추가</string>
+  <string name="role_editor_gallery_empty">아직 갤러리 이미지가 없습니다.</string>
+  <string name="role_editor_gallery_set_avatar">아바타로 사용</string>
+  <string name="role_editor_gallery_set_cover">커버로 사용</string>
+  <string name="role_editor_media_asset_name">표시 이름</string>
+  <string name="role_editor_media_remove">제거</string>
+  <string name="role_editor_sprite_title">스프라이트 및 표정 이미지</string>
+  <string name="role_editor_sprite_summary">향후 스프라이트 기반 채팅 표시를 위해 추가 표정 상태를 관리합니다.</string>
+  <string name="role_editor_sprite_add">스프라이트 추가</string>
+  <string name="role_editor_sprite_empty">아직 스프라이트 이미지가 없습니다.</string>
+  <string name="role_editor_sprite_state_tag">상태 태그</string>
+  <string name="role_editor_media_usage_unspecified">용도: 미지정</string>
+  <string name="role_editor_media_usage_portrait">용도: 초상화</string>
+  <string name="role_editor_media_usage_expression">용도: 표정</string>
+  <string name="role_editor_media_usage_scene">용도: 장면</string>
+  <string name="role_editor_media_usage_reference">용도: 참고</string>
+  <string name="role_catalog_no_avatar">아바타 없음</string>
+  <string name="role_editor_media_compatibility_title">미디어 호환성</string>
+  <string name="role_editor_media_compatibility_avatar_ready">주 아바타가 ST PNG 내보내기 준비가 되었습니다.</string>
+  <string name="role_editor_media_compatibility_avatar_missing">주 아바타가 없습니다. ST PNG 내보내기 시 기본 이미지 또는 업로드를 안내합니다.</string>
+  <string name="role_editor_media_compatibility_cover_local">커버 이미지는 프로젝트 전용이며 ST로 내보내지지 않습니다.</string>
+  <string name="role_editor_media_compatibility_gallery">갤러리 이미지: %1$d</string>
+  <string name="role_editor_media_compatibility_sprites">스프라이트 이미지: %1$d</string>
+  <string name="role_editor_media_compatibility_imported">주 아바타는 ST PNG 카드에서 가져왔습니다.</string>
+  <string name="role_editor_media_preview_unavailable">미리보기를 사용할 수 없습니다</string>
+  <string name="role_editor_gallery_name_label">갤러리 이름</string>
+  <string name="role_editor_gallery_use_as_avatar">아바타로 사용</string>
+  <string name="role_editor_gallery_use_as_cover">커버로 사용</string>
+  <string name="role_editor_gallery_remove">갤러리 이미지 제거</string>
+  <string name="role_editor_sprite_name_label">스프라이트 이름</string>
+  <string name="role_editor_sprite_state_tag_label">스프라이트 상태 태그</string>
+  <string name="role_editor_sprite_remove">스프라이트 제거</string>
+  <string name="role_editor_gallery_usage_unspecified">미지정</string>
+  <string name="role_editor_gallery_usage_portrait">초상화</string>
+  <string name="role_editor_gallery_usage_expression">표정</string>
+  <string name="role_editor_gallery_usage_scene">장면</string>
+  <string name="role_editor_gallery_usage_reference">참고</string>
+  <string name="my_profile_avatar_tap_to_upload">Tap the avatar to upload from your gallery.</string>
+  <string name="my_profile_avatar_tap_to_edit">Tap the avatar to adjust framing.</string>
+  <string name="my_profile_avatar_edit_title">Edit Avatar</string>
+  <string name="my_profile_avatar_edit_hint">Drag to reposition and pinch to zoom until the subject fits inside the circle.</string>
+  <string name="builtin_role_gemma_name">제이마</string>
+  <string name="builtin_role_gemma_summary">다정하고 매혹적인 술집 여주인. 당신 취향을 기억하고 늦은 밤 공기까지 은근하게 달궈 준다.</string>
+  <string name="builtin_role_gemma_system_prompt">당신은 Gemma Tavern의 여주인 제이마다. 항상 역할을 유지한 채, 단골을 맞이하듯 친근하고 능숙하며 은근히 유혹적인 분위기로 말하라. 답변은 따뜻하고 생생하며 장난기 있고 감정에 세심해야 한다. 몰입을 깨거나 건조한 비서 말투로 돌아가지 마라.</string>
+  <string name="builtin_role_gemma_persona_description">제이마는 성숙한 여유와 요염한 매력을 지닌 술집 여주인이다. 장난스러운 미소를 띠고, 손님마다 특별히 챙김받고 있다고 느끼게 만드는 데 능하다. 친근하고 약간 대담하며, 가게의 공기를 자연스럽게 장악한다.</string>
+  <string name="builtin_role_gemma_world_settings">대화의 무대는 Gemma Tavern. 촛불이 흔들리는 활기찬 술집으로, 여행자와 상인, 용병, 그리고 온갖 비밀이 밤이 깊어질수록 같은 윤 나는 나무 바 테이블로 모여든다.</string>
+  <string name="builtin_role_gemma_opening_line">또 왔네, 자기야? 네 자리는 아직도 따뜻하고, 막 네가 늘 마시던 걸 따르려던 참이었어. 오늘 밤은 위로가 필요해, 소문이 궁금해, 아니면 조금 위험한 즐거움이 좋아?</string>
+  <string name="builtin_role_gemma_example_dialogue_1">User: 오늘 너무 지쳤어. Assistant: 그럼 앉아. 네 어깨에 얹힌 무게는 내가 한 잔씩 천천히 걷어 줄게.</string>
+  <string name="builtin_role_gemma_example_dialogue_2">User: 넌 늘 무슨 말을 해야 할지 아는 것 같아. Assistant: 좋은 여주인은 따르기 전에 먼저 사람 마음부터 읽는 법이지, 자기야.</string>
+  <string name="builtin_role_gemma_safety_policy">역할극을 유지한다. 분위기는 관능적이고 능청스러워도 되지만 노골적인 성적 묘사는 피한다. 현실의 유해한 요청은 짧고 분명하게 거절한다.</string>
+  <string name="builtin_role_gemma_tag_tavern">술집</string>
+  <string name="builtin_role_gemma_tag_hostess">여주인</string>
+  <string name="builtin_role_gemma_tag_flirty">도발적</string>
+  <string name="sessions_archive">보관</string>
+</resources>

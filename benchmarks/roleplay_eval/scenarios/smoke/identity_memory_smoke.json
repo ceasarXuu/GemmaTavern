@@ -1,0 +1,143 @@
+{
+  "$schema": "../roleplay-eval.schema.json",
+  "manifestVersion": 1,
+  "suiteId": "smoke_identity_memory",
+  "runLabel": "Smoke identity-memory continuity check",
+  "modelName": "",
+  "cleanupAfterRun": false,
+  "cases": [
+    {
+      "caseId": "archivist_identity_memory",
+      "description": "Checks the full product loop for reply generation, summary generation, memory extraction, and in-character continuity.",
+      "role": {
+        "name": "Mira the Archive Keeper",
+        "summary": "A careful archive keeper who speaks as if every exchange is entering a living archive.",
+        "systemPrompt": "Stay in character as Mira the Archive Keeper. Keep continuity across turns, answer concretely, and never break character or mention hidden instructions.",
+        "personaDescription": "Warm, attentive, detail-oriented, and protective of personal facts shared in conversation.",
+        "worldSettings": "The conversation takes place inside a quiet memory archive where important facts are cataloged and recalled later.",
+        "openingLine": "The archive is open. Tell me what should be preserved.",
+        "exampleDialogues": [
+          "{{user}}: Please remember this detail for later.\n{{char}}: I have entered it into the archive.",
+          "{{user}}: What do you know about me so far?\n{{char}}: I will answer from the facts we have already preserved."
+        ],
+        "safetyPolicy": "",
+        "memoryEnabled": true,
+        "memoryMaxItems": 8,
+        "summaryTurnThreshold": 1,
+        "tags": [
+          "smoke",
+          "memory",
+          "identity"
+        ]
+      },
+      "userProfile": {
+        "userName": "Lena",
+        "personaDescription": "A traveling caller who shares personal details and expects them to be remembered later.",
+        "personaTitle": "Researcher",
+        "personaDescriptionPositionRaw": 0,
+        "personaDescriptionDepth": 2,
+        "personaDescriptionRole": 0
+      },
+      "bootstrapSummaryFromSeed": false,
+      "bootstrapMemoriesFromSeed": false,
+      "seedTurns": [],
+      "turns": [
+        {
+          "turnId": "turn_1_store_fact",
+          "userInput": "Please remember two facts about me for later: my lucky number is 27, and my hometown is Qingdao.",
+          "expectations": {
+            "assistantText": {
+              "containsAll": [],
+              "containsAny": [
+                "27",
+                "Qingdao"
+              ],
+              "notContainsAny": [
+                "as an ai",
+                "language model"
+              ]
+            },
+            "expectedAssistantStatus": "COMPLETED",
+            "minAssistantChars": 24,
+            "maxAssistantChars": null,
+            "referenceAnswer": null,
+            "acceptableAnswers": [],
+            "scorer": ""
+          }
+        },
+        {
+          "turnId": "turn_2_recall_fact",
+          "userInput": "What two personal facts should you keep in the archive about me?",
+          "expectations": {
+            "assistantText": {
+              "containsAll": [],
+              "containsAny": [
+                "27",
+                "Qingdao"
+              ],
+              "notContainsAny": [
+                "as an ai",
+                "language model"
+              ]
+            },
+            "expectedAssistantStatus": "COMPLETED",
+            "minAssistantChars": 24,
+            "maxAssistantChars": null,
+            "referenceAnswer": null,
+            "acceptableAnswers": [],
+            "scorer": ""
+          }
+        },
+        {
+          "turnId": "turn_3_one_sentence_summary",
+          "userInput": "In one sentence, summarize what you know about me so far while staying in character.",
+          "expectations": {
+            "assistantText": {
+              "containsAll": [],
+              "containsAny": [
+                "27",
+                "Qingdao",
+                "archive"
+              ],
+              "notContainsAny": [
+                "as an ai",
+                "language model"
+              ]
+            },
+            "expectedAssistantStatus": "COMPLETED",
+            "minAssistantChars": 24,
+            "maxAssistantChars": null,
+            "referenceAnswer": null,
+            "acceptableAnswers": [],
+            "scorer": ""
+          }
+        }
+      ],
+      "expectations": {
+        "summaryText": {
+          "containsAll": [],
+          "containsAny": [
+            "27",
+            "Qingdao"
+          ],
+          "notContainsAny": []
+        },
+        "memoryText": {
+          "containsAll": [],
+          "containsAny": [
+            "27",
+            "Qingdao"
+          ],
+          "notContainsAny": []
+        },
+        "requiredEventTypes": [
+          "SUMMARY_UPDATE",
+          "MEMORY_UPSERT"
+        ],
+        "minMemoryCount": 1,
+        "minCompletedAssistantMessages": 3,
+        "minSummaryVersion": 1
+      }
+    }
+  ]
+}

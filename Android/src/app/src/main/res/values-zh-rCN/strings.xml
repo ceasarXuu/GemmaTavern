@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright 2025 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<resources>
+  <!-- App Info -->
+  <string name="app_name">杰伊玛酒馆</string>
+  <string name="app_name_first_part">杰伊玛</string>
+  <string name="app_name_second_part">酒馆</string>
+  <string name="app_intro">探索来自的精彩端侧模型世界</string>
+
+  <!-- Common Actions -->
+  <string name="all">全部</string>
+  <string name="add">添加</string>
+  <string name="added">已添加</string>
+  <string name="cancel">取消</string>
+  <string name="close">关闭</string>
+  <string name="delete">删除</string>
+  <string name="done">完成</string>
+  <string name="edit">编辑</string>
+  <string name="save">保存</string>
+  <string name="reset">重置</string>
+  <string name="clear">清除</string>
+  <string name="copy">复制</string>
+  <string name="create">创建</string>
+  <string name="discard">放弃</string>
+  <string name="dismiss">关闭</string>
+  <string name="download">下载</string>
+  <string name="name">名称</string>
+  <string name="ok">确定</string>
+  <string name="preview">预览</string>
+  <string name="replace">替换</string>
+  <string name="results">结果</string>
+  <string name="run">运行</string>
+  <string name="running">运行中...</string>
+  <string name="run_again">再次运行</string>
+  <string name="share">分享</string>
+  <string name="test">测试</string>
+  <string name="try_it">试试看</string>
+  <string name="undo">撤销</string>
+  <string name="redo">重做</string>
+  <string name="view">查看</string>
+  <string name="error">错误</string>
+  <string name="disabled">已禁用</string>
+  <string name="continue_button_label">继续</string>
+
+  <!-- Navigation -->
+  <string name="drawer_settings_label">设置</string>
+  <string name="drawer_settings_description">管理应用设置</string>
+  <string name="drawer_models_label">模型</string>
+  <string name="drawer_models_description">浏览、试用和基准测试模型</string>
+  <string name="navigate_back">返回</string>
+
+  <!-- Tabs -->
+  <string name="tab_messages">消息</string>
+  <string name="tab_roles">角色</string>
+  <string name="tab_me">我的</string>
+  <string name="tab_settings">设置</string>
+  <string name="my_profile_avatar_slot_title">Persona 槽位</string>
+  <string name="my_profile_persona_name_title">Persona 名称</string>
+  <string name="my_profile_persona_title_title">Persona 标题</string>
+  <string name="my_profile_persona_description_title">Persona 描述</string>
+  <string name="my_profile_avatar_title">头像</string>
+  <string name="my_profile_persona_position_title">Persona 插入位置</string>
+  <string name="my_profile_persona_position_in_prompt">放入 Prompt</string>
+  <string name="my_profile_persona_position_top_an">置于作者注释前</string>
+  <string name="my_profile_persona_position_bottom_an">置于作者注释后</string>
+  <string name="my_profile_persona_position_at_depth">按深度插入</string>
+  <string name="my_profile_persona_position_none">禁用</string>
+  <string name="my_profile_persona_depth_title">Persona 深度</string>
+  <string name="my_profile_persona_role_title">Persona 角色</string>
+  <string name="my_profile_persona_role_system">系统</string>
+  <string name="my_profile_persona_role_user">用户</string>
+  <string name="my_profile_persona_role_assistant">助手</string>
+  <string name="my_profile_default_persona_title">设为默认 Persona</string>
+  <string name="my_profile_default_persona_summary">默认应用到新的角色扮演会话。</string>
+  <string name="my_profile_set_default_action">设为默认</string>
+  <string name="my_profile_delete_title">删除 Persona</string>
+  <string name="my_profile_delete_content">确定要删除 Persona “%s” 吗？</string>
+  <string name="my_profile_reset">重置 Persona</string>
+  <string name="my_profile_save">保存 Persona</string>
+  <string name="my_profile_help_avatar_body">作用：\n头像会作为当前 Persona 在“我的”页面以及读取当前用户 Persona 的角色扮演流程中的展示头像。\n\n留空时：\n应用会回退到默认生成的占位头像。\n\n建议：\n使用清晰的方形头像或图标，方便快速区分不同 Persona。</string>
+  <string name="my_profile_help_name_body">作用：\nPersona 名称是这个 Persona 配置对用户可见的名字。在角色扮演流程里，当角色需要称呼你时，也可能直接使用这个名字，所以它会影响角色在对话中如何称呼用户。\n\n留空时：\n应用会回退到默认用户名称。\n\n建议内容和长度：\n填写你希望角色看到并实际用来称呼你的短名称。通常 2 到 20 个字符就够了。编辑器预算为 120 个字符。</string>
+  <string name="my_profile_help_description_body">作用：\nPersona 描述是当前用户 Persona 的主要自我描述注入内容，用来描述身份、语气、背景和希望助手感知到的特征。\n\n留空时：\nPersona 仍可使用，但聊天会丢失大部分个性化的用户上下文信号。\n\n建议内容和长度：\n写紧凑的人设简介，不要写成长篇传记。通常 80 到 300 个字符就够了。编辑器预算为 600 个字符。</string>
+  <string name="my_profile_help_position_body">作用：\n插入位置决定 Persona 描述会被放进最终 Prompt 的哪个位置。\n\n选择“放入 Prompt”时：\n描述会进入主 Prompt 正文。\n\n选择作者注释位置或按深度插入时：\n描述会更接近 ST 风格的作者注释链路。\n\n建议：\n默认优先使用“放入 Prompt”。只有在你明确要调运行时行为时，再改成作者注释或深度插入。</string>
+  <string name="my_profile_help_depth_body">作用：\n当插入位置设为“按深度插入”时，深度决定 Persona 描述在 Prompt 栈中后移多少层。\n\n数值较小时：\n描述会更靠近最新上下文。\n\n数值较大时：\n描述会被放得更靠后，对最新对话的竞争更小。\n\n范围建议：\n使用 1 到 4 这样的较小整数即可。输入预算为 4 个字符。</string>
+  <string name="my_profile_help_role_body">作用：\n当使用深度插入时，角色用于决定 Persona 描述会以哪种 ST 风格消息角色进入 Prompt。\n\nSystem：\n更适合高优先级约束。\n\nUser：\n最适合表示玩家自身的人设描述。\n\nAssistant：\n只在你明确希望这段 Persona 更像助手侧上下文时使用。\n\n建议：\n对大多数 Persona 来说，User 是最稳妥的默认选项。</string>
+
+  <!-- Sessions Screen -->
+  <string name="sessions_loading">加载会话中...</string>
+  <string name="sessions_empty_title">暂无会话</string>
+  <string name="sessions_empty_content">选择一个角色开始第一次对话。如果还没有下载本地模型，请先打开模型库。</string>
+  <string name="sessions_delete_title">确认删除</string>
+  <string name="sessions_delete_content">确定要删除会话"%s"及其所有聊天记录吗？此操作不可恢复。</string>
+  <string name="sessions_pin">置顶</string>
+  <string name="sessions_unpin">取消置顶</string>
+  <string name="sessions_choose_role">选择角色</string>
+  <string name="sessions_model_library">模型库</string>
+  <string name="sessions_new_session">新建会话</string>
+  <string name="sessions_minutes_ago">%d分钟前</string>
+  <string name="sessions_hours_ago">%d小时前</string>
+  <string name="sessions_days_ago">%d天前</string>
+  <string name="sessions_just_now">刚刚</string>
+
+  <!-- Roles Screen -->
+  <string name="roles_menu_create">新建</string>
+  <string name="roles_menu_import">导入</string>
+  <string name="roles_create_tune_title">创建和调整角色</string>
+  <string name="roles_create_tune_content_model">您现在可以创建和编辑角色卡片。在开始会话之前请下载本地模型。</string>
+  <string name="roles_create_tune_content_no_model">仅使用文本字段创建自定义角色，然后使用本地模型开始新会话。</string>
+  <string name="roles_create_button">创建角色</string>
+  <string name="roles_import_st_card">导入ST卡片</string>
+  <string name="roles_model_library">模型库</string>
+  <string name="roles_builtin_title">内置角色</string>
+  <string name="roles_custom_title">自定义角色</string>
+  <string name="roles_delete_title">删除角色</string>
+  <string name="roles_delete_content">删除%s将同时删除其会话和保存的记忆。</string>
+  <string name="roles_start_session">聊天</string>
+  <string name="roles_persona_picker_title">选择 Persona</string>
+  <string name="roles_persona_picker_message">选择本次会话要使用的 persona。</string>
+  <string name="roles_persona_picker_default_badge">默认</string>
+  <string name="roles_missing_model_title">还没有可用的本地模型</string>
+  <string name="roles_missing_model_content">开始和这个角色聊天前，请先添加或导入一个本地模型。</string>
+  <string name="roles_missing_model_confirm">去添加</string>
+  <string name="roles_no_model">无模型</string>
+  <string name="roles_default_tag">角色扮演</string>
+
+  <!-- Role Editor Screen -->
+  <string name="role_editor_create_title">创建角色</string>
+  <string name="role_editor_edit_title">编辑角色</string>
+  <string name="role_editor_loading">加载角色中...</string>
+  <string name="role_editor_name_label">角色名称</string>
+  <string name="role_editor_name_placeholder">输入角色名称</string>
+  <string name="role_editor_summary_label">简介</string>
+  <string name="role_editor_summary_placeholder">简短的一句话描述</string>
+  <string name="role_editor_system_prompt_label">系统提示词</string>
+  <string name="role_editor_system_prompt_placeholder">详细描述角色应该如何说话和行为</string>
+  <string name="role_editor_persona_label">人格设定</string>
+  <string name="role_editor_world_settings_label">世界设定</string>
+  <string name="role_editor_opening_line_label">开场白</string>
+  <string name="role_editor_safety_policy_label">安全策略</string>
+  <string name="role_editor_tags_label">标签</string>
+  <string name="role_editor_tags_placeholder">逗号, 分隔, 标签</string>
+  <string name="role_editor_default_model_label">默认模型</string>
+  <string name="role_editor_no_default_model">无默认模型</string>
+  <string name="role_editor_create_button">创建角色</string>
+  <string name="role_editor_save_button">保存更改</string>
+  <string name="role_editor_delete_button">删除角色</string>
+
+  <string name="role_editor_tab_card">卡片</string>
+  <string name="role_editor_tab_prompt">提示词</string>
+  <string name="role_editor_tab_lorebook">设定集</string>
+  <string name="role_editor_tab_metadata">元数据</string>
+  <string name="role_editor_tab_media">媒体</string>
+  <string name="role_editor_tab_interop">互操作</string>
+  <string name="role_editor_message_example_label">示例对话</string>
+  <string name="role_editor_post_history_instructions_label">历史后置指令</string>
+  <string name="role_editor_alternate_greetings_label">备选开场白</string>
+  <string name="role_editor_alternate_greetings_hint">每行一条备选开场白。</string>
+  <string name="role_editor_lorebook_name_label">设定集名称</string>
+  <string name="role_editor_lorebook_description_label">设定集描述</string>
+  <string name="role_editor_lorebook_scan_depth_label">扫描深度</string>
+  <string name="role_editor_lorebook_token_budget_label">Token 预算</string>
+  <string name="role_editor_lorebook_recursive_label">递归扫描</string>
+  <string name="role_editor_lorebook_add_entry">新增设定条目</string>
+  <string name="role_editor_lorebook_entry_title">设定条目</string>
+  <string name="role_editor_lorebook_entry_id_label">条目 ID</string>
+  <string name="role_editor_lorebook_entry_keys_label">关键词</string>
+  <string name="role_editor_lorebook_entry_secondary_keys_label">次关键词</string>
+  <string name="role_editor_lorebook_entry_comment_label">备注</string>
+  <string name="role_editor_lorebook_entry_content_label">内容</string>
+  <string name="role_editor_lorebook_entry_order_label">插入顺序</string>
+  <string name="role_editor_lorebook_entry_position_label">插入位置</string>
+  <string name="role_editor_lorebook_entry_enabled_label">启用</string>
+  <string name="role_editor_lorebook_entry_constant_label">常驻</string>
+  <string name="role_editor_lorebook_entry_selective_label">选择性触发</string>
+  <string name="role_editor_lorebook_entry_regex_label">正则匹配</string>
+  <string name="role_editor_lorebook_remove_entry">删除设定条目</string>
+  <string name="role_editor_creator_label">作者</string>
+  <string name="role_editor_creator_notes_label">作者备注</string>
+  <string name="role_editor_character_version_label">角色版本</string>
+  <string name="role_editor_talkativeness_label">健谈度</string>
+  <string name="role_editor_favorite_label">收藏</string>
+  <string name="role_editor_interop_title">ST 互操作</string>
+  <string name="role_editor_interop_source_format">来源格式：%1$s</string>
+  <string name="role_editor_interop_spec">规范：%1$s</string>
+  <string name="role_editor_interop_spec_version">规范版本：%1$s</string>
+  <string name="role_editor_interop_warning">警告：%1$s</string>
+  <string name="role_editor_error_invalid_integer">%1$s 的整数值无效。</string>
+  <string name="role_editor_error_invalid_decimal">%1$s 的小数值无效。</string>
+
+  <!-- Chat Screen -->
+  <string name="chat_title">聊天</string>
+  <string name="chat_loading_session">加载会话中...</string>
+  <string name="chat_missing_model_title">缺少本地模型</string>
+  <string name="chat_missing_model_content">此会话引用的模型当前不可用。请打开模型库下载或导入本地大语言模型，或切换到设备上已有的其他模型。</string>
+  <string name="chat_use_model">使用%s</string>
+  <string name="chat_open_model_library">打开模型库</string>
+  <string name="chat_you">你</string>
+  <string name="chat_persona_label">Persona</string>
+  <string name="chat_assistant">助手</string>
+  <string name="chat_message_placeholder">给角色发送消息...</string>
+  <string name="chat_message_read">已读</string>
+  <string name="chat_stop_response">停止回复</string>
+  <string name="chat_send_message">发送消息</string>
+  <string name="chat_response_stopped">回复已停止。</string>
+  <string name="chat_response_failed">回复失败。</string>
+  <string name="chat_empty_message">空消息</string>
+  <string name="chat_switch_model">切换模型</string>
+  <string name="chat_open_model_library_menu">打开模型库</string>
+  <string name="chat_select_model_title">选择模型</string>
+  <string name="chat_current_model">当前使用</string>
+  <string name="chat_token_speed_format">%1$d 令牌/秒</string>
+  <string name="chat_message_actions_title">消息操作</string>
+  <string name="chat_message_actions_content">选择这条已接受的消息如何影响连续性。</string>
+  <string name="chat_pin_message_action">固定到记忆</string>
+  <string name="chat_rewind_here_action">回溯到这里</string>
+  <string name="chat_regenerate_reply_action">重新生成回复</string>
+  <string name="chat_edit_from_here_action">从这里开始编辑</string>
+
+  <!-- Settings Screen -->
+  <string name="settings_model_library_title">模型库</string>
+  <string name="settings_model_library_summary">下载、导入和管理本地模型</string>
+  <string name="settings_dialog_live_token_speed_title">显示实时生成速率</string>
+  <string name="settings_dialog_live_token_speed_summary">模型生成时，在聊天页头部实时显示 token 输出速度。</string>
+  <string name="settings_dialog_streaming_output_title">开启流式输出</string>
+  <string name="settings_dialog_streaming_output_summary">生成时逐步显示回复内容；若中途打断，会撤回当前未完成气泡，下一轮重新从头生成。</string>
+  <string name="settings_role_editor_assistant_model_title">编辑助手模型</string>
+  <string name="settings_role_editor_assistant_model_none">默认：第一个可用模型</string>
+  <string name="settings_role_editor_assistant_model_empty">当前还没有可用本地模型。请先添加模型，再在角色编辑器中使用 AI 压缩。</string>
+  <string name="settings_role_editor_assistant_model_reset_default">使用默认值</string>
+  <string name="role_editor_ai_compress_action">AI 压缩</string>
+  <string name="role_editor_ai_compress_running">压缩中...</string>
+  <string name="role_editor_ai_compress_success">已压缩到 %1$d/%2$d 字符。</string>
+  <string name="role_editor_ai_compress_failed_generic">AI 压缩失败。请检查所选模型后重试。</string>
+  <string name="role_editor_ai_compress_failed_blank">AI 压缩结果为空，已保留原文。</string>
+  <string name="role_editor_ai_compress_failed_limit">AI 压缩结果为 %1$d 字符，仍超过 %2$d 上限，已保留原文。</string>
+  <string name="role_editor_ai_compress_missing_model">当前没有可用本地模型。请先添加模型，或在设置中选择编辑助手模型。</string>
+
+  <!-- Model Manager -->
+  <string name="model_manager">模型管理器</string>
+  <string name="model_manager_select_task_title">选择要尝试的用例</string>
+  <string name="model_not_downloaded_msg">模型尚未下载</string>
+  <string name="model_is_initializing_msg">正在初始化模型...</string>
+  <string name="model_library_tab_online_models">线上模型</string>
+  <string name="model_library_tab_local_imports">本地导入模型</string>
+  <string name="model_library_imported_empty_title">还没有本地导入模型</string>
+  <string name="model_library_imported_empty_content">点击右下角导入按钮，添加本地 .task 或 .litertlm 模型文件。</string>
+  <string name="model_list_imported_models_title">已导入的模型</string>
+  <string name="model_list_recommended_models_title">推荐模型</string>
+  <string name="model_list_experimental_label">实验性</string>
+  <plurals name="model_list_number_of_models_available">
+    <item quantity="other">%d个可用模型</item>
+  </plurals>
+  <string name="select_downloaded_model">选择已下载的模型</string>
+  <string name="select_model">选择模型</string>
+  <string name="downloaded_size">已下载%1$s</string>
+  <string name="confirm_delete_model_dialog_title">删除下载</string>
+  <string name="confirm_delete_model_dialog_content">确定要删除已下载的模型"%s"吗？</string>
+  <string name="learn_more">了解更多并查看模型许可</string>
+  <string name="loading_model_list">加载模型列表中...</string>
+
+  <!-- AI Chat -->
+  <string name="aichat_initializing_title">正在初始化模型</string>
+  <string name="aichat_initializing_content">请稍候，这可能需要最多1分钟</string>
+  <string name="aichat_emptystate_title">AI聊天</string>
+  <string name="aichat_emptystate_content">与端侧大语言模型聊天。</string>
+  <string name="chat_textinput_placeholder">输入消息...</string>
+  <string name="chat_llm_agent_name">LLM</string>
+  <string name="chat_agent_agent_name">代理</string>
+  <string name="chat_generic_agent_name">模型</string>
+  <string name="chat_generic_result_name">结果</string>
+  <string name="show_thinking">显示思考过程</string>
+  <string name="conversation_reset_message">对话已重置</string>
+  <string name="engin_reset_message">引擎已重置</string>
+
+  <!-- Benchmark -->
+  <string name="benchmark">基准测试</string>
+  <string name="baseline">基准线</string>
+  <string name="benchmark_model">基准测试模型</string>
+  <string name="benchmark_results">基准测试结果</string>
+  <string name="benchmark_no_results">无基准测试结果</string>
+  <string name="benchmark_comparison_help_title">如何比较基准测试运行</string>
+  <string name="benchmark_comparison_help_content">点击任意运行结果卡片上的**基准线**芯片将该运行设置为比较基准。我们将自动计算并显示**所有其他**运行结果卡片中的百分比差异。</string>
+  <string name="benchmark_tokens_limit_message">确保预填充和解码令牌的总和保持在模型的最大令牌限制之下（%1$d vs %2$d）</string>
+  <string name="best_overall">整体最佳</string>
+  <string name="run_benchmark">运行基准测试</string>
+  <string name="run_benchmark_confirmation_msg">此过程通常需要几分钟，一旦开始就无法中断。您要继续吗？</string>
+  <string name="running_benchmark_msg">正在运行模型基准测试...</string>
+  <string name="delete_benchmark_result_dialog_title">删除基准测试结果</string>
+  <string name="delete_benchmark_result_dialog_content">确定要删除基准测试结果吗？</string>
+  <plurals name="runs">
+    <item quantity="other">%d次运行</item>
+  </plurals>
+
+  <!-- Categories -->
+  <string name="category_unlabeled">未标记</string>
+  <string name="category_llm">大语言模型</string>
+  <string name="category_agents">代理</string>
+  <string name="category_classical_ml">经典机器学习</string>
+  <string name="category_experimental">实验性</string>
+
+  <!-- Dialogs -->
+  <string name="discard_changes_dialog_title">放弃更改？</string>
+  <string name="discard_changes_dialog_content">您有未保存的更改。确定要放弃吗？</string>
+
+  <!-- Media -->
+  <string name="add_audio">+音频</string>
+  <string name="take_a_picture">拍照</string>
+  <string name="pick_from_album">从相册选择</string>
+  <string name="record_audio_clip">录制音频</string>
+  <string name="pick_wav_file">选择wav文件</string>
+  <string name="input_history">输入历史</string>
+  <string name="askimage_emptystate_title">询问图片</string>
+  <string name="askimage_emptystate_content">开始使用，点击下方的+添加图片（每次聊天最多10张）并输入提示词询问关于它的问题！</string>
+  <string name="askaudio_emptystate_title">询问音频</string>
+  <string name="askaudio_emptystate_content">开始使用，点击下方的+添加音频片段（限制1个片段，最长30秒）并输入提示词进行转录或翻译！</string>
+
+  <!-- Voice Input -->
+  <string name="hold_down_to_talk">按住说话</string>
+  <string name="listening">正在聆听...</string>
+  <string name="release_to_send">松开发送</string>
+  <string name="tap_to_send_recording">再点一次发送录音</string>
+  <string name="slide_up_to_cancel">上滑取消</string>
+  <string name="grant_permissions">授予权限</string>
+  <string name="grant_record_audio_permission">授予录音权限</string>
+
+  <!-- Memory Warning -->
+  <string name="memory_warning_title">内存警告</string>
+  <string name="memory_warning_content">您选择的模型可能超出设备的内存，这可能导致应用崩溃。为了获得最佳体验，我们建议尝试较小的模型。</string>
+  <string name="memory_warning_proceed_anyway">仍然继续</string>
+
+  <!-- Config -->
+  <string name="config_dialog_tab_model_configs">模型配置</string>
+  <string name="config_dialog_tab_system_prompt">系统提示词</string>
+  <string name="system_prompt_updated">系统提示词已更新</string>
+  <string name="restore_default">恢复默认</string>
+  <string name="max_tokens_warning_message">设置超过10000的最大令牌可能导致应用不稳定。</string>
+
+  <!-- Logs -->
+  <string name="logs_viewer_filter_text_input_placeholder">过滤日志</string>
+  <string name="logs_viewer_title">日志查看器</string>
+  <string name="logs_viewer_no_matching_logs">没有匹配的日志</string>
+
+  <!-- Terms of Service -->
+  <string name="tos_dialog_title_app">欢迎使用杰伊玛酒馆</string>
+  <string name="tos_dialog_title_gemma">Gemma使用条款</string>
+  <string name="tos_dialog_accept_and_continue_button_label">接受并继续</string>
+  <string name="tos_dialog_agree_and_continue_button_label">同意并继续</string>
+  <string name="settings_dialog_tos_title">服务条款</string>
+  <string name="settings_dialog_view_app_terms_of_service">查看应用服务条款</string>
+  <string name="settings_dialog_gemma_prohibited_use_policy">Gemma禁止使用政策</string>
+
+  <!-- Notifications -->
+  <string name="gallery_news_notification_title">杰伊玛酒馆新闻</string>
+  <string name="notification_title_fail">模型下载失败</string>
+  <string name="notification_title_success">模型下载成功</string>
+  <string name="notification_content_fail">下载模型"%s"失败</string>
+  <string name="notification_content_success">模型"%s"已下载完成</string>
+
+  <!-- Mobile Actions -->
+  <string name="mobile_actions_title">移动操作</string>
+  <string name="mobile_actions_description">使用简单命令控制您的设备</string>
+  <string name="mobile_actions_supported_actions">支持的示例操作：</string>
+  <string name="mobile_actions_tab_model_response">模型响应</string>
+  <string name="mobile_actions_tab_function_called">调用的函数</string>
+  <string name="flashlight_off_message">我已关闭手电筒。</string>
+  <string name="flashlight_on_message">我已打开手电筒。</string>
+  <string name="set_screen_brightness_message">我已将屏幕亮度设置为%1$d%%。</string>
+  <string name="set_timer_message">正在设置%d秒的计时器。</string>
+  <string name="add_calendar_event_message">正在将"团队会议（上午10点-11点）"添加到您的日历。</string>
+  <string name="take_picture_message">正在打开相机应用。</string>
+  <string name="view_results">查看结果</string>
+  <string name="view_console_logs">查看控制台日志</string>
+  <string name="warming_up">预热中...</string>
+  <string name="warning_no_function_call">未识别到函数</string>
+  <string name="snackbar_no_function_call">未识别到函数</string>
+  <string name="unknown_error">未知错误</string>
+  <string name="view_in_full_screen">全屏查看</string>
+
+  <!-- Mobile Actions Challenge -->
+  <string name="mobile_actions_challenge_title">移动操作微调挑战</string>
+  <string name="mobile_actions_challenge_subtitle">构建它来玩它！</string>
+  <string name="mobile_actions_challenge_description">此演示已锁定。要解锁移动操作代理，您需要使用我们的开源配方自行编译模型。</string>
+  <string name="mobile_actions_challenge_instructions_title">说明：</string>
+  <string name="mobile_actions_challenge_instruction_1">1. <![CDATA[<b>在您的电脑上</b>]]>，打开<![CDATA[<a href="https://ai.google.dev/gemma/docs/mobile-actions">此指南</a>]]></string>
+  <string name="mobile_actions_challenge_instruction_2">2. 按照说明微调模型并将其转换为.litertlm格式。</string>
+  <string name="mobile_actions_challenge_instruction_3">3. 将文件传输到此手机。</string>
+  <string name="mobile_actions_challenge_instruction_4">4. 点击下方的<![CDATA[<b>加载模型</b>]]>解锁演示。</string>
+  <string name="mobile_actions_challenge_email_colab">将指南发送到我的邮箱</string>
+  <string name="mobile_actions_challenge_load_model">加载模型</string>
+
+  <!-- Prompt Templates -->
+  <plurals name="parameter">
+    <item quantity="other">参数</item>
+  </plurals>
+  <string name="prompt_template_label_flash_on_off">打开/关闭手电筒</string>
+  <string name="prompt_template_label_flash_on">打开手电筒</string>
+  <string name="prompt_template_label_flash_off">关闭手电筒</string>
+  <string name="prompt_template_label_create_contact">创建联系人</string>
+  <string name="prompt_template_label_send_email">发送邮件</string>
+  <string name="prompt_template_label_create_calendar_event">创建日历事件</string>
+  <string name="prompt_template_label_show_location_on_map">在地图上显示位置</string>
+  <string name="prompt_template_label_open_wifi_settings">打开WiFi设置</string>
+  <string name="text_image_generation_text_field_placeholder">输入提示词...</string>
+  <string name="text_input_placeholder_llm_chat">输入提示词...</string>
+
+  <!-- Skills -->
+  <string name="add_script">添加脚本</string>
+  <string name="add_default_script">添加默认脚本</string>
+  <string name="add_skill">添加技能</string>
+  <string name="add_skill_option_featured_list_title">从精选列表添加技能</string>
+  <string name="add_skill_option_featured_list_description">从社区贡献的精选技能列表中添加技能</string>
+  <string name="add_skill_option_url_title">从URL加载技能</string>
+  <string name="add_skill_option_url_description">输入托管在Web上的技能目录URL</string>
+  <string name="add_skill_option_local_title">导入本地技能</string>
+  <string name="add_skill_option_local_description">本地导入技能目录</string>
+  <string name="add_skill_option_skill_creator_title">技能创建器</string>
+  <string name="add_skill_option_skill_creator_description">在应用内从头创建技能</string>
+  <string name="add_skill_from_url_dialog_title">从URL添加技能</string>
+  <string name="add_skill_dialog_title_from_local_import">导入本地技能</string>
+  <string name="add_skill_dialog_subtitle_from_local_import">请先"adb push"整个技能目录到/sdcard/Download</string>
+  <string name="add_skill_manual_input_sheet_title">创建技能</string>
+  <string name="agent_skills">代理技能</string>
+  <string name="agent_skills_description">通过加载不同的技能或创建自己的技能来使用专业化的高级推理。\n\n尝试点击下面的示例提示词来体验代理技能！</string>
+  <string name="disclaimer_dialog_content">第三方技能并非由Google编写或认可。Google对其内容、安全性或数据处理方式不承担责任。\n\n在提供敏感信息（如个人身份、令牌或API密钥）之前请谨慎行事。\n\n使用任何代理技能均受该技能适用条款的约束。</string>
+  <string name="disclaimer_dialog_title">添加第三方技能</string>
+  <string name="disclaimer_dialog_agree">同意</string>
+  <string name="delete_script_dialog_title">删除脚本</string>
+  <string name="delete_skill_dialog_title">删除技能</string>
+  <string name="delete_skill_dialog_content">确定要删除该技能吗？</string>
+  <string name="delete_selected_skills_title">删除选中的技能</string>
+  <plurals name="delete_selected_skills_content">
+    <item quantity="one">确定要删除%d个技能吗？</item>
+    <item quantity="other">确定要删除%d个技能吗？</item>
+  </plurals>
+  <plurals name="selected_custom_skills_count">
+    <item quantity="one">已选择%d个</item>
+    <item quantity="other">已选择%d个</item>
+  </plurals>
+  <string name="built_in_skills_title">内置技能</string>
+  <string name="custom_skills_title">自定义技能</string>
+  <string name="describe_requirements">描述需求</string>
+  <string name="describe_input_data">描述输入数据</string>
+  <string name="describe_input_data_support_text">字段名称需要与说明中的名称匹配。</string>
+  <string name="describe_output_data">描述输出数据</string>
+  <string name="duplicated_script_name">重复的脚本名称</string>
+  <string name="enable_skill_dialog_content">请点击下方的技能按钮启用该技能。</string>
+  <string name="edit_skill">编辑技能</string>
+  <string name="enter_skill_url">输入技能根目录的URL</string>
+  <string name="featured_skills_title">精选技能</string>
+  <string name="featured_skills_description">社区贡献的精选技能列表</string>
+  <string name="generate_llm_prompt_title">生成LLM提示词</string>
+  <string name="generate_llm_prompt_button_label">LLM提示词</string>
+  <string name="learn_how_to_write_skills">学习如何编写技能</string>
+  <string name="loading_skills_allowlist">加载精选技能中...</string>
+  <string name="manage_skills">管理技能</string>
+  <string name="manage_skills_description">查看、创建和管理您的技能</string>
+  <string name="skill_limit_warning">启用超过%s个可能会影响性能。</string>
+  <string name="no_directory_selected">未选择目录</string>
+  <string name="pick_skill_dir">选择技能的根目录</string>
+  <string name="prompt_copied_message">提示词已复制到剪贴板。将其粘贴到您喜欢的LLM应用中生成代码，然后将代码复制粘贴到这里。</string>
+  <string name="prompt_chip_kitchen_adventure">厨房冒险</string>
+  <string name="prompt_chip_calculate_hash">计算哈希</string>
+  <string name="prompt_chip_query_wikipedia">查询维基百科</string>
+  <string name="prompt_chip_plot_chart">绘制图表</string>
+  <string name="prompt_chip_interactive_map">交互式地图</string>
+  <string name="prompt_chip_text_spinner">旋转我头上的标签</string>
+  <string name="prompt_chip_send_email">发送邮件</string>
+  <string name="replace_skill_dialog_title">替换现有技能</string>
+  <string name="replace_skill_dialog_content">已存在同名技能。您要替换它吗？</string>
+  <string name="search_skill">搜索技能</string>
+  <string name="select_script">选择脚本</string>
+  <string name="script_name">脚本名称</string>
+  <string name="script_content">脚本内容</string>
+  <string name="skills">技能</string>
+  <plurals name="skills_count">
+    <item quantity="other">%d个技能</item>
+  </plurals>
+  <string name="skill_name_input_description">必填。格式为my-skill-name</string>
+  <string name="skill_description_input_description">必填。技能功能和触发条件或关键词的简要描述。</string>
+  <string name="skill_instructions_input_description">LLM必须遵循的Markdown格式的详细说明。</string>
+  <string name="use_call_js_template">使用Call JS模板</string>
+
+  <!-- Tiny Garden -->
+  <string name="conversation_history">对话历史</string>
+  <string name="collect">收集</string>
+  <string name="color">颜色</string>
+  <string name="tap_to_change_color">点击更改颜色</string>
+  <string name="no_cutouts_collected">未收集到剪贴画</string>
+  <string name="reset_note">点击"重置"将仅重置LiteRT-LM引擎。游戏进度不会受影响。</string>
+  <string name="resetting_engine">正在重置引擎...</string>
+  <string name="reinitializing_description">游戏进度不会受影响</string>
+  <string name="introducing">介绍</string>
+  <string name="litert_community_label">LiteRT社区</string>
+
+  <!-- Misc -->
+  <string name="checking_access">检查访问权限...</string>
+  <string name="collapse_all">全部折叠</string>
+  <string name="expand_all">全部展开</string>
+  <string name="failed_to_save">保存失败</string>
+  <string name="function_name">函数名称</string>
+  <string name="generate_and_copy">生成并复制</string>
+  <string name="instructions">说明</string>
+  <string name="invalid_response">无效响应</string>
+  <string name="paste_from_clipboard">从剪贴板粘贴</string>
+  <string name="selected_count">已选择%d个</string>
+  <string name="turn_on_all">全部开启</string>
+  <string name="turn_off_all">全部关闭</string>
+  <string name="unsupported_action">不支持的操作</string>
+  <string name="basic_info">基本信息</string>
+  <string name="description_required">描述*</string>
+  <string name="enter_instruction">输入指令</string>
+  <string name="edit_secret">编辑密钥</string>
+  <string name="secret">密钥</string>
+
+  <!-- Accessibility Content Descriptions -->
+  <string name="cd_add_icon">添加</string>
+  <string name="cd_import_model_button">导入模型</string>
+  <string name="cd_task_card">%1$s任务，共%2$d个模型</string>
+  <string name="cd_error">错误</string>
+  <string name="cd_import_model_from_local_file_button">从本地文件导入模型</string>
+  <string name="cd_navigate_back_icon">返回</string>
+  <string name="cd_app_settings_icon">设置</string>
+  <string name="cd_done_icon">完成</string>
+  <string name="cd_collapse_icon">折叠</string>
+  <string name="cd_expand_icon">展开</string>
+  <string name="cd_stop_icon">停止</string>
+  <string name="cd_delete_icon">删除</string>
+  <string name="cd_close_icon">关闭</string>
+  <string name="cd_selected_icon">已选择</string>
+  <string name="cd_model_settings_icon">模型设置</string>
+  <string name="cd_reset_session_icon">重置会话</string>
+  <string name="cd_change_model">当前模型是%1$s。点击更换模型。</string>
+  <string name="cd_close_image_viewer_icon">关闭图片查看器</string>
+  <string name="cd_copy_to_clipboard_icon">复制到剪贴板</string>
+  <string name="cd_prompt_input_text_field">提示词输入</string>
+  <string name="cd_send_prompt_icon">发送提示词</string>
+  <string name="cd_model_response_text">模型响应文本</string>
+  <string name="cd_clear_input_history_icon">清除输入历史</string>
+  <string name="cd_delete_input_history_entry_icon">删除输入历史条目</string>
+  <string name="cd_content_input_field">内容输入</string>
+  <string name="cd_add_example_prompt_icon">添加示例提示词</string>
+  <string name="cd_image_thumbnail">图片缩略图</string>
+  <string name="cd_user_image">用户图片%1$d</string>
+  <string name="cd_user_image_in_group">用户图片%1$d，共%2$d张</string>
+  <string name="cd_add_content_icon">添加内容</string>
+  <string name="cd_camera_shutter_icon">相机快门</string>
+  <string name="cd_toggle_front_back_camera_icon">切换前后摄像头</string>
+  <string name="cd_pick_file">选择文件</string>
+  <string name="cd_play_audio_icon">播放音频</string>
+  <string name="cd_stop_playback_icon">停止播放</string>
+  <string name="cd_send_audio_clip_icon">发送音频片段</string>
+  <string name="cd_start_recording">开始录音</string>
+  <string name="cd_downloaded_icon">已下载</string>
+  <string name="cd_not_downloaded_icon">未下载</string>
+  <string name="cd_downloading_icon">下载中</string>
+  <string name="cd_download_failed_icon">下载失败</string>
+  <string name="cd_chat_panel">聊天面板</string>
+  <string name="cd_switch_to_keyboard">切换到键盘</string>
+  <string name="cd_switch_to_voice">切换到语音</string>
+  <string name="cd_show_history">显示历史</string>
+  <string name="cd_more_options">更多选项</string>
+  <string name="cd_help">帮助</string>
+  <string name="cd_menu">菜单</string>
+  <string name="tap_to_see_value">点击图表查看数值</string>
+  <!-- Language Settings -->
+  <string name="settings_language">语言</string>
+  <string name="settings_language_summary">更改应用语言</string>
+  <string name="settings_message_sounds_title">消息音效</string>
+  <string name="settings_message_sounds_summary">在聊天中播放发送和回复提示音</string>
+  <string name="language_system">系统</string>
+  <string name="language_english">English</string>
+  <string name="language_chinese">简体中文</string>
+  <string name="language_japanese">日本語</string>
+  <string name="language_korean">한국어</string>
+  <string name="role_editor_import_st_card">导入 ST 角色卡</string>
+  <string name="role_editor_export_st_json">导出 ST JSON</string>
+  <string name="role_editor_export_st_png">导出 ST PNG</string>
+  <string name="role_editor_status_avatar_cleared">已清除主头像</string>
+  <string name="role_editor_status_avatar_updated">已更新主头像</string>
+  <string name="role_editor_status_cover_cleared">已清除封面图</string>
+  <string name="role_editor_status_cover_updated">已更新封面图</string>
+  <string name="role_editor_status_gallery_added">已添加 %1$d 张图库图片</string>
+  <string name="role_editor_status_gallery_removed">已移除图库图片</string>
+  <string name="role_editor_status_gallery_avatar">已将图库图片设为主头像</string>
+  <string name="role_editor_status_gallery_cover">已将图库图片设为封面</string>
+  <string name="role_editor_status_sprite_added">已添加 %1$d 张精灵图片</string>
+  <string name="role_editor_status_sprite_removed">已移除精灵图片</string>
+  <string name="role_editor_status_st_imported">已导入 ST 角色卡</string>
+  <string name="role_editor_status_st_exported">已导出 ST 角色卡</string>
+  <string name="role_editor_error_st_import_failed">导入 ST 角色卡失败</string>
+  <string name="role_editor_error_st_export_failed">导出 ST 角色卡失败</string>
+  <string name="role_editor_error_required_fields">角色名称是必填项。</string>
+  <string name="role_editor_default_system_prompt">你是一名沉浸式角色扮演助手。保持角色一致性，并以符合设定的方式自然回复。</string>
+  <string name="role_editor_required_badge">必填</string>
+  <string name="role_editor_required_hint">标记为必填的字段必须填写后才能保存这个角色。其他字段可以留空，但留空通常会降低风格控制力和设定还原度。</string>
+  <string name="role_editor_character_count_without_limit">%1$d</string>
+  <string name="role_editor_character_count_with_limit">%1$d/%2$d</string>
+  <string name="role_editor_help_role_name_body">作用：\n这是角色在角色列表、会话选择器和聊天顶部展示的名称，也会回写到 ST 卡片的 name 字段。\n\n留空影响：\n无法保存角色。当前这是唯一真正必填的字段。\n\n建议内容与长度：\n填写用户真正会看到的角色名，不要把简介塞进这里。通常 2 到 20 个字已经足够。编辑器预算为 120 个字符，可以容纳别名或头衔，但仍然能保持界面可读。</string>
+  <string name="role_editor_help_description_body">作用：\n简介用于定义角色稳定的身份层，包括外观、核心背景、身份定位、关系状态，以及大多数场景下都应保持成立的事实。\n\n留空影响：\n角色仍然可以运行，但模型对“这个人到底是谁”的把握会变弱，角色一致性通常会比风格表现更容易受损。\n\n建议内容与长度：\n尽量写成紧凑的人物档案，而不是完整传记。对 4k 端侧模型来说，120 到 300 个字符通常比较合适。编辑器预算为 400 个字符，建议多写事实，少写修辞。</string>
+  <string name="role_editor_help_personality_body">作用：\n人格设定控制角色的脾气、情绪习惯、价值取向、说话节奏、社交方式和常见小动作。这里更适合描述“怎么反应”，而不是“是什么身份”。\n\n留空影响：\n模型会更依赖简介、示例对话和开场白，回复可能变得更平、更像泛化助手口吻。\n\n建议内容与长度：\n建议写成几个性格簇，不要写成长篇设定文。适合放语气、耐心、强势程度、嫉妒心、幽默感、正式度、口头习惯等。150 到 350 个字符通常足够，编辑器预算为 600 个字符。</string>
+  <string name="role_editor_help_scenario_body">作用：\n场景用于定义会话起点：故事一开始发生在哪里、双方是什么关系、当前处于什么前提下展开对话。\n\n留空影响：\n角色会更通用、更方便复用，但开局上下文会变弱，模型需要从用户首轮输入里自行推断场景。\n\n建议内容与长度：\n这里适合写“当前情境”，不适合塞深层背景。100 到 250 个字符通常够用。编辑器预算为 500 个字符。如果世界观很大，建议把参考资料放进设定集，而不是把这里写成百科。</string>
+  <string name="role_editor_help_first_message_body">作用：\n开场白是新会话开始时的第一段角色输出，用来一次性建立语气、节奏、格式和开局场景感。\n\n留空影响：\n会话仍然可以开始，但少了一个强力的风格锚点，第一轮真实回复更容易“不像这个角色”。\n\n建议内容与长度：\n写一段自然的角色内发言，不要写元说明。80 到 300 个字符通常是很稳的范围。编辑器预算为 800 个字符，但对于本地模型来说，短一点通常更好。</string>
+  <string name="role_editor_help_example_dialogue_body">作用：\n示例对话通过“演示”教模型说话方式，最适合用来控制语气、旁白格式、表情符号习惯、引号风格，以及台词和动作描写的比例。\n\n留空影响：\n角色仍然可以依靠简介和人格设定运行，但会损失一部分精细口吻模仿能力。\n\n建议内容与长度：\n示例应短、小而准，重点体现格式和声音，不要把整本设定书贴进来。对 4k 端侧模型来说，300 到 1200 个字符通常就够。编辑器预算为 2400 个字符，全部用满会直接挤占最近对话和设定集预算。</string>
+  <string name="role_editor_help_system_prompt_body">作用：\n系统提示词是本项目运行时优先级最高的指令层，适合放硬性约束、禁止项、输出格式规则，以及 App 侧需要强约束的控制指令。\n\n留空影响：\n运行时会退回项目默认系统提示词。角色仍然能工作，但会缺少卡片专属的硬规则。\n\n建议内容与长度：\n建议把这里留给规则，不要写风味文案。150 到 500 个字符通常足够。编辑器预算为 1200 个字符；如果这里太长，小上下文模型会直接失去更多历史对话空间。</string>
+  <string name="role_editor_help_post_history_body">作用：\n历史后置指令会被插入到最近聊天记录之后，因此很适合放需要贴近“模型当前注意力窗口”的提醒，而不必占掉整块系统提示词。\n\n留空影响：\n不会出错，只是改为完全依赖系统提示词、摘要和设定集。\n\n建议内容与长度：\n适合放短提醒，例如说话格式、场景提醒、边界约束。60 到 200 个字符通常够用，编辑器预算为 500 个字符。</string>
+  <string name="role_editor_help_alternate_greetings_body">作用：\n备选开场白是额外的开局候选语句，用于在新会话开始时增加变化，不会改写角色本体设定。\n\n留空影响：\n系统只会使用主开场白作为开局种子。\n\n建议内容与长度：\n一行一个开场白，每行都应当独立、自然、角色内。1 到 5 条通常已经很好。总编辑器预算为 600 个字符，短开场白更适合端侧小上下文。</string>
+  <string name="role_editor_help_lorebook_name_body">作用：\n设定集名称是嵌入式 ST lorebook 的人类可读标签，方便编辑者识别这本设定集，但不会直接改变模型生成。\n\n留空影响：\n运行时仍然正常，只是这本设定集在工具和调试视图里会缺少名字。\n\n建议内容与长度：\n建议使用世界名、篇章名或资料包名这类短标签。编辑器预算为 120 个字符。</string>
+  <string name="role_editor_help_lorebook_description_body">作用：\n设定集描述是面向编辑者的说明文档，用来说明这本 lorebook 覆盖什么内容、采用什么维护方式。\n\n留空影响：\n运行时行为不会变化，只是你自己或其他维护者会少一段说明。\n\n建议内容与长度：\n适合写覆盖范围、触发策略、维护约定。80 到 200 个字符通常足够，编辑器预算为 400 个字符。</string>
+  <string name="role_editor_help_lorebook_scan_depth_body">作用：\n扫描深度控制最近多少条消息会参与 lore 触发检查。值越大，越容易让更早的提及触发设定，但同时也更耗扫描成本，并可能把已经过时的上下文带回来。\n\n留空影响：\nST 卡里该值保持未设置，运行时会走默认行为。\n\n取值建议：\n0 到 1 代表几乎只看最新一两轮。2 到 4 是比较适合端侧小模型的平衡区间。5 以上会更激进，也更容易误触发和挤占 prompt。ST 本身支持更大的值，但在本项目 4k 上下文里，低值通常更安全。</string>
+  <string name="role_editor_help_lorebook_token_budget_body">作用：\nToken 预算限制一次 prompt 组装里最多允许注入多少 lore 文本。\n\n留空影响：\nST 卡里该值保持未设置，运行时会使用默认处理方式。\n\n取值建议：\n64 到 128 token 偏保守，适合小卡和端侧设备。128 到 256 是比较实用的平衡区间。超过 256 可以带来更丰富的世界信息，但对 4k 本地模型来说，会直接和最近对话、摘要、回复预算竞争。只有设定集确实是主链路时才建议继续加大。</string>
+  <string name="role_editor_help_lorebook_recursive_body">作用：\n递归扫描允许“刚激活的设定”继续触发其他设定，适合存在链式依赖的 lore 设计。\n\n关闭时影响：\n只会处理直接命中的触发项，行为更简单，也更容易控制。\n\n建议：\n除非你的 lorebook 本来就是按链式触发设计的，否则默认建议关闭。打开后表达力更强，但也更容易让激活逻辑变复杂、消耗更多上下文预算。</string>
+  <string name="role_editor_help_lore_entry_id_body">作用：\n条目 ID 是这条 lore 的稳定数字标识，主要用于工具、导出兼容和调试。\n\n留空影响：\n这条内容仍然能作为编辑内容存在，但导出或对比时会少一个明确编号。\n\n建议内容与长度：\n建议使用短整数，通常不超过 6 位数。输入框预算为 8 个字符。</string>
+  <string name="role_editor_help_lore_entry_keys_body">作用：\n关键词是这条 lore 的主触发词。最近聊天命中这些词后，这条设定才有资格被激活。\n\n留空影响：\n对于非常驻条目来说，几乎等于很难被有意触发。通常意味着这条条目要么应改成常驻，要么应重新设计触发词。\n\n建议内容与长度：\n建议使用逗号分隔的触发词、名字、别名或明确短语。列表应尽量紧凑，不要把一堆弱相关词都塞进来。编辑器预算为 240 个字符。</string>
+  <string name="role_editor_help_lore_entry_secondary_keys_body">作用：\n次关键字用于补充主关键词，适合处理同义词、别称、不同写法，或者一些不想放进主关键词里的辅助触发线索。\n\n留空影响：\n只使用主关键词触发，这对大多数条目都完全没问题。\n\n建议内容与长度：\n只有在主关键词确实覆盖不住时再填，避免把所有相关词一股脑塞进来。编辑器预算为 240 个字符。</string>
+  <string name="role_editor_help_lore_entry_comment_body">作用：\n备注是给编辑者看的说明，用来解释设计意图、来源或维护注意事项。\n\n留空影响：\n不会影响运行时行为。\n\n建议内容与长度：\n适合写“这条为什么存在”“不要和哪条合并”“来源出自哪里”之类的短说明。编辑器预算为 240 个字符。</string>
+  <string name="role_editor_help_lore_entry_content_body">作用：\n内容是这条 lore 真正会在激活时注入 prompt 的文本。\n\n留空影响：\n即使触发成功，也没有多少可注入信息，等于触发价值很低。\n\n建议内容与长度：\n建议写高密度事实，而不是抒情散文。适合写名字、职能、规则、事实、关系。对端侧小模型来说，80 到 300 个字符通常就很有效。编辑器预算为 800 个字符。</string>
+  <string name="role_editor_help_lore_entry_order_body">作用：\n插入顺序决定多条 lore 被放进同一 prompt 槽位时的相对前后关系。\n\n留空影响：\n导出时该字段保持未设置，排序会退回默认语义。\n\n取值建议：\n数值越小通常越靠前。建议用 0、10、20 这种留空档的步进，而不是 1、2、3 连号，方便后续插入新条目。输入框预算为 6 个字符。</string>
+  <string name="role_editor_help_lore_entry_position_body">作用：\n插入位置决定这条 lore 被塞进 prompt 的哪个区域。相同内容放在不同区域，模型关注度会明显不同。\n\n留空影响：\nST 卡里该字段保持未设置，运行时回退到默认放置语义。\n\n建议内容与长度：\n填写符合你的 ST 工作流约定的位置关键字，例如支持的 before 或 after 之类值。尽量保持简短。输入框预算为 24 个字符。</string>
+  <string name="role_editor_help_lore_entry_enabled_body">作用：\n启用是这条 lore 的总开关。\n\n关闭时影响：\n条目仍然保存在卡片里，但运行时完全跳过。\n\n建议：\n测试触发质量时，优先先关闭而不是删除，这样后续恢复更方便。</string>
+  <string name="role_editor_help_lore_entry_constant_body">作用：\n常驻会让条目无需关键词命中、每轮都直接注入。\n\n关闭时影响：\n条目回到普通的“触发后再注入”模式。\n\n建议：\n只把确实需要长期存在的事实设为常驻。对 4k 本地模型来说，滥用常驻是最容易浪费上下文预算的做法之一。</string>
+  <string name="role_editor_help_lore_entry_selective_body">作用：\n选择性触发会收紧激活行为，降低条目被过宽触发的概率。\n\n关闭时影响：\n使用默认匹配逻辑。\n\n建议：\n如果这条 lore 老是在无关场景冒出来，就打开它；如果你本来就希望它尽量容易被召回，而且关键词已经足够具体，就可以保持关闭。</string>
+  <string name="role_editor_help_lore_entry_regex_body">作用：\n正则匹配会把关键词按正则表达式处理，而不是普通文本词组。\n\n关闭时影响：\n关键词使用常规文本匹配，通常更安全。\n\n建议：\n只有在你确实需要模式匹配、变体匹配或数字范围时再打开。正则能力很强，但也最容易配置出意外的大范围误触发。</string>
+  <string name="role_editor_help_creator_body">作用：\n作者用于记录卡片作者或来源名称，主要用于署名和整理。\n\n留空影响：\n卡片仍然完全可用，只是缺少作者元数据。\n\n建议内容与长度：\n可填写人名、ID、工作室名或来源包名。编辑器预算为 120 个字符。</string>
+  <string name="role_editor_help_creator_notes_body">作用：\n作者备注是面向维护者的角色外说明，适合写警告、版本说明、推荐用法或后续编辑建议。\n\n留空影响：\n不会影响运行时。\n\n建议内容与长度：\n建议写实用信息，不要再写角色口吻。80 到 250 个字符通常足够，编辑器预算为 600 个字符。</string>
+  <string name="role_editor_help_character_version_body">作用：\n角色版本是手动维护的发布标签。\n\n留空影响：\n卡片只是不显示版本号。\n\n建议内容与长度：\n推荐使用 v1、1.2.0、2026-04 这类简洁格式。编辑器预算为 32 个字符。</string>
+  <string name="role_editor_help_tags_body">作用：\n标签用于搜索、筛选、分组和后续整理角色库。\n\n留空影响：\n角色仍然可用，但角色库变大后会更难管理。\n\n建议内容与长度：\n用逗号分隔类型、题材、语气、作品来源等分类词，不要写成完整句子。编辑器预算为 200 个字符。</string>
+  <string name="role_editor_help_talkativeness_body">作用：\n健谈度是 ST 元数据里的“回复偏长还是偏短”提示。在 SillyTavern 风格卡片里，它通常只是软偏好，不是硬保证。\n\n留空影响：\nST 卡里该值保持未设置，相关工具一般会回退到默认值，通常接近中间档。\n\n取值建议：\n0.0 到 0.3 更偏短、更克制；0.4 到 0.6 是中间平衡区；0.7 到 1.0 更偏健谈、更主动。当前项目主要把它当元数据保存，所以不要把它理解成必然生效的强规则。输入框预算为 4 个字符。</string>
+  <string name="role_editor_help_favorite_body">作用：\n收藏用于在本地角色库中标记偏好角色。\n\n关闭时影响：\n完全不影响运行时生成。\n\n建议：\n适合用来标记常用角色、质量稳定的角色，或你准备长期维护的角色。</string>
+  <string name="role_editor_help_safety_policy_body">作用：\n安全策略是本项目附加在角色上的 App 侧约束层，和 ST 核心字段分开，主要服务于本项目自己的运行时与产品规则。\n\n留空影响：\n角色仍然可用，只是只剩全局默认安全策略。\n\n建议内容与长度：\n适合写简短的边界提醒、禁止内容、App 侧约束。编辑器预算为 400 个字符。</string>
+  <string name="role_editor_help_default_model_body">作用：\n默认模型用于指定打开或新建该角色会话时优先预选哪个本地模型。\n\n留空影响：\nApp 会回到常规模型选择流程。\n\n建议：\n只有当这个角色明确针对某个本地模型调过、测过时才建议设置。它是便捷默认值，不是强制锁定。</string>
+  <string name="role_editor_help_interop_body">作用：\nST 互操作信息用于展示当前角色和 SillyTavern 兼容卡片格式之间的映射状态，包括来源格式、规范版本和兼容性警告。\n\n出现警告时影响：\n导入导出通常仍然可能成功，但某些高级 ST 数据可能会被忽略、以原始互操作负载形式保留，或在本项目里采用不同表示方式。\n\n建议：\n导出前最好看一眼这个区域，尤其是原始卡片用了高级 lorebook 或 extension 字段时。</string>
+  <string name="role_editor_tab_basic">基础资料</string>
+  <string name="role_editor_tab_persona">人格设定</string>
+  <string name="role_editor_tab_world">世界设定</string>
+  <string name="role_editor_tab_other">其他配置</string>
+  <string name="role_catalog_status_st_imported">已导入 ST 角色卡</string>
+  <string name="role_catalog_error_st_import_failed">导入 ST 角色卡失败</string>
+  <string name="sessions_unknown_role">未知角色</string>
+  <string name="sessions_no_messages">暂无消息</string>
+  <string name="sessions_status_imported">已导入 ST 聊天记录</string>
+  <string name="sessions_error_import_failed">导入 ST 聊天记录失败</string>
+  <string name="sessions_status_exported">已导出 ST 聊天记录</string>
+  <string name="sessions_error_export_failed">导出 ST 聊天记录失败</string>
+  <string name="chat_status_pending">等待中</string>
+  <string name="chat_status_streaming">生成中</string>
+  <string name="chat_status_completed">已完成</string>
+  <string name="chat_status_failed">失败</string>
+  <string name="chat_status_stopped">已停止</string>
+  <string name="role_editor_media_title">媒体资源</string>
+  <string name="role_editor_media_summary">管理主头像和仅项目内使用的封面图。主头像会用于聊天显示和 ST PNG 导出。</string>
+  <string name="role_editor_avatar_title">主头像</string>
+  <string name="role_editor_avatar_summary">用于聊天显示，并作为 ST PNG 角色卡导出的图片外壳。</string>
+  <string name="role_editor_avatar_empty">尚未选择主头像</string>
+  <string name="role_editor_cover_title">封面图</string>
+  <string name="role_editor_cover_summary">仅在本项目内使用，不属于标准 ST 角色卡。</string>
+  <string name="role_editor_cover_empty">尚未设置封面图</string>
+  <string name="role_editor_media_status_missing">缺失</string>
+  <string name="role_editor_media_status_st_png">来自 ST PNG</string>
+  <string name="role_editor_media_status_local">本地</string>
+  <string name="role_editor_media_status_project_only">仅项目内使用</string>
+  <string name="role_editor_media_add">添加</string>
+  <string name="role_editor_media_replace">替换</string>
+  <string name="role_editor_media_clear">清除</string>
+  <string name="role_editor_export_png_missing_avatar_title">导出 ST PNG 需要主头像</string>
+  <string name="role_editor_export_png_missing_avatar_content">当前角色还没有主头像。你可以使用默认图片导出，或者现在选择一张图片，并将其用于角色和本次导出。</string>
+  <string name="role_editor_export_png_use_default">使用默认图片</string>
+  <string name="role_editor_export_png_upload_image">上传图片</string>
+  <string name="role_editor_media_export_summary_title">媒体导出摘要</string>
+  <string name="role_editor_media_export_summary_body">ST PNG 目前只会导出当前主头像。封面、图库和精灵图片暂时仅在项目内保留。</string>
+  <string name="role_editor_media_export_st_png_ready">ST PNG 头像已就绪</string>
+  <string name="role_editor_media_export_st_png_missing">缺少 ST PNG 头像</string>
+  <string name="role_editor_media_export_cover_project_only">封面图仅项目内使用</string>
+  <string name="role_editor_media_export_cover_empty">没有封面图</string>
+  <string name="role_editor_media_export_gallery_count">图库：%1$d</string>
+  <string name="role_editor_media_export_sprite_count">精灵：%1$d</string>
+  <string name="role_editor_gallery_title">图库图片</string>
+  <string name="role_editor_gallery_summary">为当前角色添加额外的立绘、场景图和参考图。</string>
+  <string name="role_editor_gallery_add">添加图库图片</string>
+  <string name="role_editor_gallery_empty">还没有图库图片。</string>
+  <string name="role_editor_gallery_set_avatar">设为头像</string>
+  <string name="role_editor_gallery_set_cover">设为封面</string>
+  <string name="role_editor_media_asset_name">显示名称</string>
+  <string name="role_editor_media_remove">移除</string>
+  <string name="role_editor_sprite_title">精灵和表情图片</string>
+  <string name="role_editor_sprite_summary">管理额外的表情状态，为未来精灵感知聊天展示做准备。</string>
+  <string name="role_editor_sprite_add">添加精灵图片</string>
+  <string name="role_editor_sprite_empty">还没有精灵图片。</string>
+  <string name="role_editor_sprite_state_tag">状态标签</string>
+  <string name="role_editor_media_usage_unspecified">用途：未指定</string>
+  <string name="role_editor_media_usage_portrait">用途：立绘</string>
+  <string name="role_editor_media_usage_expression">用途：表情</string>
+  <string name="role_editor_media_usage_scene">用途：场景</string>
+  <string name="role_editor_media_usage_reference">用途：参考</string>
+  <string name="role_catalog_no_avatar">无头像</string>
+  <string name="role_editor_media_compatibility_title">媒体兼容性</string>
+  <string name="role_editor_media_compatibility_avatar_ready">主头像已可用于 ST PNG 导出。</string>
+  <string name="role_editor_media_compatibility_avatar_missing">缺少主头像。导出 ST PNG 时会提示使用默认图片或上传图片。</string>
+  <string name="role_editor_media_compatibility_cover_local">封面图仅在本项目内使用，不会导出到 ST。</string>
+  <string name="role_editor_media_compatibility_gallery">图库图片：%1$d</string>
+  <string name="role_editor_media_compatibility_sprites">精灵图片：%1$d</string>
+  <string name="role_editor_media_compatibility_imported">主头像来自导入的 ST PNG 角色卡。</string>
+  <string name="role_editor_media_preview_unavailable">无法预览</string>
+  <string name="role_editor_gallery_name_label">图库名称</string>
+  <string name="role_editor_gallery_use_as_avatar">设为头像</string>
+  <string name="role_editor_gallery_use_as_cover">设为封面</string>
+  <string name="role_editor_gallery_remove">移除图库图片</string>
+  <string name="role_editor_sprite_name_label">精灵名称</string>
+  <string name="role_editor_sprite_state_tag_label">精灵状态标签</string>
+  <string name="role_editor_sprite_remove">移除精灵</string>
+  <string name="role_editor_gallery_usage_unspecified">未指定</string>
+  <string name="role_editor_gallery_usage_portrait">立绘</string>
+  <string name="role_editor_gallery_usage_expression">表情</string>
+  <string name="role_editor_gallery_usage_scene">场景</string>
+  <string name="role_editor_gallery_usage_reference">参考</string>
+  <string name="my_profile_avatar_tap_to_upload">点击头像，从相册上传。</string>
+  <string name="my_profile_avatar_tap_to_edit">点击头像，调整取景。</string>
+  <string name="my_profile_avatar_edit_title">编辑头像</string>
+  <string name="my_profile_avatar_edit_hint">拖动调整位置，双指缩放，直到内容刚好落在圆形头像框内。</string>
+  <string name="builtin_role_gemma_name">杰伊玛</string>
+  <string name="builtin_role_gemma_summary">热情熟络的酒馆老板娘，记得你的口味，也总能把深夜招待得暧昧又安心。</string>
+  <string name="builtin_role_gemma_system_prompt">你是“杰伊玛”，Gemma Tavern 的老板娘。始终保持角色设定，以自信、风情万种、见多识广的酒馆女主人身份与用户交谈，把对方当成熟客来招待。回复要温热、鲜活、会撩、懂分寸，关注情绪，不要跳出角色，也不要变成干巴巴的助手口吻。</string>
+  <string name="builtin_role_gemma_persona_description">杰伊玛成熟妩媚，待人熟络，嘴角总带着若有若无的笑意，很擅长让每位客人都觉得自己被偏爱。她亲切、会拿捏气氛，偶尔大胆，总能稳稳掌控整间酒馆的节奏。</string>
+  <string name="builtin_role_gemma_world_settings">对话发生在 Gemma Tavern，一间灯火暧昧的热闹酒馆。旅人、商人、佣兵和各种秘密都会在深夜汇到同一张擦得发亮的木吧台前。</string>
+  <string name="builtin_role_gemma_opening_line">又来了，亲爱的？你的位置还暖着，我正准备给你倒上一杯老样子。说吧，今晚你想要安慰、八卦，还是一点不太安分的乐子？</string>
+  <string name="builtin_role_gemma_example_dialogue_1">用户：今天太累了。 助手：那就先坐下，让我用这一杯一杯的酒，替你把肩上的疲惫慢慢拿走。</string>
+  <string name="builtin_role_gemma_example_dialogue_2">用户：你总知道该说什么。 助手：好老板娘就该有这点本事，亲爱的。我总得先听明白，才知道该给你倒什么。</string>
+  <string name="builtin_role_gemma_safety_policy">保持角色扮演。语气可以暧昧、会撩，但不要进入露骨的性描写。对有害的现实请求要直接、简短地拒绝。</string>
+  <string name="builtin_role_gemma_tag_tavern">酒馆</string>
+  <string name="builtin_role_gemma_tag_hostess">老板娘</string>
+  <string name="builtin_role_gemma_tag_flirty">暧昧</string>
+  <string name="sessions_archive">归档</string>
+</resources>

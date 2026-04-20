@@ -1,0 +1,36 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <activity
+      android:name="selfgemma.talk.performance.benchmark.RoleplayBenchmarkSurfaceActivity"
+      android:enabled="true"
+      android:exported="true"
+      android:excludeFromRecents="true"
+      android:theme="@style/Theme.Gallery" />
+    <activity
+      android:name="selfgemma.talk.performance.benchmark.RoleplayBenchmarkSeederActivity"
+      android:enabled="true"
+      android:exported="true"
+      android:excludeFromRecents="true"
+      android:finishOnTaskLaunch="true"
+      android:noHistory="true"
+      android:theme="@android:style/Theme.NoDisplay" />
+    <activity
+      android:name="selfgemma.talk.performance.roleplayeval.RoleplayEvalActivity"
+      android:enabled="true"
+      android:exported="true"
+      android:excludeFromRecents="true"
+      android:finishOnTaskLaunch="true"
+      android:noHistory="true"
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:theme="@style/Theme.Gallery" />
+    <receiver
+      android:name="selfgemma.talk.performance.benchmark.RoleplayBenchmarkReceiver"
+      android:enabled="true"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="selfgemma.talk.action.SEED_ROLEPLAY_BENCHMARK" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>

@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gemmatavern.local/benchmarks/roleplay_eval/schema/roleplay-eval.schema.json",
+  "title": "GemmaTavern Roleplay Eval Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifestVersion",
+    "suiteId",
+    "runLabel",
+    "modelName",
+    "cleanupAfterRun",
+    "cases"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "suiteId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runLabel": {
+      "type": "string"
+    },
+    "modelName": {
+      "type": "string"
+    },
+    "cleanupAfterRun": {
+      "type": "boolean"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "description",
+        "role",
+        "userProfile",
+        "bootstrapSummaryFromSeed",
+        "bootstrapMemoriesFromSeed",
+        "seedTurns",
+        "turns",
+        "expectations"
+      ],
+      "properties": {
+        "caseId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/role"
+        },
+        "userProfile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/userProfile"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bootstrapSummaryFromSeed": {
+          "type": "boolean"
+        },
+        "bootstrapMemoriesFromSeed": {
+          "type": "boolean"
+        },
+        "seedTurns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/seedTurn"
+          }
+        },
+        "turns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/turn"
+          }
+        },
+        "expectations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/caseExpectations"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "summary",
+        "systemPrompt",
+        "personaDescription",
+        "worldSettings",
+        "openingLine",
+        "exampleDialogues",
+        "safetyPolicy",
+        "memoryEnabled",
+        "memoryMaxItems",
+        "summaryTurnThreshold",
+        "tags"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string"
+        },
+        "systemPrompt": {
+          "type": "string"
+        },
+        "personaDescription": {
+          "type": "string"
+        },
+        "worldSettings": {
+          "type": "string"
+        },
+        "openingLine": {
+          "type": "string"
+        },
+        "exampleDialogues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "safetyPolicy": {
+          "type": "string"
+        },
+        "memoryEnabled": {
+          "type": "boolean"
+        },
+        "memoryMaxItems": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32
+        },
+        "summaryTurnThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "userProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "userName",
+        "personaDescription",
+        "personaTitle",
+        "personaDescriptionPositionRaw",
+        "personaDescriptionDepth",
+        "personaDescriptionRole"
+      ],
+      "properties": {
+        "userName": {
+          "type": "string"
+        },
+        "personaDescription": {
+          "type": "string"
+        },
+        "personaTitle": {
+          "type": "string"
+        },
+        "personaDescriptionPositionRaw": {
+          "type": "integer"
+        },
+        "personaDescriptionDepth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "personaDescriptionRole": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "seedTurn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "side",
+        "content"
+      ],
+      "properties": {
+        "side": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant",
+            "system"
+          ]
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "turn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "turnId",
+        "userInput",
+        "expectations"
+      ],
+      "properties": {
+        "turnId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "userInput": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/turnExpectations"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "turnExpectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assistantText",
+        "expectedAssistantStatus",
+        "minAssistantChars",
+        "maxAssistantChars",
+        "referenceAnswer",
+        "acceptableAnswers",
+        "scorer"
+      ],
+      "properties": {
+        "assistantText": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/textExpectation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expectedAssistantStatus": {
+          "type": "string",
+          "enum": [
+            "COMPLETED",
+            "FAILED",
+            "INTERRUPTED",
+            "STREAMING",
+            "PENDING",
+            "MISSING"
+          ]
+        },
+        "minAssistantChars": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxAssistantChars": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "referenceAnswer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptableAnswers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scorer": {
+          "type": "string"
+        }
+      }
+    },
+    "caseExpectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summaryText",
+        "memoryText",
+        "requiredEventTypes",
+        "minMemoryCount",
+        "minCompletedAssistantMessages",
+        "minSummaryVersion"
+      ],
+      "properties": {
+        "summaryText": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/textExpectation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "memoryText": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/textExpectation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requiredEventTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "MODEL_SWITCH",
+              "SUMMARY_UPDATE",
+              "MEMORY_UPSERT",
+              "RESET",
+              "EXPORT",
+              "CONTEXT_BUDGET_APPLIED",
+              "CONTEXT_OVERFLOW_RECOVERED"
+            ]
+          }
+        },
+        "minMemoryCount": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minCompletedAssistantMessages": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minSummaryVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "textExpectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "containsAll",
+        "containsAny",
+        "notContainsAny"
+      ],
+      "properties": {
+        "containsAll": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "containsAny": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notContainsAny": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
