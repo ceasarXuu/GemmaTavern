@@ -20,6 +20,7 @@ import selfgemma.talk.data.roleplay.db.dao.RuntimeStateSnapshotDao
 import selfgemma.talk.data.roleplay.db.dao.SessionDao
 import selfgemma.talk.data.roleplay.db.dao.SessionEventDao
 import selfgemma.talk.data.roleplay.db.dao.SessionSummaryDao
+import selfgemma.talk.data.roleplay.db.dao.ToolInvocationDao
 import selfgemma.talk.data.roleplay.repository.RoomConversationRepository
 import selfgemma.talk.data.roleplay.repository.AndroidRoleplayInteropDocumentRepository
 import selfgemma.talk.data.roleplay.repository.RoomCompactionCacheRepository
@@ -28,6 +29,7 @@ import selfgemma.talk.data.roleplay.repository.RoomMemoryRepository
 import selfgemma.talk.data.roleplay.repository.RoomOpenThreadRepository
 import selfgemma.talk.data.roleplay.repository.RoomRoleRepository
 import selfgemma.talk.data.roleplay.repository.RoomRuntimeStateRepository
+import selfgemma.talk.data.roleplay.repository.RoomToolInvocationRepository
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryAtomRepository
@@ -36,6 +38,7 @@ import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RoleplayInteropDocumentRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
+import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.AndroidRoleplaySeedCatalog
 import selfgemma.talk.domain.roleplay.usecase.RoleplaySeedCatalog
 
@@ -101,6 +104,11 @@ object RoleplayDatabaseModule {
   fun provideCompactionCacheDao(database: RoleplayDatabase): CompactionCacheDao {
     return database.compactionCacheDao()
   }
+
+  @Provides
+  fun provideToolInvocationDao(database: RoleplayDatabase): ToolInvocationDao {
+    return database.toolInvocationDao()
+  }
 }
 
 @Module
@@ -155,4 +163,10 @@ abstract class RoleplayRepositoryModule {
   abstract fun bindRoleplaySeedCatalog(
     implementation: AndroidRoleplaySeedCatalog
   ): RoleplaySeedCatalog
+
+  @Binds
+  @Singleton
+  abstract fun bindToolInvocationRepository(
+    implementation: RoomToolInvocationRepository,
+  ): ToolInvocationRepository
 }

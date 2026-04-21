@@ -61,7 +61,7 @@ import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
 import selfgemma.talk.domain.roleplay.usecase.RollbackRoleplayContinuityUseCase
-import selfgemma.talk.domain.roleplay.usecase.SendRoleplayMessageUseCase
+import selfgemma.talk.domain.roleplay.usecase.RunRoleplayTurnUseCase
 import selfgemma.talk.domain.roleplay.usecase.StagedRoleplayTurn
 import selfgemma.talk.runtime.runtimeHelper
 import selfgemma.talk.ui.common.chat.ChatMessage
@@ -148,7 +148,7 @@ constructor(
   private val openThreadRepository: OpenThreadRepository,
   private val memoryAtomRepository: MemoryAtomRepository,
   private val compactionCacheRepository: CompactionCacheRepository,
-  private val sendRoleplayMessageUseCase: SendRoleplayMessageUseCase,
+  private val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
   private val extractMemoriesUseCase: ExtractMemoriesUseCase,
   private val rollbackRoleplayContinuityUseCase: RollbackRoleplayContinuityUseCase,
   private val prepareRoleplayEditUseCase: PrepareRoleplayEditUseCase,
@@ -438,7 +438,7 @@ constructor(
       )
 
       val result =
-        sendRoleplayMessageUseCase.completePendingMessage(
+        runRoleplayTurnUseCase.runPrepared(
           pendingMessage = prepared.pendingMessage,
           model = model,
           enableStreamingOutput = dataStoreRepository.isStreamingOutputEnabled(),
@@ -553,7 +553,7 @@ constructor(
 
     viewModelScope.launch(ioDispatcher) {
       val pendingMessage =
-        sendRoleplayMessageUseCase.enqueuePendingMessage(
+        runRoleplayTurnUseCase.enqueueTurn(
           sessionId = sessionId,
           stagedTurn = stagedTurn,
           persistedUserMessageIds = persistedIds,
@@ -589,11 +589,10 @@ constructor(
         )
       }
       logDebug(
-        "dispatch queued after ${elapsedRealtime() - dispatchStartedAt}ms sessionId=$sessionId assistantMessageId=${pendingMessage.assistantSeed.id}",
+        "dispatch queued after ${elapsedRealtime() - dispatchStartedAt}ms sessionId=$sessionId assistantMessageId=${stagedTurn.assistantMessage.id}",
       )
-
       val result =
-        sendRoleplayMessageUseCase.completePendingMessage(
+        runRoleplayTurnUseCase.runPrepared(
           pendingMessage = pendingMessage,
           model = model,
           enableStreamingOutput = dataStoreRepository.isStreamingOutputEnabled(),

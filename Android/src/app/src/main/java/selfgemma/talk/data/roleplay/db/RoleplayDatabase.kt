@@ -14,6 +14,7 @@ import selfgemma.talk.data.roleplay.db.dao.RuntimeStateSnapshotDao
 import selfgemma.talk.data.roleplay.db.dao.SessionDao
 import selfgemma.talk.data.roleplay.db.dao.SessionEventDao
 import selfgemma.talk.data.roleplay.db.dao.SessionSummaryDao
+import selfgemma.talk.data.roleplay.db.dao.ToolInvocationDao
 import selfgemma.talk.data.roleplay.db.entity.CompactionCacheEntity
 import selfgemma.talk.data.roleplay.db.entity.MemoryAtomEntity
 import selfgemma.talk.data.roleplay.db.entity.MemoryAtomFtsEntity
@@ -25,6 +26,7 @@ import selfgemma.talk.data.roleplay.db.entity.RuntimeStateSnapshotEntity
 import selfgemma.talk.data.roleplay.db.entity.SessionEntity
 import selfgemma.talk.data.roleplay.db.entity.SessionEventEntity
 import selfgemma.talk.data.roleplay.db.entity.SessionSummaryEntity
+import selfgemma.talk.data.roleplay.db.entity.ToolInvocationEntity
 
 @Database(
   entities = [
@@ -39,8 +41,9 @@ import selfgemma.talk.data.roleplay.db.entity.SessionSummaryEntity
     MemoryAtomFtsEntity::class,
     OpenThreadEntity::class,
     CompactionCacheEntity::class,
+    ToolInvocationEntity::class,
   ],
-  version = 8,
+  version = 9,
   exportSchema = true,
 )
 @TypeConverters(RoleplayConverters::class)
@@ -64,4 +67,6 @@ abstract class RoleplayDatabase : RoomDatabase() {
   abstract fun openThreadDao(): OpenThreadDao
 
   abstract fun compactionCacheDao(): CompactionCacheDao
+
+  abstract fun toolInvocationDao(): ToolInvocationDao
 }

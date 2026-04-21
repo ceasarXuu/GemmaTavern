@@ -37,6 +37,7 @@ import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.StUserProfile
+import selfgemma.talk.domain.roleplay.model.ToolInvocation
 import selfgemma.talk.domain.roleplay.model.snapshotSelectedPersona
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
@@ -45,14 +46,17 @@ import selfgemma.talk.domain.roleplay.repository.MemoryRepository
 import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
+import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.CompileRoleplayMemoryContextUseCase
 import selfgemma.talk.domain.roleplay.usecase.CompileRuntimeRoleProfileUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
+import selfgemma.talk.domain.roleplay.usecase.NoOpRoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
 import selfgemma.talk.domain.roleplay.usecase.PromptAssembler
 import selfgemma.talk.domain.roleplay.usecase.RebuildRoleplayContinuityUseCase
 import selfgemma.talk.domain.roleplay.usecase.RollbackRoleplayContinuityUseCase
+import selfgemma.talk.domain.roleplay.usecase.RunRoleplayTurnUseCase
 import selfgemma.talk.domain.roleplay.usecase.SendRoleplayMessageUseCase
 import selfgemma.talk.domain.roleplay.usecase.SummarizeSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.TokenEstimator
@@ -387,6 +391,14 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
       summarizeSessionUseCase = summarizeSessionUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
     )
+  val toolInvocationRepository = ViewModelToolInvocationRepository()
+  val runRoleplayTurnUseCase =
+    RunRoleplayTurnUseCase(
+      sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
+      toolOrchestrator = NoOpRoleplayToolOrchestrator(),
+      toolInvocationRepository = toolInvocationRepository,
+      conversationRepository = conversationRepository,
+    )
 
   val viewModel =
     RoleplayChatViewModel(
@@ -400,7 +412,7 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
       openThreadRepository = openThreadRepository,
       memoryAtomRepository = memoryAtomRepository,
       compactionCacheRepository = compactionCacheRepository,
-      sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
+      runRoleplayTurnUseCase = runRoleplayTurnUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
       rollbackRoleplayContinuityUseCase = rollbackUseCase,
       prepareRoleplayEditUseCase =
@@ -584,6 +596,14 @@ private class ViewModelCompactionCacheRepository : CompactionCacheRepository {
   override suspend fun upsert(entry: selfgemma.talk.domain.roleplay.model.CompactionCacheEntry) = Unit
 
   override suspend fun deleteBySession(sessionId: String) = Unit
+}
+
+private class ViewModelToolInvocationRepository : ToolInvocationRepository {
+  override suspend fun listBySession(sessionId: String): List<ToolInvocation> = emptyList()
+
+  override suspend fun listByTurn(sessionId: String, turnId: String): List<ToolInvocation> = emptyList()
+
+  override suspend fun upsert(invocation: ToolInvocation) = Unit
 }
 
 private fun testSession(now: Long): Session =

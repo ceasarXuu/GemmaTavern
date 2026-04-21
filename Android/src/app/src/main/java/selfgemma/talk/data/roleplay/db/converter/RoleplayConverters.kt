@@ -17,6 +17,9 @@ import selfgemma.talk.domain.roleplay.model.OpenThreadOwner
 import selfgemma.talk.domain.roleplay.model.OpenThreadStatus
 import selfgemma.talk.domain.roleplay.model.OpenThreadType
 import selfgemma.talk.domain.roleplay.model.SessionEventType
+import selfgemma.talk.domain.roleplay.model.ToolArtifactKind
+import selfgemma.talk.domain.roleplay.model.ToolExecutionSource
+import selfgemma.talk.domain.roleplay.model.ToolInvocationStatus
 
 class RoleplayConverters {
   private val gson = Gson()
@@ -173,6 +176,36 @@ class RoleplayConverters {
 
   @TypeConverter
   fun toSessionEventType(value: String): SessionEventType {
+    return enumValueOf(value)
+  }
+
+  @TypeConverter
+  fun fromToolExecutionSource(value: ToolExecutionSource): String {
+    return value.name
+  }
+
+  @TypeConverter
+  fun toToolExecutionSource(value: String): ToolExecutionSource {
+    return enumValueOf(value)
+  }
+
+  @TypeConverter
+  fun fromToolInvocationStatus(value: ToolInvocationStatus): String {
+    return value.name
+  }
+
+  @TypeConverter
+  fun toToolInvocationStatus(value: String): ToolInvocationStatus {
+    return enumValueOf(value)
+  }
+
+  @TypeConverter
+  fun fromToolArtifactKind(value: ToolArtifactKind): String {
+    return value.name
+  }
+
+  @TypeConverter
+  fun toToolArtifactKind(value: String): ToolArtifactKind {
     return enumValueOf(value)
   }
 }

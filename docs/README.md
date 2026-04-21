@@ -22,6 +22,7 @@ Do not keep here:
 - `frontend-performance-standard.md`
 - `ui-material3-guardrails.md`
 - `roleplay-memory-system-architecture-v1.md`
+- `roleplay-tooling-architecture.md`
 - `roleplay-context-budget-architecture.md`
 - `st-roleplay-compat-architecture.md`
 - `roleplay-memory-acceptance-standard.md`
