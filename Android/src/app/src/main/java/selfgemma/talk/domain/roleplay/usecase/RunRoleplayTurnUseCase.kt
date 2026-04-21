@@ -21,7 +21,6 @@ data class RunRoleplayTurnResult(
 
 class RunRoleplayTurnUseCase @Inject constructor(
   private val sendRoleplayMessageUseCase: SendRoleplayMessageUseCase,
-  private val toolOrchestrator: RoleplayToolOrchestrator,
   private val toolInvocationRepository: ToolInvocationRepository,
   private val conversationRepository: ConversationRepository,
 ) {
@@ -69,54 +68,22 @@ class RunRoleplayTurnUseCase @Inject constructor(
     enableStreamingOutput: Boolean,
     isStopRequested: () -> Boolean,
   ): RunRoleplayTurnResult {
-    val orchestration =
-      runCatching {
-        toolOrchestrator.execute(
-          RoleplayToolExecutionRequest(
-            pendingMessage = pendingMessage,
-            model = model,
-            enableStreamingOutput = enableStreamingOutput,
-            isStopRequested = isStopRequested,
-          )
-        )
-      }.getOrElse { error ->
-        appendInvocationEvent(
-          sessionId = pendingMessage.session.id,
-          turnId = pendingMessage.assistantSeed.id,
-          eventType = SessionEventType.TOOL_CALL_FAILED,
-          toolName = "__turn_orchestrator__",
-          status = ToolInvocationStatus.FAILED,
-          stepIndex = -1,
-          errorMessage = error.message ?: "Roleplay tool orchestration failed.",
-        )
-        RoleplayToolExecutionResult()
-      }
-
-    val effectivePendingMessage = orchestration.augmentedPendingMessage ?: pendingMessage
-    persistToolInvocations(pendingMessage.session.id, pendingMessage.assistantSeed.id, orchestration.toolInvocations)
-
     val finalResult =
-      if (orchestration.handled) {
-        orchestration.finalResult ?: SendRoleplayMessageResult(
-          assistantMessage = null,
-          interrupted = false,
-          errorMessage = "Tool orchestrator reported a handled turn without a final result.",
-        )
-      } else {
-        sendRoleplayMessageUseCase.completePendingMessage(
-          pendingMessage = effectivePendingMessage,
-          model = model,
-          enableStreamingOutput = enableStreamingOutput,
-          isStopRequested = isStopRequested,
-        )
-      }
+      sendRoleplayMessageUseCase.completePendingMessage(
+        pendingMessage = pendingMessage,
+        model = model,
+        enableStreamingOutput = enableStreamingOutput,
+        isStopRequested = isStopRequested,
+      )
 
-    if (orchestration.toolInvocations.isNotEmpty() && finalResult.assistantMessage != null) {
+    persistToolInvocations(pendingMessage.session.id, pendingMessage.assistantSeed.id, finalResult.toolInvocations)
+
+    if (finalResult.toolInvocations.isNotEmpty() && finalResult.assistantMessage != null) {
       appendToolResultAppliedEvent(
         sessionId = pendingMessage.session.id,
         turnId = pendingMessage.assistantSeed.id,
         assistantMessageId = finalResult.assistantMessage.id,
-        invocationCount = orchestration.toolInvocations.size,
+        invocationCount = finalResult.toolInvocations.size,
       )
     }
 
@@ -125,7 +92,7 @@ class RunRoleplayTurnUseCase @Inject constructor(
       assistantMessage = finalResult.assistantMessage,
       interrupted = finalResult.interrupted,
       errorMessage = finalResult.errorMessage,
-      toolInvocations = orchestration.toolInvocations,
+      toolInvocations = finalResult.toolInvocations,
     )
   }
 

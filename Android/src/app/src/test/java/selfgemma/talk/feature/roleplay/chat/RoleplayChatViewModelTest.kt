@@ -407,6 +407,7 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
       dataStoreRepository = dataStoreRepository,
       conversationRepository = conversationRepository,
       roleRepository = roleRepository,
+      toolOrchestrator = NoOpRoleplayToolOrchestrator(),
       compileRuntimeRoleProfileUseCase = CompileRuntimeRoleProfileUseCase(TokenEstimator()),
       promptAssembler = PromptAssembler(TokenEstimator()),
       compileRoleplayMemoryContextUseCase =
@@ -426,7 +427,6 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
   val runRoleplayTurnUseCase =
     RunRoleplayTurnUseCase(
       sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
-      toolOrchestrator = NoOpRoleplayToolOrchestrator(),
       toolInvocationRepository = toolInvocationRepository,
       conversationRepository = conversationRepository,
     )

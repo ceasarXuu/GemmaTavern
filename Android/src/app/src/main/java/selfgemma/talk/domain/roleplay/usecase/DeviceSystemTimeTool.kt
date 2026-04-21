@@ -2,6 +2,10 @@ package selfgemma.talk.domain.roleplay.usecase
 
 import android.icu.util.ChineseCalendar
 import android.icu.util.TimeZone as IcuTimeZone
+import com.google.ai.edge.litertlm.Tool
+import com.google.ai.edge.litertlm.ToolProvider
+import com.google.ai.edge.litertlm.ToolSet
+import com.google.ai.edge.litertlm.tool
 import android.util.Log
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -12,10 +16,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.ToolExecutionSource
-import selfgemma.talk.domain.roleplay.model.ToolInvocation
-import selfgemma.talk.domain.roleplay.model.ToolInvocationStatus
 
 private const val TAG = "DeviceSystemTimeTool"
+private const val TOOL_NAME = "getDeviceSystemTime"
 private val GREGORIAN_DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd", Locale.ROOT)
 private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
 private val LUNAR_MONTH_NAMES = arrayOf("正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月")
@@ -54,80 +57,106 @@ private val LUNAR_DAY_NAMES =
   )
 
 @Singleton
-class DeviceSystemTimeTool @Inject constructor() : RoleplayToolHandler {
-  override val toolName: String = "get_device_system_time"
+class DeviceSystemTimeTool @Inject constructor() : RoleplayToolProviderFactory {
   override val priority: Int = 10
 
   internal var snapshotProvider: () -> DeviceSystemTimeSnapshot = { DeviceSystemTimeSnapshot.capture() }
 
-  override suspend fun maybeExecute(
-    request: RoleplayToolExecutionRequest,
-    stepIndex: Int,
-  ): RoleplayToolHandlerResult? {
-    val normalizedInput = request.pendingMessage.combinedUserInput.trim()
-    if (!isTimeQuery(normalizedInput) || request.isStopRequested()) {
-      return null
-    }
+  override fun createToolProvider(
+    pendingMessage: PendingRoleplayMessage,
+    collector: RoleplayToolTraceCollector,
+  ): ToolProvider {
+    return tool(createToolSetForTurn(pendingMessage = pendingMessage, collector = collector))
+  }
 
-    val startedAt = System.currentTimeMillis()
-    val snapshot = snapshotProvider()
-    val resultSummary = "${snapshot.gregorianDate} ${snapshot.time24h}，农历${snapshot.lunarDate}"
-    logDebug(
-      "matched time query sessionId=${request.pendingMessage.session.id} turnId=${request.pendingMessage.assistantSeed.id} summary=$resultSummary",
-    )
-    return RoleplayToolHandlerResult(
-      toolInvocation =
-        ToolInvocation(
-          id = UUID.randomUUID().toString(),
-          sessionId = request.pendingMessage.session.id,
-          turnId = request.pendingMessage.assistantSeed.id,
-          toolName = toolName,
-          source = ToolExecutionSource.NATIVE,
-          status = ToolInvocationStatus.SUCCEEDED,
-          stepIndex = stepIndex,
-          argsJson = """{"requestedFields":["gregorian_date","lunar_date","hour","minute"]}""",
-          resultJson =
-            """{"gregorianDate":"${snapshot.gregorianDate}","lunarDate":"${snapshot.lunarDate}","time24h":"${snapshot.time24h}","hour":${snapshot.hour},"minute":${snapshot.minute},"timeZone":"${snapshot.timeZoneId}"}""",
-          resultSummary = resultSummary,
-          startedAt = startedAt,
-          finishedAt = System.currentTimeMillis(),
-        ),
-      externalFacts =
-        listOf(
-          RoleplayExternalFact(
-            id = UUID.randomUUID().toString(),
-            sourceToolName = toolName,
-            title = "Device system time",
-            content =
-              "Real-world device system time is ${snapshot.gregorianDate} ${snapshot.time24h} in ${snapshot.timeZoneId}. " +
-                "The lunar date is ${snapshot.lunarDate}. Use this only when the user is asking about the real current date or time, not the story world.",
-          )
-        ),
+  internal fun createToolSetForTurn(
+    pendingMessage: PendingRoleplayMessage,
+    collector: RoleplayToolTraceCollector,
+  ): ToolSet {
+    return DeviceSystemTimeToolSet(
+      pendingMessage = pendingMessage,
+      collector = collector,
+      snapshotProvider = snapshotProvider,
     )
   }
 
-  internal fun isTimeQuery(input: String): Boolean {
-    if (input.isBlank()) {
-      return false
-    }
-    return TIME_QUERY_PATTERNS.any { pattern -> pattern.containsMatchIn(input) }
+  internal interface DeviceSystemTimeToolSetAccess {
+    fun getDeviceSystemTimeForTest(): Map<String, Any>
   }
 
   private fun logDebug(message: String) {
     runCatching { Log.d(TAG, message) }
   }
 
-  companion object {
-    private val TIME_QUERY_PATTERNS =
-      listOf(
-        Regex("(现在|当前|此刻|现实).{0,8}(时间|日期|几点|几号|几月几日|农历|公历)"),
-        Regex("(今天|今日).{0,8}(日期|几号|几月几号|几月几日|农历|公历)"),
-        Regex("(几点了|现在几点|当前时间|当前日期|系统时间|设备时间|今天几号|今天农历|农历几月几号)"),
-        Regex("(?i)\\b(current|device|system|local)\\s+(time|date)\\b"),
-        Regex("(?i)\\bwhat(?:'s| is)?\\s+the\\s+(time|date)\\b"),
-        Regex("(?i)\\bwhat\\s+time\\s+is\\s+it\\b"),
-        Regex("(?i)\\blunar\\s+date\\b"),
-      )
+  private inner class DeviceSystemTimeToolSet(
+    private val pendingMessage: PendingRoleplayMessage,
+    private val collector: RoleplayToolTraceCollector,
+    private val snapshotProvider: () -> DeviceSystemTimeSnapshot,
+  ) : ToolSet, DeviceSystemTimeToolSetAccess {
+    @Tool(
+      description =
+        "Get the device's real-world current system time. Returns Gregorian date, lunar date in the Chinese calendar, 24-hour time, hour, minute, and time zone. Use this when the user asks about the actual current date or time outside the roleplay fiction.",
+    )
+    fun getDeviceSystemTime(): Map<String, Any> {
+      val startedAt = System.currentTimeMillis()
+      return runCatching {
+        val snapshot = snapshotProvider()
+        val result =
+          linkedMapOf<String, Any>(
+            "gregorianDate" to snapshot.gregorianDate,
+            "lunarDate" to snapshot.lunarDate,
+            "time24h" to snapshot.time24h,
+            "hour" to snapshot.hour,
+            "minute" to snapshot.minute,
+            "timeZone" to snapshot.timeZoneId,
+          )
+        val resultSummary = "${snapshot.gregorianDate} ${snapshot.time24h}，农历${snapshot.lunarDate}"
+        collector.recordSucceeded(
+          toolName = TOOL_NAME,
+          argsJson = "{}",
+          resultJson =
+            """{"gregorianDate":"${snapshot.gregorianDate}","lunarDate":"${snapshot.lunarDate}","time24h":"${snapshot.time24h}","hour":${snapshot.hour},"minute":${snapshot.minute},"timeZone":"${snapshot.timeZoneId}"}""",
+          resultSummary = resultSummary,
+          source = ToolExecutionSource.NATIVE,
+          externalFacts =
+            listOf(
+              RoleplayExternalFact(
+                id = UUID.randomUUID().toString(),
+                sourceToolName = TOOL_NAME,
+                title = "Device system time",
+                content =
+                  "Real-world device system time is ${snapshot.gregorianDate} ${snapshot.time24h} in ${snapshot.timeZoneId}. " +
+                    "The lunar date is ${snapshot.lunarDate}. Use this only when the user is asking about the real current date or time, not the story world.",
+              )
+            ),
+          startedAt = startedAt,
+          finishedAt = System.currentTimeMillis(),
+        )
+        logDebug(
+          "runtime tool called sessionId=${pendingMessage.session.id} turnId=${pendingMessage.assistantSeed.id} summary=$resultSummary",
+        )
+        result
+      }.getOrElse { error ->
+        collector.recordFailed(
+          toolName = TOOL_NAME,
+          argsJson = "{}",
+          errorMessage = error.message ?: "Failed to read device system time.",
+          source = ToolExecutionSource.NATIVE,
+          startedAt = startedAt,
+          finishedAt = System.currentTimeMillis(),
+        )
+        logDebug(
+          "runtime tool failed sessionId=${pendingMessage.session.id} turnId=${pendingMessage.assistantSeed.id} error=${error.message}",
+        )
+        mapOf(
+          "error" to (error.message ?: "Failed to read device system time."),
+        )
+      }
+    }
+
+    override fun getDeviceSystemTimeForTest(): Map<String, Any> {
+      return getDeviceSystemTime()
+    }
   }
 }
 

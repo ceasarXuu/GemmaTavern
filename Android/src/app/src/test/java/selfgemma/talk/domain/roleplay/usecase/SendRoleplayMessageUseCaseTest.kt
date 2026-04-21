@@ -513,6 +513,7 @@ private fun createSendRoleplayFixture(
       dataStoreRepository = dataStoreRepository,
       conversationRepository = conversationRepository,
       roleRepository = roleRepository,
+      toolOrchestrator = NoOpRoleplayToolOrchestrator(),
       compileRuntimeRoleProfileUseCase = CompileRuntimeRoleProfileUseCase(TokenEstimator()),
       promptAssembler = PromptAssembler(TokenEstimator()),
       compileRoleplayMemoryContextUseCase =

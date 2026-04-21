@@ -195,7 +195,7 @@ class PromptAssemblerTest {
           listOf(
             RoleplayExternalFact(
               id = "fact-1",
-              sourceToolName = "get_device_system_time",
+              sourceToolName = "getDeviceSystemTime",
               title = "Device system time",
               content = "Real-world device system time is 2026-04-22 18:07 in Asia/Shanghai. The lunar date is 三月初六.",
             )
@@ -206,6 +206,50 @@ class PromptAssemblerTest {
     assertTrue(prompt.contains("Device system time"))
     assertTrue(prompt.contains("2026-04-22 18:07"))
     assertTrue(prompt.contains("三月初六"))
+  }
+
+  @Test
+  fun assemble_instructsModelToDecideToolUsageWhenRuntimeToolsAreAvailable() {
+    val now = System.currentTimeMillis()
+    val promptWithTools =
+      assembler.assemble(
+        role =
+          RoleCard(
+            id = "role-1",
+            name = "Iris Vale",
+            summary = "A dry-witted investigator.",
+            systemPrompt = "Always stay in character.",
+            createdAt = now,
+            updatedAt = now,
+          ),
+        summary = null,
+        memories = emptyList(),
+        recentMessages = emptyList(),
+        pendingUserInput = "现在现实时间是多少？",
+        hasRuntimeTools = true,
+      )
+    val promptWithoutTools =
+      assembler.assemble(
+        role =
+          RoleCard(
+            id = "role-1",
+            name = "Iris Vale",
+            summary = "A dry-witted investigator.",
+            systemPrompt = "Always stay in character.",
+            createdAt = now,
+            updatedAt = now,
+          ),
+        summary = null,
+        memories = emptyList(),
+        recentMessages = emptyList(),
+        pendingUserInput = "现在现实时间是多少？",
+        hasRuntimeTools = false,
+      )
+
+    val toolDecisionInstruction =
+      "When the user needs real-world device facts or actions, decide yourself whether to call an available tool instead of guessing."
+    assertTrue(promptWithTools.contains(toolDecisionInstruction))
+    assertFalse(promptWithoutTools.contains(toolDecisionInstruction))
   }
 
   @Test

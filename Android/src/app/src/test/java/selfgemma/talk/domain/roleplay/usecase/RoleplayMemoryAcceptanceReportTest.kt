@@ -743,6 +743,7 @@ private fun createRoleplaySendAcceptanceFixture(
       dataStoreRepository = FakeDataStoreRepository(stUserProfile = StUserProfile()),
       conversationRepository = fixture.conversationRepository,
       roleRepository = fixture.roleRepository,
+      toolOrchestrator = NoOpRoleplayToolOrchestrator(),
       compileRuntimeRoleProfileUseCase = CompileRuntimeRoleProfileUseCase(TokenEstimator()),
       promptAssembler = PromptAssembler(TokenEstimator()),
       compileRoleplayMemoryContextUseCase = fixture.compileMemoryContextUseCase,

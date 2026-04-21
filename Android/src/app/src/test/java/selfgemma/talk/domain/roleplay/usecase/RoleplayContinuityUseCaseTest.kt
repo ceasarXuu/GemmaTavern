@@ -702,6 +702,7 @@ private fun queueOnlySendRoleplayMessageUseCase(
     dataStoreRepository = FakeDataStoreRepository(),
     conversationRepository = conversationRepository,
     roleRepository = ContinuityRoleRepository(role),
+    toolOrchestrator = NoOpRoleplayToolOrchestrator(),
     compileRuntimeRoleProfileUseCase = CompileRuntimeRoleProfileUseCase(TokenEstimator()),
     promptAssembler = PromptAssembler(TokenEstimator()),
     compileRoleplayMemoryContextUseCase =

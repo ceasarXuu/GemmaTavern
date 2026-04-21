@@ -8,8 +8,8 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import selfgemma.talk.domain.roleplay.usecase.DefaultRoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.DeviceSystemTimeTool
-import selfgemma.talk.domain.roleplay.usecase.RoleplayToolHandler
 import selfgemma.talk.domain.roleplay.usecase.RoleplayToolOrchestrator
+import selfgemma.talk.domain.roleplay.usecase.RoleplayToolProviderFactory
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -24,5 +24,5 @@ abstract class RoleplayToolingModule {
   @IntoSet
   abstract fun bindDeviceSystemTimeTool(
     implementation: DeviceSystemTimeTool,
-  ): RoleplayToolHandler
+  ): RoleplayToolProviderFactory
 }

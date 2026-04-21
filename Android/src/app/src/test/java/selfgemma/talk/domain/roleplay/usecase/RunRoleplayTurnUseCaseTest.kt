@@ -71,28 +71,23 @@ class RunRoleplayTurnUseCaseTest {
   @Test
   fun runPrepared_persistsToolTraceBeforeFallingBackToNormalReplyGeneration() =
     runBlocking {
+      val orchestrator = RecordingToolOrchestrator()
+      val runtimeHelper =
+        ToolCallingRuntimeHelper(
+          onRunInference = {
+            orchestrator.lastCollector.recordSucceeded(
+              toolName = "getDeviceSystemTime",
+              argsJson = "{}",
+              resultJson = """{"gregorianDate":"2026-04-22"}""",
+              resultSummary = "2026-04-22 18:07，农历三月初六",
+              source = ToolExecutionSource.NATIVE,
+            )
+          }
+        )
       val fixture =
         createFixture(
-          toolOrchestrator =
-            RecordingToolOrchestrator(
-              toolInvocations =
-                listOf(
-                  ToolInvocation(
-                    id = "tool-1",
-                    sessionId = "session-1",
-                    turnId = "assistant-seed-2",
-                    toolName = "search_wiki",
-                    source = ToolExecutionSource.JS_SKILL,
-                    status = ToolInvocationStatus.SUCCEEDED,
-                    stepIndex = 0,
-                    argsJson = """{"topic":"observatory"}""",
-                    resultJson = """{"summary":"Observatory summary"}""",
-                    resultSummary = "Observatory summary",
-                    startedAt = 10L,
-                    finishedAt = 20L,
-                  ),
-                )
-            ),
+          toolOrchestrator = orchestrator,
+          runtimeHelper = runtimeHelper,
         )
       val pendingMessage = fixture.enqueuePendingTurn("What do you know about the observatory?")
 
@@ -105,19 +100,20 @@ class RunRoleplayTurnUseCaseTest {
         )
 
       assertEquals(MessageStatus.COMPLETED, result.assistantMessage?.status)
+      assertEquals(1, runtimeHelper.lastResetToolsCount)
       assertEquals(1, result.toolInvocations.size)
       assertEquals(1, fixture.toolInvocationRepository.invocations.size)
-      assertEquals("search_wiki", fixture.toolInvocationRepository.invocations.single().toolName)
+      assertEquals("getDeviceSystemTime", fixture.toolInvocationRepository.invocations.single().toolName)
       assertTrue(
         fixture.conversationRepository.events.any { event ->
           event.eventType == SessionEventType.TOOL_CALL_STARTED &&
-            event.payloadJson.contains("\"toolName\":\"search_wiki\"")
+            event.payloadJson.contains("\"toolName\":\"getDeviceSystemTime\"")
         }
       )
       assertTrue(
         fixture.conversationRepository.events.any { event ->
           event.eventType == SessionEventType.TOOL_CALL_COMPLETED &&
-            event.payloadJson.contains("\"toolName\":\"search_wiki\"")
+            event.payloadJson.contains("\"toolName\":\"getDeviceSystemTime\"")
         }
       )
       assertTrue(
@@ -181,6 +177,7 @@ private data class RunRoleplayTurnFixture(
 
 private fun createFixture(
   toolOrchestrator: RoleplayToolOrchestrator = NoOpRoleplayToolOrchestrator(),
+  runtimeHelper: LlmModelHelper = ImmediateRuntimeHelper(),
 ): RunRoleplayTurnFixture {
   val now = System.currentTimeMillis()
   val session =
@@ -239,6 +236,7 @@ private fun createFixture(
       dataStoreRepository = dataStoreRepository,
       conversationRepository = conversationRepository,
       roleRepository = roleRepository,
+      toolOrchestrator = toolOrchestrator,
       compileRuntimeRoleProfileUseCase = CompileRuntimeRoleProfileUseCase(TokenEstimator()),
       promptAssembler = PromptAssembler(TokenEstimator()),
       compileRoleplayMemoryContextUseCase =
@@ -254,13 +252,12 @@ private fun createFixture(
       summarizeSessionUseCase = summarizeSessionUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
     ).also { useCase ->
-      useCase.runtimeHelperResolver = { ImmediateRuntimeHelper() }
+      useCase.runtimeHelperResolver = { runtimeHelper }
     }
   val toolInvocationRepository = RecordingToolInvocationRepository()
   val runRoleplayTurnUseCase =
     RunRoleplayTurnUseCase(
       sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
-      toolOrchestrator = toolOrchestrator,
       toolInvocationRepository = toolInvocationRepository,
       conversationRepository = conversationRepository,
     )
@@ -275,10 +272,25 @@ private fun createFixture(
 }
 
 private class RecordingToolOrchestrator(
-  private val toolInvocations: List<ToolInvocation>,
 ) : RoleplayToolOrchestrator {
-  override suspend fun execute(request: RoleplayToolExecutionRequest): RoleplayToolExecutionResult {
-    return RoleplayToolExecutionResult(toolInvocations = toolInvocations)
+  lateinit var lastCollector: RoleplayToolTraceCollector
+
+  override suspend fun prepareTurnContext(request: RoleplayToolPreparationRequest): RoleplayPreparedToolContext {
+    lastCollector =
+      RoleplayToolTraceCollector(
+        sessionId = request.pendingMessage.session.id,
+        turnId = request.pendingMessage.assistantSeed.id,
+      )
+    return RoleplayPreparedToolContext(
+      tools =
+        listOf(
+          DeviceSystemTimeTool().createToolProvider(
+            pendingMessage = request.pendingMessage,
+            collector = lastCollector,
+          )
+        ),
+      collector = lastCollector,
+    )
   }
 }
 
@@ -347,6 +359,39 @@ private class ImmediateRuntimeHelper : LlmModelHelper {
   }
 
   override fun stopResponse(model: Model) = Unit
+}
+
+private class ToolCallingRuntimeHelper(
+  private val onRunInference: () -> Unit,
+) : LlmModelHelper by ImmediateRuntimeHelper() {
+  var lastResetToolsCount: Int = 0
+
+  override fun resetConversation(
+    model: Model,
+    supportImage: Boolean,
+    supportAudio: Boolean,
+    systemInstruction: Contents?,
+    tools: List<ToolProvider>,
+    enableConversationConstrainedDecoding: Boolean,
+  ) {
+    lastResetToolsCount = tools.size
+  }
+
+  override fun runInference(
+    model: Model,
+    input: String,
+    resultListener: (partialResult: String, done: Boolean, partialThinkingResult: String?) -> Unit,
+    cleanUpListener: () -> Unit,
+    onError: (message: String) -> Unit,
+    images: List<Bitmap>,
+    audioClips: List<ByteArray>,
+    coroutineScope: CoroutineScope?,
+    extraContext: Map<String, String>?,
+  ) {
+    onRunInference()
+    resultListener("Hold formation.", false, null)
+    resultListener("", true, null)
+  }
 }
 
 private class TurnConversationRepository(

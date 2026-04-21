@@ -41,6 +41,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     memoryAtoms: List<MemoryAtom>,
     recentMessages: List<Message>,
     externalFacts: List<RoleplayExternalFact>,
+    hasRuntimeTools: Boolean,
     macroContext: StMacroContext,
     resolvedCharacterBook: StResolvedPromptRuntime,
     postHistoryBlock: String,
@@ -263,10 +264,15 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
         ),
       sections = sections,
       responseRules =
-        listOf(
+        listOfNotNull(
           "- The next incoming user message is the live message you must answer.",
           "- Use memory and summary when relevant, but prioritize natural conversation.",
           "- Treat any external tool facts as authoritative only for this turn, and only when they answer the user's real-world request.",
+          if (hasRuntimeTools) {
+            "- When the user needs real-world device facts or actions, decide yourself whether to call an available tool instead of guessing."
+          } else {
+            null
+          },
           "- Keep continuity with the recent conversation.",
           "- Never output labels like USER:, ASSISTANT:, or SYSTEM: in your reply.",
         ),

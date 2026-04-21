@@ -1,11 +1,8 @@
 package selfgemma.talk.domain.roleplay.usecase
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import selfgemma.talk.data.Model
 import selfgemma.talk.domain.roleplay.model.Message
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
@@ -14,7 +11,7 @@ import selfgemma.talk.domain.roleplay.model.StUserProfile
 
 class DeviceSystemTimeToolTest {
   @Test
-  fun maybeExecute_returnsInvocationAndExternalFactForTimeQuery() {
+  fun getDeviceSystemTime_recordsInvocationAndExternalFact() {
     val tool =
       DeviceSystemTimeTool().apply {
         snapshotProvider = {
@@ -28,39 +25,26 @@ class DeviceSystemTimeToolTest {
           )
         }
       }
+    val collector = RoleplayToolTraceCollector(sessionId = "session-1", turnId = "assistant-2")
+    val toolSet =
+      tool.createToolSetForTurn(
+        pendingMessage = pendingMessage("随便问一句"),
+        collector = collector,
+      )
 
     val result =
-      kotlinx.coroutines.runBlocking {
-        tool.maybeExecute(
-          request =
-            RoleplayToolExecutionRequest(
-              pendingMessage = pendingMessage("现在几点了，顺便告诉我农历。"),
-              model = testModel(),
-              enableStreamingOutput = false,
-              isStopRequested = { false },
-            ),
-          stepIndex = 0,
-        )
-      }
+      (toolSet as DeviceSystemTimeTool.DeviceSystemTimeToolSetAccess).getDeviceSystemTimeForTest()
+    val invocations = collector.snapshotInvocations()
+    val externalFacts = collector.snapshotExternalFacts()
 
-    assertNotNull(result)
-    assertEquals("get_device_system_time", result!!.toolInvocation.toolName)
-    assertTrue(result.toolInvocation.resultSummary!!.contains("2026-04-22 18:07"))
-    assertTrue(result.toolInvocation.resultSummary!!.contains("农历三月初六"))
-    assertEquals(1, result.externalFacts.size)
-    assertTrue(result.externalFacts.single().content.contains("Asia/Shanghai"))
-    assertTrue(result.externalFacts.single().ephemeral)
-  }
-
-  @Test
-  fun isTimeQuery_requiresCurrentTimeIntent() {
-    val tool = DeviceSystemTimeTool()
-
-    assertTrue(tool.isTimeQuery("当前系统时间是多少？"))
-    assertTrue(tool.isTimeQuery("今天农历几月几号"))
-    assertTrue(tool.isTimeQuery("what time is it right now"))
-    assertFalse(tool.isTimeQuery("我们没有多少时间了"))
-    assertFalse(tool.isTimeQuery("把时间线整理一下"))
+    assertEquals("2026-04-22", result["gregorianDate"])
+    assertEquals("三月初六", result["lunarDate"])
+    assertEquals(1, invocations.size)
+    assertEquals("getDeviceSystemTime", invocations.single().toolName)
+    assertTrue(invocations.single().resultSummary!!.contains("2026-04-22 18:07"))
+    assertEquals(1, externalFacts.size)
+    assertTrue(externalFacts.single().content.contains("Asia/Shanghai"))
+    assertTrue(externalFacts.single().ephemeral)
   }
 
   @Test
@@ -115,13 +99,4 @@ private fun pendingMessage(input: String): PendingRoleplayMessage {
     assistantSeed = assistantSeed,
     combinedUserInput = input,
   )
-}
-
-private fun testModel(): Model {
-  return Model(
-    name = "model-1",
-    downloadFileName = "model.tflite",
-  ).apply {
-    instance = Any()
-  }
 }

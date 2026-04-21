@@ -29,6 +29,7 @@ import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachment
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
+import selfgemma.talk.domain.roleplay.model.ToolInvocation
 import selfgemma.talk.domain.roleplay.model.encodeRoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.model.pcm16MonoToWav
 import selfgemma.talk.domain.roleplay.model.roleplayMessageMediaPayload
@@ -48,6 +49,7 @@ data class SendRoleplayMessageResult(
   val assistantMessage: Message? = null,
   val interrupted: Boolean = false,
   val errorMessage: String? = null,
+  val toolInvocations: List<ToolInvocation> = emptyList(),
 )
 
 data class PendingRoleplayMessage(
@@ -152,6 +154,7 @@ constructor(
   private val dataStoreRepository: DataStoreRepository,
   private val conversationRepository: ConversationRepository,
   private val roleRepository: RoleRepository,
+  private val toolOrchestrator: RoleplayToolOrchestrator,
   private val compileRuntimeRoleProfileUseCase: CompileRuntimeRoleProfileUseCase,
   private val promptAssembler: PromptAssembler,
   private val compileRoleplayMemoryContextUseCase: CompileRoleplayMemoryContextUseCase,
@@ -245,6 +248,13 @@ constructor(
     val startTime = safeElapsedRealtime()
     val sessionId = pendingMessage.session.id
     val session = pendingMessage.session
+    val turnToolContext =
+      prepareTurnToolContext(
+        pendingMessage = pendingMessage,
+        model = model,
+        enableStreamingOutput = enableStreamingOutput,
+        isStopRequested = isStopRequested,
+      )
     var userMessages = pendingMessage.userMessages
     val assistantSeed = pendingMessage.assistantSeed
     var effectiveInput = pendingMessage.combinedUserInput
@@ -321,6 +331,7 @@ constructor(
         recentMessages = recentMessages,
         trimmedInput = effectiveInput,
         externalFacts = pendingMessage.externalFacts,
+        hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
         role = promptRole,
         contextProfile = contextProfile,
         budgetMode = attemptMode,
@@ -353,6 +364,7 @@ constructor(
           recentMessages = recentMessages,
           trimmedInput = effectiveInput,
           externalFacts = pendingMessage.externalFacts,
+          hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
           role = promptRole,
           contextProfile = contextProfile,
           budgetMode = attemptMode,
@@ -385,6 +397,7 @@ constructor(
           recentMessages = recentMessages,
           trimmedInput = effectiveInput,
           externalFacts = pendingMessage.externalFacts,
+          hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
           role = promptRole,
           contextProfile = contextProfile,
           budgetMode = attemptMode,
@@ -406,6 +419,7 @@ constructor(
           assistantSeed = assistantSeed,
           model = model,
           promptAssembly = promptAssembly,
+          turnToolContext = turnToolContext,
           currentTurnMedia = currentTurnMedia,
           sessionId = sessionId,
           recentMessages = recentMessages,
@@ -446,6 +460,7 @@ constructor(
               recentMessages = recentMessages,
               trimmedInput = effectiveInput,
               externalFacts = pendingMessage.externalFacts,
+              hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
               role = promptRole,
               contextProfile = contextProfile,
               budgetMode = attemptMode,
@@ -515,6 +530,7 @@ constructor(
           recentMessages = recentMessages,
           trimmedInput = effectiveInput,
           externalFacts = pendingMessage.externalFacts,
+          hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
           role = promptRole,
           contextProfile = contextProfile,
           budgetMode = attemptMode,
@@ -528,6 +544,9 @@ constructor(
     }
     finalMessage = normalizeFinalMessage(checkNotNull(finalMessage))
     conversationRepository.updateMessage(finalMessage)
+    val runtimeToolInvocations = turnToolContext.collector.snapshotInvocations()
+    val runtimeExternalFacts = turnToolContext.collector.snapshotExternalFacts()
+    val effectiveExternalFacts = pendingMessage.externalFacts + runtimeExternalFacts
 
     if (finalMessage.status == MessageStatus.COMPLETED) {
       finalMessage =
@@ -541,13 +560,13 @@ constructor(
         )
       summarizeSessionUseCase(sessionId)
       val memorySourceUserMessage = userMessages.lastOrNull { it.kind == MessageKind.TEXT } ?: userMessages.last()
-      if (pendingMessage.externalFacts.any { it.ephemeral }) {
+      if (effectiveExternalFacts.any { it.ephemeral }) {
         debugLog(
-          "skipping auto memory extraction for tool-augmented turn sessionId=$sessionId facts=${pendingMessage.externalFacts.size}",
+          "skipping auto memory extraction for tool-augmented turn sessionId=$sessionId facts=${effectiveExternalFacts.size}",
         )
         appendToolMemoryGuardEvent(
           sessionId = sessionId,
-          toolNames = pendingMessage.externalFacts.map { it.sourceToolName },
+          toolNames = effectiveExternalFacts.map { it.sourceToolName },
         )
       } else {
         extractMemoriesUseCase(
@@ -569,6 +588,7 @@ constructor(
       assistantMessage = finalMessage,
       interrupted = finalMessage.status == MessageStatus.INTERRUPTED,
       errorMessage = finalMessage.errorMessage,
+      toolInvocations = runtimeToolInvocations,
     )
   }
 
@@ -579,6 +599,7 @@ constructor(
     recentMessages: List<Message>,
     trimmedInput: String,
     externalFacts: List<RoleplayExternalFact>,
+    hasRuntimeTools: Boolean,
     role: selfgemma.talk.domain.roleplay.model.RoleCard,
     contextProfile: selfgemma.talk.domain.roleplay.model.ModelContextProfile,
     budgetMode: PromptBudgetMode,
@@ -594,6 +615,7 @@ constructor(
       memoryAtoms = memoryContext.memoryAtoms,
       pendingUserInput = trimmedInput,
       externalFacts = externalFacts,
+      hasRuntimeTools = hasRuntimeTools,
       runtimeProfile = role.runtimeProfile,
       contextProfile = contextProfile,
       budgetMode = budgetMode,
@@ -686,6 +708,30 @@ constructor(
         id = UUID.randomUUID().toString(),
         sessionId = sessionId,
         eventType = SessionEventType.MEMORY_OP_REJECTED,
+        payloadJson = payload.toString(),
+        createdAt = System.currentTimeMillis(),
+      )
+    )
+  }
+
+  private suspend fun appendToolPreparationFailureEvent(
+    sessionId: String,
+    turnId: String,
+    errorMessage: String,
+  ) {
+    val payload =
+      JsonObject().apply {
+        addProperty("turnId", turnId)
+        addProperty("toolName", "__tool_context__")
+        addProperty("status", "FAILED")
+        addProperty("stepIndex", -1)
+        addProperty("errorMessage", errorMessage)
+      }
+    conversationRepository.appendEvent(
+      SessionEvent(
+        id = UUID.randomUUID().toString(),
+        sessionId = sessionId,
+        eventType = SessionEventType.TOOL_CALL_FAILED,
         payloadJson = payload.toString(),
         createdAt = System.currentTimeMillis(),
       )
@@ -998,10 +1044,46 @@ constructor(
     return message.copy(errorMessage = ContextOverflowRecovery.toUserFacingError(message.errorMessage))
   }
 
+  private suspend fun prepareTurnToolContext(
+    pendingMessage: PendingRoleplayMessage,
+    model: Model,
+    enableStreamingOutput: Boolean,
+    isStopRequested: () -> Boolean,
+  ): RoleplayPreparedToolContext {
+    return runCatching {
+      toolOrchestrator.prepareTurnContext(
+        RoleplayToolPreparationRequest(
+          pendingMessage = pendingMessage,
+          model = model,
+          enableStreamingOutput = enableStreamingOutput,
+          isStopRequested = isStopRequested,
+        )
+      )
+    }.getOrElse { error ->
+      warnLog(
+        "failed to prepare roleplay tool context sessionId=${pendingMessage.session.id} turnId=${pendingMessage.assistantSeed.id}",
+        error,
+      )
+      appendToolPreparationFailureEvent(
+        sessionId = pendingMessage.session.id,
+        turnId = pendingMessage.assistantSeed.id,
+        errorMessage = error.message ?: "Failed to prepare roleplay tool context.",
+      )
+      RoleplayPreparedToolContext(
+        collector =
+          RoleplayToolTraceCollector(
+            sessionId = pendingMessage.session.id,
+            turnId = pendingMessage.assistantSeed.id,
+          )
+      )
+    }
+  }
+
   private fun prepareConversation(
     assistantSeed: Message,
     model: Model,
     promptAssembly: PromptAssemblyResult,
+    turnToolContext: RoleplayPreparedToolContext,
     currentTurnMedia: CurrentTurnMedia,
     sessionId: String,
     recentMessages: List<Message>,
@@ -1024,9 +1106,10 @@ constructor(
         supportImage = currentTurnMedia.images.isNotEmpty(),
         supportAudio = currentTurnMedia.audioClips.isNotEmpty(),
         systemInstruction = systemInstruction,
+        tools = turnToolContext.tools,
       )
       debugLog(
-        "conversation reset after ${safeElapsedRealtime() - startTime}ms sessionId=$sessionId images=${currentTurnMedia.images.size} audioClips=${currentTurnMedia.audioClips.size} historicalImages=${currentTurnMedia.historicalImageCount} currentImages=${currentTurnMedia.currentImageCount} historicalAudioClips=${currentTurnMedia.historicalAudioCount} currentAudioClips=${currentTurnMedia.currentAudioCount}",
+        "conversation reset after ${safeElapsedRealtime() - startTime}ms sessionId=$sessionId tools=${turnToolContext.tools.size} images=${currentTurnMedia.images.size} audioClips=${currentTurnMedia.audioClips.size} historicalImages=${currentTurnMedia.historicalImageCount} currentImages=${currentTurnMedia.currentImageCount} historicalAudioClips=${currentTurnMedia.historicalAudioCount} currentAudioClips=${currentTurnMedia.currentAudioCount}",
       )
       ConversationPreparationResult()
     } catch (exception: Exception) {
