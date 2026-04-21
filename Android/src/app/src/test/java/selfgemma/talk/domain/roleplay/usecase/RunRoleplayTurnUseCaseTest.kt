@@ -279,6 +279,10 @@ private class RecordingToolOrchestrator(
 private class RecordingToolInvocationRepository : ToolInvocationRepository {
   val invocations = mutableListOf<ToolInvocation>()
 
+  override fun observeBySession(sessionId: String): Flow<List<ToolInvocation>> {
+    return flowOf(invocations.filter { it.sessionId == sessionId })
+  }
+
   override suspend fun listBySession(sessionId: String): List<ToolInvocation> {
     return invocations.filter { it.sessionId == sessionId }
   }

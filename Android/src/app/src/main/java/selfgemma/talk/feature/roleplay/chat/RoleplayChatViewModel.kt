@@ -47,6 +47,7 @@ import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionEventType
+import selfgemma.talk.domain.roleplay.model.ToolInvocation
 import selfgemma.talk.domain.roleplay.model.encodeRoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.resolveUserProfile
@@ -57,6 +58,7 @@ import selfgemma.talk.domain.roleplay.repository.MemoryRepository
 import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
+import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
@@ -92,6 +94,7 @@ data class RoleplayChatUiState(
   val userPersonaDescription: String = "",
   val summary: SessionSummary? = null,
   val pinnedMemories: List<MemoryItem> = emptyList(),
+  val toolInvocations: List<ToolInvocation> = emptyList(),
   val continuityDebug: RoleplayContinuityDebugState = RoleplayContinuityDebugState(),
   val inProgress: Boolean = false,
   val hasPendingSends: Boolean = false,
@@ -134,6 +137,12 @@ private data class RoleplayChatMetaState(
   val errorMessage: String? = null,
 )
 
+private data class RoleplayChatTransientState(
+  val draft: String,
+  val meta: RoleplayChatMetaState,
+  val toolInvocations: List<ToolInvocation>,
+)
+
 @HiltViewModel
 class RoleplayChatViewModel
 @Inject
@@ -148,6 +157,7 @@ constructor(
   private val openThreadRepository: OpenThreadRepository,
   private val memoryAtomRepository: MemoryAtomRepository,
   private val compactionCacheRepository: CompactionCacheRepository,
+  private val toolInvocationRepository: ToolInvocationRepository,
   private val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
   private val extractMemoriesUseCase: ExtractMemoriesUseCase,
   private val rollbackRoleplayContinuityUseCase: RollbackRoleplayContinuityUseCase,
@@ -175,15 +185,24 @@ constructor(
     combine(sessionFlow, roleRepository.observeRoles()) { session, roles ->
       roles.firstOrNull { it.id == session?.roleId }
     }.distinctUntilChanged()
+  private val toolInvocationsFlow =
+    toolInvocationRepository.observeBySession(sessionId).distinctUntilChanged()
+  private val transientStateFlow =
+    combine(draft, metaState, toolInvocationsFlow) { draftValue, meta, toolInvocations ->
+      RoleplayChatTransientState(
+        draft = draftValue,
+        meta = meta,
+        toolInvocations = toolInvocations,
+      )
+    }
 
   val uiState: StateFlow<RoleplayChatUiState> =
     combine(
       sessionFlow,
       conversationRepository.observeMessages(sessionId).distinctUntilChanged(),
       roleFlow,
-      draft,
-      metaState,
-    ) { session, messages, role, draftValue, meta ->
+      transientStateFlow,
+    ) { session, messages, role, transientState ->
       val userProfile =
         session?.resolveUserProfile(dataStoreRepository.getStUserProfile())
           ?: dataStoreRepository.getStUserProfile().ensureDefaults()
@@ -191,18 +210,19 @@ constructor(
         loading = session == null,
         session = session,
         role = role,
-        messages = mergeMessages(messages = messages, queuedMessages = meta.pendingUserMessages),
-        draft = draftValue,
+        messages = mergeMessages(messages = messages, queuedMessages = transientState.meta.pendingUserMessages),
+        draft = transientState.draft,
         userPersonaSlotId = userProfile.resolvedUserAvatarId(),
         userPersonaName = userProfile.userName,
         userPersonaAvatarUri = userProfile.activeAvatarUri,
         userPersonaDescription = userProfile.personaDescription,
-        summary = meta.summary,
-        pinnedMemories = meta.pinnedMemories,
-        continuityDebug = meta.continuityDebug,
-        inProgress = meta.inProgress,
-        hasPendingSends = meta.pendingUserMessages.isNotEmpty(),
-        errorMessage = meta.errorMessage,
+        summary = transientState.meta.summary,
+        pinnedMemories = transientState.meta.pinnedMemories,
+        toolInvocations = transientState.toolInvocations,
+        continuityDebug = transientState.meta.continuityDebug,
+        inProgress = transientState.meta.inProgress,
+        hasPendingSends = transientState.meta.pendingUserMessages.isNotEmpty(),
+        errorMessage = transientState.meta.errorMessage,
       )
     }
       .stateIn(

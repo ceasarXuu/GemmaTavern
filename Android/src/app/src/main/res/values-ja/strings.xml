@@ -740,4 +740,7 @@
   <string name="builtin_role_gemma_tag_hostess">女主人</string>
   <string name="builtin_role_gemma_tag_flirty">艶やか</string>
   <string name="sessions_archive">アーカイブ</string>
+  <string name="chat_tool_call_label">ツール呼び出し</string>
+  <string name="settings_roleplay_tool_debug_output_title">ツールのデバッグ出力を表示</string>
+  <string name="settings_roleplay_tool_debug_output_summary">各ロールプレイのツール呼び出しを、チャット内で中央寄せのシステム出力として表示します。</string>
 </resources>

@@ -114,19 +114,37 @@ fun RoleplaySettingsScreen(
         title = stringResource(R.string.settings_message_sounds_title),
         summary = stringResource(R.string.settings_message_sounds_summary),
         checked = uiState.messageSoundsEnabled,
-        onCheckedChange = viewModel::setMessageSoundsEnabled,
+        onCheckedChange = { enabled ->
+          viewModel.setMessageSoundsEnabled(enabled)
+          modelManagerViewModel.updateSettingsUpdateTrigger()
+        },
       )
       AppPreferenceSwitchCard(
         title = stringResource(R.string.settings_dialog_live_token_speed_title),
         summary = stringResource(R.string.settings_dialog_live_token_speed_summary),
         checked = uiState.liveTokenSpeedEnabled,
-        onCheckedChange = viewModel::setLiveTokenSpeedEnabled,
+        onCheckedChange = { enabled ->
+          viewModel.setLiveTokenSpeedEnabled(enabled)
+          modelManagerViewModel.updateSettingsUpdateTrigger()
+        },
       )
       AppPreferenceSwitchCard(
         title = stringResource(R.string.settings_dialog_streaming_output_title),
         summary = stringResource(R.string.settings_dialog_streaming_output_summary),
         checked = uiState.streamingOutputEnabled,
-        onCheckedChange = viewModel::setStreamingOutputEnabled,
+        onCheckedChange = { enabled ->
+          viewModel.setStreamingOutputEnabled(enabled)
+          modelManagerViewModel.updateSettingsUpdateTrigger()
+        },
+      )
+      AppPreferenceSwitchCard(
+        title = stringResource(R.string.settings_roleplay_tool_debug_output_title),
+        summary = stringResource(R.string.settings_roleplay_tool_debug_output_summary),
+        checked = uiState.roleplayToolDebugOutputEnabled,
+        onCheckedChange = { enabled ->
+          viewModel.setRoleplayToolDebugOutputEnabled(enabled)
+          modelManagerViewModel.updateSettingsUpdateTrigger()
+        },
       )
       AppPreferenceCard(
         title = stringResource(R.string.settings_model_library_title),

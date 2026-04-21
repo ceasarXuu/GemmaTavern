@@ -100,6 +100,10 @@ interface DataStoreRepository {
 
   fun isStreamingOutputEnabled(): Boolean
 
+  fun setRoleplayToolDebugOutputEnabled(enabled: Boolean)
+
+  fun isRoleplayToolDebugOutputEnabled(): Boolean
+
   fun setRoleEditorAssistantModelId(modelId: String?)
 
   fun getRoleEditorAssistantModelId(): String?
@@ -385,6 +389,20 @@ class DefaultDataStoreRepository(
     return runBlocking {
       val settings = dataStore.data.first()
       !settings.disableStreamingOutput
+    }
+  }
+
+  override fun setRoleplayToolDebugOutputEnabled(enabled: Boolean) {
+    runBlocking {
+      dataStore.updateData { settings ->
+        settings.toBuilder().setRoleplayToolDebugOutputEnabled(enabled).build()
+      }
+    }
+  }
+
+  override fun isRoleplayToolDebugOutputEnabled(): Boolean {
+    return runBlocking {
+      dataStore.data.first().roleplayToolDebugOutputEnabled
     }
   }
 

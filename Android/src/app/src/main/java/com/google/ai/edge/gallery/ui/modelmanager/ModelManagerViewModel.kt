@@ -692,6 +692,10 @@ constructor(
     return dataStoreRepository.isStreamingOutputEnabled()
   }
 
+  fun isRoleplayToolDebugOutputEnabled(): Boolean {
+    return dataStoreRepository.isRoleplayToolDebugOutputEnabled()
+  }
+
   fun getModelUrlResponse(model: Model, accessToken: String? = null): Int {
     try {
       val url = URL(model.url)

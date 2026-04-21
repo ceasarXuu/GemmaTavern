@@ -15,6 +15,19 @@ For release validation, also run:
 1. `./gradlew.bat :app:lintRelease`
 2. `./gradlew.bat :app:assembleRelease`
 
+## Device verification note
+
+On the current MIUI test device, `adb install -r` does not reliably leave the
+app in the foreground after an overwrite install.
+
+When validating a fresh debug or release APK on-device, explicitly rerun:
+
+1. `adb shell am start -W -n selfgemma.talk/.MainActivity`
+2. `adb shell pidof selfgemma.talk`
+3. `adb shell dumpsys activity activities | Select-String -Pattern 'selfgemma.talk/.MainActivity|ResumedActivity' -Context 0,1`
+
+Do not assume the previous foreground state survived the install step.
+
 ## Optional service configuration
 
 The default open-source build intentionally ships without private service credentials.

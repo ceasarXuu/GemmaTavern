@@ -9,6 +9,9 @@ import selfgemma.talk.domain.roleplay.model.Message
 import selfgemma.talk.domain.roleplay.model.MessageKind
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
+import selfgemma.talk.domain.roleplay.model.ToolExecutionSource
+import selfgemma.talk.domain.roleplay.model.ToolInvocation
+import selfgemma.talk.domain.roleplay.model.ToolInvocationStatus
 
 class RoleplayChatScreenTest {
   @Test
@@ -192,20 +195,106 @@ class RoleplayChatScreenTest {
     )
   }
 
+  @Test
+  fun `tool timeline item appears before anchored assistant message`() {
+    val timelineItems =
+      buildRoleplayTimelineItems(
+        messages =
+          listOf(
+            conversationMessage(
+              id = "user-1",
+              kind = MessageKind.TEXT,
+              seq = 1,
+              side = MessageSide.USER,
+              content = "What is the weather like?",
+            ),
+            conversationMessage(
+              id = "assistant-2",
+              kind = MessageKind.TEXT,
+              seq = 2,
+              side = MessageSide.ASSISTANT,
+              content = "It is clear tonight.",
+            ),
+          ),
+        toolInvocations =
+          listOf(
+            ToolInvocation(
+              id = "tool-1",
+              sessionId = "session-1",
+              turnId = "assistant-2",
+              toolName = "get_weather",
+              source = ToolExecutionSource.NATIVE,
+              status = ToolInvocationStatus.SUCCEEDED,
+              stepIndex = 0,
+              startedAt = 10L,
+              finishedAt = 20L,
+            ),
+          ),
+        showToolDebugOutput = true,
+      )
+
+    assertEquals(3, timelineItems.size)
+    assertTrue(timelineItems[0] is RoleplayTimelineItem.MessageEntry)
+    assertTrue(timelineItems[1] is RoleplayTimelineItem.ToolInvocationEntry)
+    assertTrue(timelineItems[2] is RoleplayTimelineItem.MessageEntry)
+    assertEquals(
+      "assistant-2",
+      (timelineItems[1] as RoleplayTimelineItem.ToolInvocationEntry).invocation.turnId,
+    )
+  }
+
+  @Test
+  fun `tool timeline items are hidden when debug output is disabled`() {
+    val timelineItems =
+      buildRoleplayTimelineItems(
+        messages =
+          listOf(
+            conversationMessage(
+              id = "assistant-2",
+              kind = MessageKind.TEXT,
+              seq = 2,
+              side = MessageSide.ASSISTANT,
+              content = "Standing by.",
+            ),
+          ),
+        toolInvocations =
+          listOf(
+            ToolInvocation(
+              id = "tool-1",
+              sessionId = "session-1",
+              turnId = "assistant-2",
+              toolName = "get_time",
+              source = ToolExecutionSource.NATIVE,
+              status = ToolInvocationStatus.SUCCEEDED,
+              stepIndex = 0,
+              startedAt = 10L,
+              finishedAt = 20L,
+            ),
+          ),
+        showToolDebugOutput = false,
+      )
+
+    assertEquals(1, timelineItems.size)
+    assertTrue(timelineItems.single() is RoleplayTimelineItem.MessageEntry)
+  }
+
   private fun conversationMessage(
     id: String,
     kind: MessageKind,
+    seq: Int = 1,
+    side: MessageSide = MessageSide.USER,
     status: MessageStatus = MessageStatus.COMPLETED,
+    content: String = "",
   ): Message {
     val now = System.currentTimeMillis()
     return Message(
       id = id,
       sessionId = "session-1",
-      seq = 1,
-      side = MessageSide.USER,
+      seq = seq,
+      side = side,
       kind = kind,
       status = status,
-      content = "",
+      content = content,
       createdAt = now,
       updatedAt = now,
     )

@@ -164,6 +164,10 @@ fun RoleplayChatScreen(
     remember(modelManagerUiState.settingsUpdateTrigger) {
       modelManagerViewModel.isLiveTokenSpeedEnabled()
     }
+  val showToolDebugOutput =
+    remember(modelManagerUiState.settingsUpdateTrigger) {
+      modelManagerViewModel.isRoleplayToolDebugOutputEnabled()
+    }
   val activeModel = uiState.session?.activeModelId?.let(modelManagerViewModel::getModelByName)
   val historicalWarmupRequirements =
     remember(uiState.messages) {
@@ -182,6 +186,15 @@ fun RoleplayChatScreen(
   val llmChatTask = modelManagerViewModel.getTaskById(BuiltInTaskId.LLM_CHAT)
   val listState = rememberLazyListState()
   val lastMessage = uiState.messages.lastOrNull()
+  val timelineItems =
+    remember(uiState.messages, uiState.toolInvocations, showToolDebugOutput) {
+      buildRoleplayTimelineItems(
+        messages = uiState.messages,
+        toolInvocations = uiState.toolInvocations,
+        showToolDebugOutput = showToolDebugOutput,
+      )
+    }
+  val lastTimelineItem = timelineItems.lastOrNull()
   val roleName = uiState.role?.name ?: stringResource(R.string.chat_assistant)
   val userPersonaName = uiState.userPersonaName.ifBlank { stringResource(R.string.chat_you) }
   val latestAssistantMessage =
@@ -222,12 +235,12 @@ fun RoleplayChatScreen(
   val screenOpenTimestamp = remember { SystemClock.elapsedRealtime() }
   var hasCompletedInitialPositioning by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
   var hasLoggedInitialPositioning by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
-  var previousMessageCount by rememberSaveable(uiState.session?.id) { mutableStateOf(0) }
+  var previousTimelineItemCount by rememberSaveable(uiState.session?.id) { mutableStateOf(0) }
   var composerBoundsInWindow by remember { mutableStateOf<Rect?>(null) }
   val latestListItemIndex =
-    remember(uiState.messages.size) {
+    remember(timelineItems.size) {
       calculateLatestListItemIndex(
-        messageCount = uiState.messages.size,
+        itemCount = timelineItems.size,
       )
     }
 
@@ -370,38 +383,38 @@ fun RoleplayChatScreen(
     }
   }
 
-  LaunchedEffect(latestListItemIndex, uiState.messages.size) {
+  LaunchedEffect(latestListItemIndex, timelineItems.size) {
     if (latestListItemIndex < 0) {
-      previousMessageCount = 0
+      previousTimelineItemCount = 0
       return@LaunchedEffect
     }
 
     if (!hasCompletedInitialPositioning) {
       scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = false)
       hasCompletedInitialPositioning = true
-      previousMessageCount = uiState.messages.size
+      previousTimelineItemCount = timelineItems.size
       if (!hasLoggedInitialPositioning) {
         hasLoggedInitialPositioning = true
         Log.d(
           TAG,
-          "initial chat positioned sessionId=${uiState.session?.id} messageCount=${uiState.messages.size} elapsed=${SystemClock.elapsedRealtime() - screenOpenTimestamp}ms",
+          "initial chat positioned sessionId=${uiState.session?.id} itemCount=${timelineItems.size} elapsed=${SystemClock.elapsedRealtime() - screenOpenTimestamp}ms",
         )
       }
       return@LaunchedEffect
     }
 
-    val messageCountIncreased = uiState.messages.size > previousMessageCount
-    previousMessageCount = uiState.messages.size
-    if (messageCountIncreased) {
+    val timelineItemCountIncreased = timelineItems.size > previousTimelineItemCount
+    previousTimelineItemCount = timelineItems.size
+    if (timelineItemCountIncreased) {
       Log.d(
         TAG,
-        "auto scroll to latest after message append sessionId=${uiState.session?.id} messageCount=${uiState.messages.size} latestItemIndex=$latestListItemIndex",
+        "auto scroll to latest after timeline append sessionId=${uiState.session?.id} itemCount=${timelineItems.size} latestItemIndex=$latestListItemIndex",
       )
       scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = true)
     }
   }
 
-  LaunchedEffect(lastMessage?.id, lastMessage?.status, hasCompletedInitialPositioning) {
+  LaunchedEffect(lastTimelineItem?.stableId, lastMessage?.status, hasCompletedInitialPositioning) {
     if (
       hasCompletedInitialPositioning &&
         !listState.isScrollInProgress &&
@@ -409,6 +422,15 @@ fun RoleplayChatScreen(
         shouldKeepLatestMessageVisible(listState, latestListItemIndex)
     ) {
       scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = false)
+    }
+  }
+
+  LaunchedEffect(showToolDebugOutput, uiState.toolInvocations.size) {
+    if (showToolDebugOutput) {
+      Log.d(
+        TAG,
+        "roleplay tool debug output visible sessionId=${uiState.session?.id} toolInvocationCount=${uiState.toolInvocations.size}",
+      )
     }
   }
 
@@ -538,27 +560,32 @@ fun RoleplayChatScreen(
         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
       ) {
-        items(uiState.messages, key = { it.id }) { message ->
-          ChatMessageBubble(
-            message = message,
-            roleName = roleName,
-            roleAvatarUri = uiState.role?.primaryAvatarUri(),
-            userName = userPersonaName,
-            userAvatarUri = uiState.userPersonaAvatarUri,
-            animateOnEnter = hasCompletedInitialPositioning && message.id == lastMessage?.id,
-            onRoleAvatarClick = handleRoleAvatarClick,
-            onUserAvatarClick = handlePersonaAvatarClick,
-            onMessageLongPress = { pressedMessage ->
-              if (!pressedMessage.supportsRoleplayActions()) {
-                return@ChatMessageBubble
-              }
-              selectedMessageActionId = pressedMessage.id
-              Log.d(
-                TAG,
-                "open message actions sessionId=${uiState.session?.id} messageId=${pressedMessage.id} side=${pressedMessage.side} canonical=${pressedMessage.isCanonical}",
+        items(timelineItems, key = { it.stableId }) { timelineItem ->
+          when (timelineItem) {
+            is RoleplayTimelineItem.MessageEntry ->
+              ChatMessageBubble(
+                message = timelineItem.message,
+                roleName = roleName,
+                roleAvatarUri = uiState.role?.primaryAvatarUri(),
+                userName = userPersonaName,
+                userAvatarUri = uiState.userPersonaAvatarUri,
+                animateOnEnter = hasCompletedInitialPositioning && timelineItem.message.id == lastMessage?.id,
+                onRoleAvatarClick = handleRoleAvatarClick,
+                onUserAvatarClick = handlePersonaAvatarClick,
+                onMessageLongPress = { pressedMessage ->
+                  if (!pressedMessage.supportsRoleplayActions()) {
+                    return@ChatMessageBubble
+                  }
+                  selectedMessageActionId = pressedMessage.id
+                  Log.d(
+                    TAG,
+                    "open message actions sessionId=${uiState.session?.id} messageId=${pressedMessage.id} side=${pressedMessage.side} canonical=${pressedMessage.isCanonical}",
+                  )
+                },
               )
-            },
-          )
+            is RoleplayTimelineItem.ToolInvocationEntry ->
+              RoleplayToolInvocationSystemRow(invocation = timelineItem.invocation)
+          }
         }
       }
 
@@ -1470,13 +1497,13 @@ private suspend fun scrollToItem(listState: LazyListState, itemIndex: Int, anima
 }
 
 private fun calculateLatestListItemIndex(
-  messageCount: Int,
+  itemCount: Int,
 ): Int {
-  if (messageCount == 0) {
+  if (itemCount == 0) {
     return -1
   }
 
-  return messageCount - 1
+  return itemCount - 1
 }
 
 private fun String.looksLikeHtml(): Boolean {

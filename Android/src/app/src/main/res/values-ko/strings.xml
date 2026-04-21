@@ -740,4 +740,7 @@
   <string name="builtin_role_gemma_tag_hostess">여주인</string>
   <string name="builtin_role_gemma_tag_flirty">도발적</string>
   <string name="sessions_archive">보관</string>
+  <string name="chat_tool_call_label">도구 호출</string>
+  <string name="settings_roleplay_tool_debug_output_title">도구 디버그 출력 표시</string>
+  <string name="settings_roleplay_tool_debug_output_summary">각 롤플레이 도구 호출을 채팅 안에서 가운데 정렬된 시스템 출력으로 표시합니다.</string>
 </resources>

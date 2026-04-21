@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -37,7 +38,9 @@ import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.StUserProfile
+import selfgemma.talk.domain.roleplay.model.ToolExecutionSource
 import selfgemma.talk.domain.roleplay.model.ToolInvocation
+import selfgemma.talk.domain.roleplay.model.ToolInvocationStatus
 import selfgemma.talk.domain.roleplay.model.snapshotSelectedPersona
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
@@ -218,6 +221,33 @@ class RoleplayChatViewModelTest {
       )
       uiCollector.cancel()
     }
+
+  @Test
+  fun uiState_updatesWhenToolInvocationsArrive() =
+    runTest {
+      val fixture = createFixture()
+      val uiCollector = backgroundScope.launch { fixture.viewModel.uiState.collect() }
+      advanceUntilIdle()
+
+      fixture.toolInvocationRepository.upsert(
+        ToolInvocation(
+          id = "tool-1",
+          sessionId = fixture.session.id,
+          turnId = "assistant-2",
+          toolName = "search_weather",
+          source = ToolExecutionSource.NATIVE,
+          status = ToolInvocationStatus.SUCCEEDED,
+          stepIndex = 0,
+          startedAt = 10L,
+          finishedAt = 20L,
+        )
+      )
+      advanceUntilIdle()
+
+      assertEquals(1, fixture.viewModel.uiState.value.toolInvocations.size)
+      assertEquals("search_weather", fixture.viewModel.uiState.value.toolInvocations.single().toolName)
+      uiCollector.cancel()
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -236,6 +266,7 @@ class MainDispatcherRule : TestWatcher() {
 private data class RoleplayChatViewModelFixture(
   val viewModel: RoleplayChatViewModel,
   val conversationRepository: ViewModelConversationRepository,
+  val toolInvocationRepository: ViewModelToolInvocationRepository,
   val session: Session,
 ) {
   fun queuedUserMessage(message: Message): Any {
@@ -412,6 +443,7 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
       openThreadRepository = openThreadRepository,
       memoryAtomRepository = memoryAtomRepository,
       compactionCacheRepository = compactionCacheRepository,
+      toolInvocationRepository = toolInvocationRepository,
       runRoleplayTurnUseCase = runRoleplayTurnUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
       rollbackRoleplayContinuityUseCase = rollbackUseCase,
@@ -434,6 +466,7 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
   return RoleplayChatViewModelFixture(
     viewModel = viewModel,
     conversationRepository = conversationRepository,
+    toolInvocationRepository = toolInvocationRepository,
     session = session,
   )
 }
@@ -599,11 +632,27 @@ private class ViewModelCompactionCacheRepository : CompactionCacheRepository {
 }
 
 private class ViewModelToolInvocationRepository : ToolInvocationRepository {
-  override suspend fun listBySession(sessionId: String): List<ToolInvocation> = emptyList()
+  private val invocations = MutableStateFlow<List<ToolInvocation>>(emptyList())
 
-  override suspend fun listByTurn(sessionId: String, turnId: String): List<ToolInvocation> = emptyList()
+  override fun observeBySession(sessionId: String): Flow<List<ToolInvocation>> {
+    return invocations.map { currentInvocations ->
+      currentInvocations.filter { it.sessionId == sessionId }
+    }
+  }
 
-  override suspend fun upsert(invocation: ToolInvocation) = Unit
+  override suspend fun listBySession(sessionId: String): List<ToolInvocation> =
+    invocations.value.filter { it.sessionId == sessionId }
+
+  override suspend fun listByTurn(sessionId: String, turnId: String): List<ToolInvocation> =
+    invocations.value.filter { it.sessionId == sessionId && it.turnId == turnId }
+
+  override suspend fun upsert(invocation: ToolInvocation) {
+    invocations.value =
+      invocations.value
+        .filterNot { current -> current.id == invocation.id }
+        .plus(invocation)
+        .sortedWith(compareBy<ToolInvocation>({ it.startedAt }, { it.stepIndex }, { it.id }))
+  }
 }
 
 private fun testSession(now: Long): Session =

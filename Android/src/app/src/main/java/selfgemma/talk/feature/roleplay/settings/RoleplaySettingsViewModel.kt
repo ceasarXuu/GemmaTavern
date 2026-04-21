@@ -15,6 +15,7 @@ data class RoleplaySettingsUiState(
   val messageSoundsEnabled: Boolean = true,
   val liveTokenSpeedEnabled: Boolean = true,
   val streamingOutputEnabled: Boolean = true,
+  val roleplayToolDebugOutputEnabled: Boolean = false,
   val roleEditorAssistantModelId: String? = null,
 )
 
@@ -30,6 +31,7 @@ constructor(
         messageSoundsEnabled = dataStoreRepository.areMessageSoundsEnabled(),
         liveTokenSpeedEnabled = dataStoreRepository.isLiveTokenSpeedEnabled(),
         streamingOutputEnabled = dataStoreRepository.isStreamingOutputEnabled(),
+        roleplayToolDebugOutputEnabled = dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
         roleEditorAssistantModelId = dataStoreRepository.getRoleEditorAssistantModelId(),
       )
     )
@@ -51,6 +53,12 @@ constructor(
     dataStoreRepository.setStreamingOutputEnabled(enabled)
     _uiState.value = _uiState.value.copy(streamingOutputEnabled = enabled)
     Log.d(TAG, "streaming output updated enabled=$enabled")
+  }
+
+  fun setRoleplayToolDebugOutputEnabled(enabled: Boolean) {
+    dataStoreRepository.setRoleplayToolDebugOutputEnabled(enabled)
+    _uiState.value = _uiState.value.copy(roleplayToolDebugOutputEnabled = enabled)
+    Log.d(TAG, "roleplay tool debug output updated enabled=$enabled")
   }
 
   fun setRoleEditorAssistantModelId(modelId: String?) {

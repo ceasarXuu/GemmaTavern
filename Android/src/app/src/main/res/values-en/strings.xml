@@ -232,6 +232,7 @@
   <string name="chat_edit_from_here_action">Edit from here</string>
   <string name="chat_continuity_debug_action">Continuity debug</string>
   <string name="chat_continuity_debug_title">Continuity debug</string>
+  <string name="chat_tool_call_label">Tool call</string>
   <string name="chat_continuity_runtime_state_label">Runtime state</string>
   <string name="chat_continuity_open_threads_label">Open threads</string>
   <string name="chat_continuity_memory_atoms_label">Memory atoms</string>
@@ -249,6 +250,8 @@
   <string name="settings_dialog_live_token_speed_summary">Display real-time token output speed in the chat header while the model is generating.</string>
   <string name="settings_dialog_streaming_output_title">Enable streaming output</string>
   <string name="settings_dialog_streaming_output_summary">Show assistant replies incrementally while generating. If interrupted, the partial bubble is withdrawn and the next turn restarts from scratch.</string>
+  <string name="settings_roleplay_tool_debug_output_title">Show tool debug output</string>
+  <string name="settings_roleplay_tool_debug_output_summary">Display each roleplay tool call as a centered system output in chat.</string>
   <string name="settings_role_editor_assistant_model_title">Editor assistant model</string>
   <string name="settings_role_editor_assistant_model_none">Default: first available model</string>
   <string name="settings_role_editor_assistant_model_empty">No local model is available yet. Add a model before using AI compression in the role editor.</string>

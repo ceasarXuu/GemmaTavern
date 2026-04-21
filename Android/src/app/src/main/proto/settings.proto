@@ -111,6 +111,7 @@ message Settings {
   bool disable_live_token_speed = 14;
   bool disable_streaming_output = 15;
   StUserProfileSettings st_user_profile = 16;
+  bool roleplay_tool_debug_output_enabled = 17;
 }
 
 message UserData {

@@ -25,6 +25,7 @@ class FakeDataStoreRepository(
   private var messageSoundsEnabled = true
   private var liveTokenSpeedEnabled = true
   private var streamingOutputEnabled = true
+  private var roleplayToolDebugOutputEnabled = false
   private var roleEditorAssistantModelId: String? = null
   private var lastUsedLlmModelId: String? = null
   private val benchmarkResults = mutableListOf<BenchmarkResult>()
@@ -133,6 +134,12 @@ class FakeDataStoreRepository(
   }
 
   override fun isStreamingOutputEnabled(): Boolean = streamingOutputEnabled
+
+  override fun setRoleplayToolDebugOutputEnabled(enabled: Boolean) {
+    roleplayToolDebugOutputEnabled = enabled
+  }
+
+  override fun isRoleplayToolDebugOutputEnabled(): Boolean = roleplayToolDebugOutputEnabled
 
   override fun setRoleEditorAssistantModelId(modelId: String?) {
     roleEditorAssistantModelId = modelId

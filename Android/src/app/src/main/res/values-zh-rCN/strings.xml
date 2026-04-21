@@ -219,6 +219,7 @@
   <string name="chat_response_stopped">回复已停止。</string>
   <string name="chat_response_failed">回复失败。</string>
   <string name="chat_empty_message">空消息</string>
+  <string name="chat_tool_call_label">工具调用</string>
   <string name="chat_switch_model">切换模型</string>
   <string name="chat_open_model_library_menu">打开模型库</string>
   <string name="chat_select_model_title">选择模型</string>
@@ -238,6 +239,8 @@
   <string name="settings_dialog_live_token_speed_summary">模型生成时，在聊天页头部实时显示 token 输出速度。</string>
   <string name="settings_dialog_streaming_output_title">开启流式输出</string>
   <string name="settings_dialog_streaming_output_summary">生成时逐步显示回复内容；若中途打断，会撤回当前未完成气泡，下一轮重新从头生成。</string>
+  <string name="settings_roleplay_tool_debug_output_title">显示工具调试输出</string>
+  <string name="settings_roleplay_tool_debug_output_summary">在聊天中将每次角色工具调用显示为居中的系统输出。</string>
   <string name="settings_role_editor_assistant_model_title">编辑助手模型</string>
   <string name="settings_role_editor_assistant_model_none">默认：第一个可用模型</string>
   <string name="settings_role_editor_assistant_model_empty">当前还没有可用本地模型。请先添加模型，再在角色编辑器中使用 AI 压缩。</string>
