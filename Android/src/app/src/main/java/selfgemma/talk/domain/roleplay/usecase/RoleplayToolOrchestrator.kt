@@ -16,6 +16,7 @@ data class RoleplayToolExecutionResult(
   val handled: Boolean = false,
   val finalResult: SendRoleplayMessageResult? = null,
   val toolInvocations: List<ToolInvocation> = emptyList(),
+  val augmentedPendingMessage: PendingRoleplayMessage? = null,
 )
 
 interface RoleplayToolOrchestrator {

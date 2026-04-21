@@ -26,6 +26,7 @@ import selfgemma.talk.domain.roleplay.model.Message
 import selfgemma.talk.domain.roleplay.model.MessageKind
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachment
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
 import selfgemma.talk.domain.roleplay.model.encodeRoleplayMessageMediaPayload
@@ -54,6 +55,7 @@ data class PendingRoleplayMessage(
   val userMessages: List<Message>,
   val assistantSeed: Message,
   val combinedUserInput: String,
+  val externalFacts: List<RoleplayExternalFact> = emptyList(),
 )
 
 data class StagedRoleplayTurn(
@@ -318,6 +320,7 @@ constructor(
         memoryContext = memoryContext,
         recentMessages = recentMessages,
         trimmedInput = effectiveInput,
+        externalFacts = pendingMessage.externalFacts,
         role = promptRole,
         contextProfile = contextProfile,
         budgetMode = attemptMode,
@@ -349,6 +352,7 @@ constructor(
           memoryContext = memoryContext,
           recentMessages = recentMessages,
           trimmedInput = effectiveInput,
+          externalFacts = pendingMessage.externalFacts,
           role = promptRole,
           contextProfile = contextProfile,
           budgetMode = attemptMode,
@@ -380,6 +384,7 @@ constructor(
           memoryContext = memoryContext,
           recentMessages = recentMessages,
           trimmedInput = effectiveInput,
+          externalFacts = pendingMessage.externalFacts,
           role = promptRole,
           contextProfile = contextProfile,
           budgetMode = attemptMode,
@@ -440,6 +445,7 @@ constructor(
               memoryContext = memoryContext,
               recentMessages = recentMessages,
               trimmedInput = effectiveInput,
+              externalFacts = pendingMessage.externalFacts,
               role = promptRole,
               contextProfile = contextProfile,
               budgetMode = attemptMode,
@@ -508,6 +514,7 @@ constructor(
           memoryContext = memoryContext,
           recentMessages = recentMessages,
           trimmedInput = effectiveInput,
+          externalFacts = pendingMessage.externalFacts,
           role = promptRole,
           contextProfile = contextProfile,
           budgetMode = attemptMode,
@@ -534,12 +541,22 @@ constructor(
         )
       summarizeSessionUseCase(sessionId)
       val memorySourceUserMessage = userMessages.lastOrNull { it.kind == MessageKind.TEXT } ?: userMessages.last()
-      extractMemoriesUseCase(
-        session = session,
-        role = role,
-        userMessage = memorySourceUserMessage,
-        assistantMessage = finalMessage,
-      )
+      if (pendingMessage.externalFacts.any { it.ephemeral }) {
+        debugLog(
+          "skipping auto memory extraction for tool-augmented turn sessionId=$sessionId facts=${pendingMessage.externalFacts.size}",
+        )
+        appendToolMemoryGuardEvent(
+          sessionId = sessionId,
+          toolNames = pendingMessage.externalFacts.map { it.sourceToolName },
+        )
+      } else {
+        extractMemoriesUseCase(
+          session = session,
+          role = role,
+          userMessage = memorySourceUserMessage,
+          assistantMessage = finalMessage,
+        )
+      }
       appendDriftEventIfNeeded(
         sessionId = sessionId,
         role = role,
@@ -561,6 +578,7 @@ constructor(
     memoryContext: RoleplayMemoryContextPack,
     recentMessages: List<Message>,
     trimmedInput: String,
+    externalFacts: List<RoleplayExternalFact>,
     role: selfgemma.talk.domain.roleplay.model.RoleCard,
     contextProfile: selfgemma.talk.domain.roleplay.model.ModelContextProfile,
     budgetMode: PromptBudgetMode,
@@ -575,6 +593,7 @@ constructor(
       openThreads = memoryContext.openThreads,
       memoryAtoms = memoryContext.memoryAtoms,
       pendingUserInput = trimmedInput,
+      externalFacts = externalFacts,
       runtimeProfile = role.runtimeProfile,
       contextProfile = contextProfile,
       budgetMode = budgetMode,
@@ -645,6 +664,29 @@ constructor(
         eventType = SessionEventType.CONTEXT_BUDGET_APPLIED,
         payloadJson =
           """{"mode":"${report.mode.name}","estimatedInputTokens":${report.estimatedInputTokens},"usableInputTokens":${report.usableInputTokens},"compactedSectionCount":${report.compactedSectionIds.size},"droppedSectionCount":${report.droppedSectionIds.size}}""",
+        createdAt = System.currentTimeMillis(),
+      )
+    )
+  }
+
+  private suspend fun appendToolMemoryGuardEvent(sessionId: String, toolNames: List<String>) {
+    val payload =
+      JsonObject().apply {
+        addProperty("reason", "ephemeral_tool_fact_guard")
+        addProperty("toolCount", toolNames.size)
+        add(
+          "toolNames",
+          JsonArray().apply {
+            toolNames.distinct().forEach(::add)
+          },
+        )
+      }
+    conversationRepository.appendEvent(
+      SessionEvent(
+        id = UUID.randomUUID().toString(),
+        sessionId = sessionId,
+        eventType = SessionEventType.MEMORY_OP_REJECTED,
+        payloadJson = payload.toString(),
         createdAt = System.currentTimeMillis(),
       )
     )

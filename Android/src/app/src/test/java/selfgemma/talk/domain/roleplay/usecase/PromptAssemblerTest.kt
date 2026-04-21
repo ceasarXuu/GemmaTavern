@@ -13,6 +13,7 @@ import selfgemma.talk.domain.roleplay.model.MessageKind
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.RoleCard
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RoleRuntimeProfile
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.SessionSummary
@@ -170,6 +171,41 @@ class PromptAssemblerTest {
     assertTrue(prompt.contains("Iris Vale: Agreed. The forged pass narrows the route."))
     assertFalse(prompt.contains("[Suggested Opening Tone]"))
     assertFalse(prompt.contains("The case file is already open."))
+  }
+
+  @Test
+  fun assemble_includesExternalToolFactsInDedicatedSection() {
+    val now = System.currentTimeMillis()
+    val prompt =
+      assembler.assemble(
+        role =
+          RoleCard(
+            id = "role-1",
+            name = "Iris Vale",
+            summary = "A dry-witted investigator.",
+            systemPrompt = "Always stay in character.",
+            createdAt = now,
+            updatedAt = now,
+          ),
+        summary = null,
+        memories = emptyList(),
+        recentMessages = emptyList(),
+        pendingUserInput = "现在几点？",
+        externalFacts =
+          listOf(
+            RoleplayExternalFact(
+              id = "fact-1",
+              sourceToolName = "get_device_system_time",
+              title = "Device system time",
+              content = "Real-world device system time is 2026-04-22 18:07 in Asia/Shanghai. The lunar date is 三月初六.",
+            )
+          ),
+      )
+
+    assertTrue(prompt.contains("[External Tool Facts]"))
+    assertTrue(prompt.contains("Device system time"))
+    assertTrue(prompt.contains("2026-04-22 18:07"))
+    assertTrue(prompt.contains("三月初六"))
   }
 
   @Test

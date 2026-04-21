@@ -12,6 +12,7 @@ import selfgemma.talk.domain.roleplay.model.MessageKind
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.OpenThread
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RoleRuntimeProfile
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.SessionSummary
@@ -39,6 +40,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     openThreads: List<OpenThread>,
     memoryAtoms: List<MemoryAtom>,
     recentMessages: List<Message>,
+    externalFacts: List<RoleplayExternalFact>,
     macroContext: StMacroContext,
     resolvedCharacterBook: StResolvedPromptRuntime,
     postHistoryBlock: String,
@@ -47,6 +49,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   ): PromptMaterial {
     val characterKernel = runtimeProfile?.characterKernel
     val recentConversationVariants = buildRecentConversationVariants(runtimeRole = runtimeRole, recentMessages = recentMessages)
+    val externalFactVariants = buildExternalFactVariants(externalFacts)
     val runtimeStateVariants = buildRuntimeStateVariants(runtimeStateSnapshot)
     val openThreadVariants = buildOpenThreadVariants(openThreads)
     val memoryAtomVariants = buildMemoryAtomVariants(memoryAtoms)
@@ -135,6 +138,17 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
             fullBody = runtimeRole.safetyPolicy,
             priority = PromptSectionPriority.REQUIRED,
             required = true,
+          )
+        )
+        addCandidate(
+          PromptSectionCandidate(
+            id = PromptSectionId.EXTERNAL_FACTS,
+            title = "External Tool Facts",
+            fullBody = externalFactVariants.full,
+            compactBody = externalFactVariants.compact,
+            minimalBody = externalFactVariants.minimal,
+            priority = PromptSectionPriority.HIGH,
+            required = externalFacts.isNotEmpty(),
           )
         )
         addCandidate(
@@ -252,6 +266,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
         listOf(
           "- The next incoming user message is the live message you must answer.",
           "- Use memory and summary when relevant, but prioritize natural conversation.",
+          "- Treat any external tool facts as authoritative only for this turn, and only when they answer the user's real-world request.",
           "- Keep continuity with the recent conversation.",
           "- Never output labels like USER:, ASSISTANT:, or SYSTEM: in your reply.",
         ),
@@ -329,6 +344,18 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     val rendered =
       openThreads.map { thread ->
         "- [${thread.type.name.lowercase()}/${thread.owner.name.lowercase()}/p${thread.priority}] ${thread.content.normalizeWhitespace().take(MAX_THREAD_LINE_LENGTH)}"
+      }
+    return MemoryVariants(
+      full = rendered.joinToString("\n"),
+      compact = rendered.take(2).joinToString("\n"),
+      minimal = rendered.take(1).joinToString("\n"),
+    )
+  }
+
+  private fun buildExternalFactVariants(externalFacts: List<RoleplayExternalFact>): MemoryVariants {
+    val rendered =
+      externalFacts.map { fact ->
+        "- ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace().take(MAX_EXTERNAL_FACT_LINE_LENGTH)}"
       }
     return MemoryVariants(
       full = rendered.joinToString("\n"),
@@ -516,6 +543,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
       listOf("trust", "intimacy", "tension", "dependence", "initiative|dominance", "respect", "fear", "currentMood", "lastShiftReason")
     private const val MAX_THREAD_LINE_LENGTH = 180
     private const val MAX_MEMORY_LINE_LENGTH = 180
+    private const val MAX_EXTERNAL_FACT_LINE_LENGTH = 220
     private const val MAX_RUNTIME_STATE_VALUE_LENGTH = 180
   }
 }

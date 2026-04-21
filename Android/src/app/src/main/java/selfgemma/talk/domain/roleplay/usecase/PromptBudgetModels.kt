@@ -8,6 +8,7 @@ internal enum class PromptSectionId {
   PERSONA,
   WORLD,
   SAFETY,
+  EXTERNAL_FACTS,
   RUNTIME_STATE,
   OPEN_THREADS,
   SEMANTIC_MEMORY,

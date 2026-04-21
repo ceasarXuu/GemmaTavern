@@ -110,6 +110,12 @@ class RunRoleplayTurnUseCaseTest {
       assertEquals("search_wiki", fixture.toolInvocationRepository.invocations.single().toolName)
       assertTrue(
         fixture.conversationRepository.events.any { event ->
+          event.eventType == SessionEventType.TOOL_CALL_STARTED &&
+            event.payloadJson.contains("\"toolName\":\"search_wiki\"")
+        }
+      )
+      assertTrue(
+        fixture.conversationRepository.events.any { event ->
           event.eventType == SessionEventType.TOOL_CALL_COMPLETED &&
             event.payloadJson.contains("\"toolName\":\"search_wiki\"")
         }

@@ -28,6 +28,20 @@ When validating a fresh debug or release APK on-device, explicitly rerun:
 
 Do not assume the previous foreground state survived the install step.
 
+## Targeted instrumentation note
+
+For single Android instrumentation classes, the most reliable path on this
+workspace has been:
+
+1. `Set-Location .\Android\src`
+2. `./gradlew.bat :app:installDebug :app:installDebugAndroidTest`
+3. `adb shell am instrument -w -r -e class <fqcn> selfgemma.talk.test/androidx.test.runner.AndroidJUnitRunner`
+
+Using Gradle runner-arg properties such as
+`-Pandroid.testInstrumentationRunnerArguments.class=...` triggered a plugin
+configuration failure around the Protobuf Gradle plugin on this setup, so avoid
+that path unless it is revalidated later.
+
 ## Optional service configuration
 
 The default open-source build intentionally ships without private service credentials.

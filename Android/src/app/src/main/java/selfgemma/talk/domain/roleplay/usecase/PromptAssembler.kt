@@ -12,6 +12,7 @@ import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.ModelContextProfile
 import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.RoleCard
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RoleRuntimeProfile
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.SessionSummary
@@ -49,6 +50,7 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
     openThreads: List<OpenThread> = emptyList(),
     memoryAtoms: List<MemoryAtom> = emptyList(),
     pendingUserInput: String = "",
+    externalFacts: List<RoleplayExternalFact> = emptyList(),
     generationTrigger: String = "normal",
     userProfile: StUserProfile = StUserProfile(),
     contextProfile: ModelContextProfile? = null,
@@ -63,6 +65,7 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
       openThreads = openThreads,
       memoryAtoms = memoryAtoms,
       pendingUserInput = pendingUserInput,
+      externalFacts = externalFacts,
       generationTrigger = generationTrigger,
       userProfile = userProfile,
       chatMetadataJson = null,
@@ -80,6 +83,7 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
     openThreads: List<OpenThread> = emptyList(),
     memoryAtoms: List<MemoryAtom> = emptyList(),
     pendingUserInput: String = "",
+    externalFacts: List<RoleplayExternalFact> = emptyList(),
     generationTrigger: String = "normal",
     userProfile: StUserProfile = StUserProfile(),
     chatMetadataJson: String? = null,
@@ -102,6 +106,7 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
       openThreads = openThreads,
       memoryAtoms = memoryAtoms,
       pendingUserInput = pendingUserInput,
+      externalFacts = externalFacts,
       runtimeProfile = role.runtimeProfile,
       contextProfile = contextProfile,
       budgetMode = budgetMode,
@@ -118,6 +123,7 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
     openThreads: List<OpenThread> = emptyList(),
     memoryAtoms: List<MemoryAtom> = emptyList(),
     pendingUserInput: String = "",
+    externalFacts: List<RoleplayExternalFact> = emptyList(),
     runtimeProfile: RoleRuntimeProfile? = null,
     contextProfile: ModelContextProfile? = null,
     budgetMode: PromptBudgetMode = PromptBudgetMode.FULL,
@@ -202,6 +208,7 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
         openThreads = openThreads,
         memoryAtoms = memoryAtoms,
         recentMessages = recentMessages,
+        externalFacts = externalFacts,
         macroContext = macroContext,
         resolvedCharacterBook = resolvedCharacterBook,
         postHistoryBlock = postHistoryBlock,

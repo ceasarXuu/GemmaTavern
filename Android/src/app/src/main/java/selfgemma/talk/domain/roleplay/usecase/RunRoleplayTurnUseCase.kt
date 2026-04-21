@@ -92,6 +92,7 @@ class RunRoleplayTurnUseCase @Inject constructor(
         RoleplayToolExecutionResult()
       }
 
+    val effectivePendingMessage = orchestration.augmentedPendingMessage ?: pendingMessage
     persistToolInvocations(pendingMessage.session.id, pendingMessage.assistantSeed.id, orchestration.toolInvocations)
 
     val finalResult =
@@ -103,7 +104,7 @@ class RunRoleplayTurnUseCase @Inject constructor(
         )
       } else {
         sendRoleplayMessageUseCase.completePendingMessage(
-          pendingMessage = pendingMessage,
+          pendingMessage = effectivePendingMessage,
           model = model,
           enableStreamingOutput = enableStreamingOutput,
           isStopRequested = isStopRequested,
@@ -134,6 +135,17 @@ class RunRoleplayTurnUseCase @Inject constructor(
     toolInvocations: List<ToolInvocation>,
   ) {
     toolInvocations.forEach { invocation ->
+      if (invocation.status !in listOf(ToolInvocationStatus.PENDING, ToolInvocationStatus.RUNNING)) {
+        appendInvocationEvent(
+          sessionId = sessionId,
+          turnId = turnId,
+          eventType = SessionEventType.TOOL_CALL_STARTED,
+          toolName = invocation.toolName,
+          status = ToolInvocationStatus.RUNNING,
+          stepIndex = invocation.stepIndex,
+          errorMessage = null,
+        )
+      }
       toolInvocationRepository.upsert(invocation)
       appendInvocationEvent(
         sessionId = sessionId,

@@ -31,6 +31,14 @@ data class ToolArtifactRef(
   val metadataJson: String? = null,
 )
 
+data class RoleplayExternalFact(
+  val id: String,
+  val sourceToolName: String,
+  val title: String,
+  val content: String,
+  val ephemeral: Boolean = true,
+)
+
 data class ToolInvocation(
   val id: String,
   val sessionId: String,
