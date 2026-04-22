@@ -41,10 +41,13 @@ When validating a fresh debug or release APK on-device, explicitly rerun:
 
 Do not assume the previous foreground state survived the install step.
 
-On the current Android 16 test device, `adb shell pidof -s selfgemma.talk`
-returned an empty result even while the process was alive. Prefer
-`adb shell pidof selfgemma.talk`, and if that ever looks ambiguous, confirm with
-`adb shell ps -A | Select-String -Pattern 'selfgemma.talk'`.
+On the current Android 16 test device, both `adb shell pidof selfgemma.talk`
+and `adb shell pidof -s selfgemma.talk` have shown intermittent false-empty
+results across different runs. Treat both as hints, not the source of truth.
+Always fall back to:
+
+1. `adb shell ps -A | Select-String -Pattern 'selfgemma.talk'`
+2. `adb shell dumpsys activity activities | Select-String -Pattern 'selfgemma.talk/.MainActivity|ResumedActivity' -Context 0,1`
 
 ## Targeted instrumentation note
 

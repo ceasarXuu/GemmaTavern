@@ -114,6 +114,7 @@ message Settings {
   bool roleplay_tool_debug_output_enabled = 17;
   bool roleplay_location_tools_enabled = 18;
   bool roleplay_calendar_tools_enabled = 19;
+  repeated string roleplay_disabled_tool_id = 20;
 }
 
 message UserData {

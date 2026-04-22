@@ -27,6 +27,7 @@ private val DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd", Locale.RO
 class DeviceContextTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.DEVICE_CONTEXT
   override val priority: Int = 40
 
   internal var snapshotProvider: () -> DeviceContextSnapshot = {

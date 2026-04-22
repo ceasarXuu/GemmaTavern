@@ -15,6 +15,8 @@ data class RoleplayPreparedToolContext(
 )
 
 interface RoleplayToolProviderFactory {
+  val toolId: String
+
   val priority: Int
     get() = 0
 

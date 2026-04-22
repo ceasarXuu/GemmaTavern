@@ -24,6 +24,7 @@ private const val TOOL_NAME = "getDeviceBatteryStatus"
 class DeviceBatteryStatusTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.DEVICE_BATTERY_STATUS
   override val priority: Int = 20
 
   internal var snapshotProvider: () -> DeviceBatteryStatusSnapshot = {

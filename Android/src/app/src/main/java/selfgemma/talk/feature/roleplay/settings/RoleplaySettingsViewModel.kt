@@ -8,6 +8,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import selfgemma.talk.data.DataStoreRepository
+import selfgemma.talk.domain.roleplay.usecase.RoleplayToolIds
+
+data class RoleplayToolToggleUiState(
+  val toolId: String,
+  val enabled: Boolean,
+)
 
 private const val TAG = "RoleplaySettingsViewModel"
 
@@ -16,10 +22,12 @@ data class RoleplaySettingsUiState(
   val liveTokenSpeedEnabled: Boolean = true,
   val streamingOutputEnabled: Boolean = true,
   val roleplayToolDebugOutputEnabled: Boolean = false,
-  val roleplayLocationToolsEnabled: Boolean = false,
-  val roleplayCalendarToolsEnabled: Boolean = false,
+  val toolStates: List<RoleplayToolToggleUiState> = emptyList(),
   val roleEditorAssistantModelId: String? = null,
-)
+) {
+  val allToolsEnabled: Boolean
+    get() = toolStates.isNotEmpty() && toolStates.all(RoleplayToolToggleUiState::enabled)
+}
 
 @HiltViewModel
 class RoleplaySettingsViewModel
@@ -34,8 +42,7 @@ constructor(
         liveTokenSpeedEnabled = dataStoreRepository.isLiveTokenSpeedEnabled(),
         streamingOutputEnabled = dataStoreRepository.isStreamingOutputEnabled(),
         roleplayToolDebugOutputEnabled = dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
-        roleplayLocationToolsEnabled = dataStoreRepository.isRoleplayLocationToolsEnabled(),
-        roleplayCalendarToolsEnabled = dataStoreRepository.isRoleplayCalendarToolsEnabled(),
+        toolStates = buildToolStates(),
         roleEditorAssistantModelId = dataStoreRepository.getRoleEditorAssistantModelId(),
       )
     )
@@ -65,16 +72,16 @@ constructor(
     logDebug("roleplay tool debug output updated enabled=$enabled")
   }
 
-  fun setRoleplayLocationToolsEnabled(enabled: Boolean) {
-    dataStoreRepository.setRoleplayLocationToolsEnabled(enabled)
-    _uiState.value = _uiState.value.copy(roleplayLocationToolsEnabled = enabled)
-    logDebug("roleplay location tools updated enabled=$enabled")
+  fun setRoleplayToolEnabled(toolId: String, enabled: Boolean) {
+    dataStoreRepository.setRoleplayToolEnabled(toolId, enabled)
+    _uiState.value = _uiState.value.copy(toolStates = buildToolStates())
+    logDebug("roleplay tool updated toolId=$toolId enabled=$enabled")
   }
 
-  fun setRoleplayCalendarToolsEnabled(enabled: Boolean) {
-    dataStoreRepository.setRoleplayCalendarToolsEnabled(enabled)
-    _uiState.value = _uiState.value.copy(roleplayCalendarToolsEnabled = enabled)
-    logDebug("roleplay calendar tools updated enabled=$enabled")
+  fun setAllRoleplayToolsEnabled(enabled: Boolean) {
+    dataStoreRepository.setAllRoleplayToolsEnabled(RoleplayToolIds.all, enabled)
+    _uiState.value = _uiState.value.copy(toolStates = buildToolStates())
+    logDebug("all roleplay tools updated enabled=$enabled")
   }
 
   fun setRoleEditorAssistantModelId(modelId: String?) {
@@ -85,5 +92,14 @@ constructor(
 
   private fun logDebug(message: String) {
     runCatching { Log.d(TAG, message) }
+  }
+
+  private fun buildToolStates(): List<RoleplayToolToggleUiState> {
+    return roleplayToolManagementEntries.map { entry ->
+      RoleplayToolToggleUiState(
+        toolId = entry.toolId,
+        enabled = dataStoreRepository.isRoleplayToolEnabled(entry.toolId),
+      )
+    }
   }
 }

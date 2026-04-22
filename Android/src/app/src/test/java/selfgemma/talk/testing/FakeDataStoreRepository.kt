@@ -28,6 +28,7 @@ class FakeDataStoreRepository(
   private var roleplayToolDebugOutputEnabled = false
   private var roleplayLocationToolsEnabled = false
   private var roleplayCalendarToolsEnabled = false
+  private val disabledRoleplayToolIds = linkedSetOf<String>()
   private var roleEditorAssistantModelId: String? = null
   private var lastUsedLlmModelId: String? = null
   private val benchmarkResults = mutableListOf<BenchmarkResult>()
@@ -154,6 +155,25 @@ class FakeDataStoreRepository(
   }
 
   override fun isRoleplayCalendarToolsEnabled(): Boolean = roleplayCalendarToolsEnabled
+
+  override fun setRoleplayToolEnabled(toolId: String, enabled: Boolean) {
+    if (toolId.isBlank()) {
+      return
+    }
+    if (enabled) {
+      disabledRoleplayToolIds.remove(toolId)
+    } else {
+      disabledRoleplayToolIds.add(toolId)
+    }
+  }
+
+  override fun isRoleplayToolEnabled(toolId: String): Boolean = toolId.isNotBlank() && toolId !in disabledRoleplayToolIds
+
+  override fun setAllRoleplayToolsEnabled(toolIds: Collection<String>, enabled: Boolean) {
+    toolIds.filter { it.isNotBlank() }.forEach { toolId -> setRoleplayToolEnabled(toolId, enabled) }
+  }
+
+  override fun getDisabledRoleplayToolIds(): Set<String> = disabledRoleplayToolIds.toSet()
 
   override fun setRoleEditorAssistantModelId(modelId: String?) {
     roleEditorAssistantModelId = modelId

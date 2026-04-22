@@ -29,6 +29,7 @@ private val ALARM_DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd", Loc
 class DeviceNextAlarmTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.NEXT_ALARM_HINT
   override val priority: Int = 70
 
   internal var snapshotProvider: () -> DeviceNextAlarmSnapshot = {

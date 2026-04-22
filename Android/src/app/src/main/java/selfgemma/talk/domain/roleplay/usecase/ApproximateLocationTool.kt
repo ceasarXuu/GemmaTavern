@@ -29,9 +29,10 @@ class ApproximateLocationTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
   private val accessPolicy: RoleplayToolAccessPolicy,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.APPROXIMATE_LOCATION
   override val priority: Int = 50
 
-  internal var isAvailableProvider: () -> Boolean = { accessPolicy.canUseLocationTools() }
+  internal var isAvailableProvider: () -> Boolean = { accessPolicy.canRegisterTool(toolId) }
   internal var snapshotProvider: () -> ApproximateLocationSnapshot = {
     ApproximateLocationSnapshot.capture(appContext)
   }

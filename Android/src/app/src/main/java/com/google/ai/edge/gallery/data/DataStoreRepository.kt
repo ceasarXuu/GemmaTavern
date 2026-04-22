@@ -112,6 +112,14 @@ interface DataStoreRepository {
 
   fun isRoleplayCalendarToolsEnabled(): Boolean
 
+  fun setRoleplayToolEnabled(toolId: String, enabled: Boolean)
+
+  fun isRoleplayToolEnabled(toolId: String): Boolean
+
+  fun setAllRoleplayToolsEnabled(toolIds: Collection<String>, enabled: Boolean)
+
+  fun getDisabledRoleplayToolIds(): Set<String>
+
   fun setRoleEditorAssistantModelId(modelId: String?)
 
   fun getRoleEditorAssistantModelId(): String?
@@ -439,6 +447,61 @@ class DefaultDataStoreRepository(
   override fun isRoleplayCalendarToolsEnabled(): Boolean {
     return runBlocking {
       dataStore.data.first().roleplayCalendarToolsEnabled
+    }
+  }
+
+  override fun setRoleplayToolEnabled(toolId: String, enabled: Boolean) {
+    if (toolId.isBlank()) {
+      return
+    }
+    runBlocking {
+      dataStore.updateData { settings ->
+        val disabledToolIds = settings.roleplayDisabledToolIdList.toMutableSet()
+        if (enabled) {
+          disabledToolIds.remove(toolId)
+        } else {
+          disabledToolIds.add(toolId)
+        }
+        settings
+          .toBuilder()
+          .clearRoleplayDisabledToolId()
+          .addAllRoleplayDisabledToolId(disabledToolIds.sorted())
+          .build()
+      }
+    }
+  }
+
+  override fun isRoleplayToolEnabled(toolId: String): Boolean {
+    if (toolId.isBlank()) {
+      return false
+    }
+    return runBlocking {
+      !dataStore.data.first().roleplayDisabledToolIdList.contains(toolId)
+    }
+  }
+
+  override fun setAllRoleplayToolsEnabled(toolIds: Collection<String>, enabled: Boolean) {
+    val normalizedToolIds = toolIds.filter { it.isNotBlank() }.toSet()
+    runBlocking {
+      dataStore.updateData { settings ->
+        val disabledToolIds = settings.roleplayDisabledToolIdList.toMutableSet()
+        if (enabled) {
+          disabledToolIds.removeAll(normalizedToolIds)
+        } else {
+          disabledToolIds.addAll(normalizedToolIds)
+        }
+        settings
+          .toBuilder()
+          .clearRoleplayDisabledToolId()
+          .addAllRoleplayDisabledToolId(disabledToolIds.sorted())
+          .build()
+      }
+    }
+  }
+
+  override fun getDisabledRoleplayToolIds(): Set<String> {
+    return runBlocking {
+      dataStore.data.first().roleplayDisabledToolIdList.toSet()
     }
   }
 

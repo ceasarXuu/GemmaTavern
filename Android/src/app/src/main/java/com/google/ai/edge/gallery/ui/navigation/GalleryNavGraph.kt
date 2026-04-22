@@ -260,6 +260,7 @@ fun AppNavHost(
         },
         onOpenRoleCatalog = { navController.navigate(RoleplayRoutes.ROLE_CATALOG) },
         onOpenSettings = { navController.navigate(RoleplayRoutes.SETTINGS) },
+        onOpenToolManagement = { navController.navigate(RoleplayRoutes.TOOL_MANAGEMENT) },
         onOpenModelLibrary = { navController.navigate(ROUTE_MODEL_MANAGER) },
         onOpenChat = { sessionId ->
           pendingChatEnterStartedAtMs = SystemClock.elapsedRealtime()
@@ -346,7 +347,19 @@ composable(route = RoleplayRoutes.ROLE_CATALOG, enterTransition = { slideEnter()
         modelManagerViewModel = modelManagerViewModel,
         navigateUp = { navController.navigateUp() },
         onOpenModelLibrary = { navController.navigate(ROUTE_MODEL_MANAGER) },
+        onOpenToolManagement = { navController.navigate(RoleplayRoutes.TOOL_MANAGEMENT) },
         showNavigateUp = true,
+      )
+    }
+
+    composable(
+      route = RoleplayRoutes.TOOL_MANAGEMENT,
+      enterTransition = { slideUpEnter() },
+      exitTransition = { slideDownExit() },
+    ) {
+      selfgemma.talk.feature.roleplay.settings.RoleplayToolManagementScreen(
+        modelManagerViewModel = modelManagerViewModel,
+        navigateUp = { navController.navigateUp() },
       )
     }
 

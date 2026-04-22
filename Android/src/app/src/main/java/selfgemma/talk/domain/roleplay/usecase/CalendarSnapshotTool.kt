@@ -33,9 +33,10 @@ class CalendarSnapshotTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
   private val accessPolicy: RoleplayToolAccessPolicy,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.CALENDAR_SNAPSHOT
   override val priority: Int = 60
 
-  internal var isAvailableProvider: () -> Boolean = { accessPolicy.canUseCalendarTools() }
+  internal var isAvailableProvider: () -> Boolean = { accessPolicy.canRegisterTool(toolId) }
   internal var snapshotProvider: () -> CalendarSnapshot = { CalendarSnapshot.capture(appContext) }
 
   override fun createToolProvider(

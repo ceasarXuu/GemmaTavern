@@ -24,6 +24,7 @@ private val wikipediaQueryGson = Gson()
 class WikipediaQueryTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.QUERY_WIKIPEDIA
   override val priority: Int = 80
 
   internal var localeProvider: () -> Locale = { DeviceContextSnapshot.resolvePrimaryLocale(appContext) }

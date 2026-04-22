@@ -15,6 +15,7 @@ import selfgemma.talk.CutoutsSerializer
 import selfgemma.talk.SettingsSerializer
 import selfgemma.talk.SkillsSerializer
 import selfgemma.talk.UserDataSerializer
+import selfgemma.talk.domain.roleplay.usecase.RoleplayToolIds
 import selfgemma.talk.domain.roleplay.model.DEFAULT_ST_USER_AVATAR_ID
 import selfgemma.talk.domain.roleplay.model.StPersonaDescriptor
 import selfgemma.talk.domain.roleplay.model.StUserProfile
@@ -102,6 +103,50 @@ class DefaultDataStoreRepositoryTest {
       assertEquals(true, repository.isRoleplayCalendarToolsEnabled())
       assertEquals(true, persistedSettings.roleplayLocationToolsEnabled)
       assertEquals(true, persistedSettings.roleplayCalendarToolsEnabled)
+    } finally {
+      scope.cancel()
+      tempDir.deleteRecursively()
+    }
+  }
+
+  @Test
+  fun roleplayToolDisabledSet_defaultsToAllEnabledAndPersistsOverrides() {
+    val tempDir = Files.createTempDirectory("datastore-repo-disabled-tools").toFile()
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    try {
+      val settingsFile = File(tempDir, "settings.pb")
+      val repository =
+        DefaultDataStoreRepository(
+          dataStore = createDataStore(settingsFile, SettingsSerializer, scope),
+          userDataDataStore = createDataStore(File(tempDir, "user-data.pb"), UserDataSerializer, scope),
+          cutoutDataStore = createDataStore(File(tempDir, "cutouts.pb"), CutoutsSerializer, scope),
+          benchmarkResultsDataStore =
+            createDataStore(File(tempDir, "benchmark-results.pb"), BenchmarkResultsSerializer, scope),
+          skillsDataStore = createDataStore(File(tempDir, "skills.pb"), SkillsSerializer, scope),
+        )
+
+      assertEquals(true, repository.isRoleplayToolEnabled(RoleplayToolIds.WEATHER))
+
+      repository.setRoleplayToolEnabled(RoleplayToolIds.WEATHER, false)
+      repository.setRoleplayToolEnabled(RoleplayToolIds.CALENDAR_SNAPSHOT, false)
+
+      val persistedSettings = settingsFile.inputStream().use(Settings::parseFrom)
+
+      assertEquals(false, repository.isRoleplayToolEnabled(RoleplayToolIds.WEATHER))
+      assertEquals(false, repository.isRoleplayToolEnabled(RoleplayToolIds.CALENDAR_SNAPSHOT))
+      assertEquals(
+        setOf(RoleplayToolIds.WEATHER, RoleplayToolIds.CALENDAR_SNAPSHOT),
+        repository.getDisabledRoleplayToolIds(),
+      )
+      assertEquals(
+        listOf(RoleplayToolIds.CALENDAR_SNAPSHOT, RoleplayToolIds.WEATHER),
+        persistedSettings.roleplayDisabledToolIdList,
+      )
+
+      repository.setAllRoleplayToolsEnabled(RoleplayToolIds.all, true)
+
+      assertEquals(true, repository.isRoleplayToolEnabled(RoleplayToolIds.WEATHER))
+      assertEquals(emptySet<String>(), repository.getDisabledRoleplayToolIds())
     } finally {
       scope.cancel()
       tempDir.deleteRecursively()

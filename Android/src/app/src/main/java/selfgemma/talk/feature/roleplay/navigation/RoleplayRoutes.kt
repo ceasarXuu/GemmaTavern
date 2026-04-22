@@ -9,6 +9,7 @@ object RoleplayRoutes {
   const val ROLE_EDITOR = "roleplay_role_editor?roleId={roleId}"
   const val PROFILE = "roleplay_profile?slotId={slotId}&edit={edit}"
   const val SETTINGS = "roleplay_settings"
+  const val TOOL_MANAGEMENT = "roleplay_tool_management"
   const val CHAT = "roleplay_chat/{sessionId}"
 
   fun chat(sessionId: String): String {

@@ -1,13 +1,8 @@
 package selfgemma.talk.feature.roleplay.settings
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatDelegate
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,18 +17,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import selfgemma.talk.AppTopBar
@@ -54,6 +46,7 @@ fun RoleplaySettingsScreen(
   modelManagerViewModel: ModelManagerViewModel,
   navigateUp: () -> Unit,
   onOpenModelLibrary: () -> Unit,
+  onOpenToolManagement: () -> Unit,
   showNavigateUp: Boolean = false,
   modifier: Modifier = Modifier,
   contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -68,25 +61,10 @@ fun RoleplaySettingsScreen(
   var showAssistantModelDialog by remember { mutableStateOf(false) }
   val currentLocaleTag = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore(',')
   val uiState by viewModel.uiState.collectAsState()
-  val context = LocalContext.current
-  val locationPermissionGranted = hasPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-  val calendarPermissionGranted = hasPermission(context, Manifest.permission.READ_CALENDAR)
   val downloadedModels = modelManagerViewModel.getAllDownloadedModels()
   val resolvedAssistantModel =
     downloadedModels.firstOrNull { it.name == uiState.roleEditorAssistantModelId }
       ?: downloadedModels.firstOrNull()
-  val locationPermissionLauncher =
-    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-      viewModel.setRoleplayLocationToolsEnabled(granted)
-      modelManagerViewModel.updateSettingsUpdateTrigger()
-      Log.d(TAG, "location permission request completed granted=$granted")
-    }
-  val calendarPermissionLauncher =
-    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-      viewModel.setRoleplayCalendarToolsEnabled(granted)
-      modelManagerViewModel.updateSettingsUpdateTrigger()
-      Log.d(TAG, "calendar permission request completed granted=$granted")
-    }
   val handleNavigateUp: () -> Unit = {
     if (showLanguageDialog) {
       showLanguageDialog = false
@@ -101,21 +79,6 @@ fun RoleplaySettingsScreen(
   }
 
   BackHandler(enabled = showNavigateUp || showLanguageDialog || showAssistantModelDialog) { handleNavigateUp() }
-
-  LaunchedEffect(locationPermissionGranted, uiState.roleplayLocationToolsEnabled) {
-    if (!locationPermissionGranted && uiState.roleplayLocationToolsEnabled) {
-      viewModel.setRoleplayLocationToolsEnabled(false)
-      modelManagerViewModel.updateSettingsUpdateTrigger()
-      Log.d(TAG, "location tools disabled because coarse location permission is missing")
-    }
-  }
-  LaunchedEffect(calendarPermissionGranted, uiState.roleplayCalendarToolsEnabled) {
-    if (!calendarPermissionGranted && uiState.roleplayCalendarToolsEnabled) {
-      viewModel.setRoleplayCalendarToolsEnabled(false)
-      modelManagerViewModel.updateSettingsUpdateTrigger()
-      Log.d(TAG, "calendar tools disabled because calendar permission is missing")
-    }
-  }
 
   Scaffold(
     modifier = modifier,
@@ -175,48 +138,10 @@ fun RoleplaySettingsScreen(
           modelManagerViewModel.updateSettingsUpdateTrigger()
         },
       )
-      AppPreferenceSwitchCard(
-        title = stringResource(R.string.settings_roleplay_tool_debug_output_title),
-        summary = stringResource(R.string.settings_roleplay_tool_debug_output_summary),
-        checked = uiState.roleplayToolDebugOutputEnabled,
-        onCheckedChange = { enabled ->
-          viewModel.setRoleplayToolDebugOutputEnabled(enabled)
-          modelManagerViewModel.updateSettingsUpdateTrigger()
-        },
-      )
-      AppPreferenceSwitchCard(
-        title = stringResource(R.string.settings_roleplay_location_tools_title),
-        summary =
-          roleplayLocationToolsSummary(
-            permissionGranted = locationPermissionGranted,
-            enabled = uiState.roleplayLocationToolsEnabled,
-          ),
-        checked = uiState.roleplayLocationToolsEnabled && locationPermissionGranted,
-        onCheckedChange = { enabled ->
-          when {
-            !enabled -> viewModel.setRoleplayLocationToolsEnabled(false)
-            locationPermissionGranted -> viewModel.setRoleplayLocationToolsEnabled(true)
-            else -> locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-          }
-          modelManagerViewModel.updateSettingsUpdateTrigger()
-        },
-      )
-      AppPreferenceSwitchCard(
-        title = stringResource(R.string.settings_roleplay_calendar_tools_title),
-        summary =
-          roleplayCalendarToolsSummary(
-            permissionGranted = calendarPermissionGranted,
-            enabled = uiState.roleplayCalendarToolsEnabled,
-          ),
-        checked = uiState.roleplayCalendarToolsEnabled && calendarPermissionGranted,
-        onCheckedChange = { enabled ->
-          when {
-            !enabled -> viewModel.setRoleplayCalendarToolsEnabled(false)
-            calendarPermissionGranted -> viewModel.setRoleplayCalendarToolsEnabled(true)
-            else -> calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
-          }
-          modelManagerViewModel.updateSettingsUpdateTrigger()
-        },
+      AppPreferenceCard(
+        title = stringResource(R.string.settings_tool_management_title),
+        summary = stringResource(R.string.settings_tool_management_entry_summary),
+        onClick = onOpenToolManagement,
       )
       AppPreferenceCard(
         title = stringResource(R.string.settings_model_library_title),
@@ -268,34 +193,6 @@ fun RoleplaySettingsScreen(
       },
     )
   }
-}
-
-@Composable
-private fun roleplayLocationToolsSummary(permissionGranted: Boolean, enabled: Boolean): String {
-  return when {
-    enabled && permissionGranted ->
-      stringResource(R.string.settings_roleplay_location_tools_summary_enabled)
-    permissionGranted ->
-      stringResource(R.string.settings_roleplay_location_tools_summary_disabled)
-    else ->
-      stringResource(R.string.settings_roleplay_location_tools_summary_permission_required)
-  }
-}
-
-@Composable
-private fun roleplayCalendarToolsSummary(permissionGranted: Boolean, enabled: Boolean): String {
-  return when {
-    enabled && permissionGranted ->
-      stringResource(R.string.settings_roleplay_calendar_tools_summary_enabled)
-    permissionGranted ->
-      stringResource(R.string.settings_roleplay_calendar_tools_summary_disabled)
-    else ->
-      stringResource(R.string.settings_roleplay_calendar_tools_summary_permission_required)
-  }
-}
-
-private fun hasPermission(context: Context, permission: String): Boolean {
-  return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 }
 
 @Composable

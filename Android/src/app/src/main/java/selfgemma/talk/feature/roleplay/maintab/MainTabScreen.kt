@@ -59,6 +59,7 @@ fun MainTabScreen(
   onOpenSession: (String) -> Unit,
   onOpenRoleCatalog: () -> Unit,
   onOpenSettings: () -> Unit,
+  onOpenToolManagement: () -> Unit,
   onOpenModelLibrary: () -> Unit,
   onOpenChat: (String) -> Unit,
   onCreateRole: () -> Unit,
@@ -202,6 +203,7 @@ fun MainTabScreen(
             modelManagerViewModel = modelManagerViewModel,
             navigateUp = handleNavigateUp,
             onOpenModelLibrary = onOpenModelLibrary,
+            onOpenToolManagement = onOpenToolManagement,
             showNavigateUp = false,
             contentPadding = innerPadding,
           )

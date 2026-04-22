@@ -24,10 +24,11 @@ class PlaceLookupTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
   private val accessPolicy: RoleplayToolAccessPolicy,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.PLACE_LOOKUP
   override val priority: Int = 100
 
   internal var locationBiasProvider: () -> ApproximateLocationSnapshot? = {
-    if (accessPolicy.canUseLocationTools()) {
+    if (accessPolicy.canRegisterTool(RoleplayToolIds.APPROXIMATE_LOCATION)) {
       runCatching { ApproximateLocationSnapshot.capture(appContext) }.getOrNull()
     } else {
       null

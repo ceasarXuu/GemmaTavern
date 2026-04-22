@@ -9,6 +9,7 @@ private const val TAG = "RoleplayToolOrchestrator"
 @Singleton
 class DefaultRoleplayToolOrchestrator @Inject constructor(
   private val toolProviderFactories: Set<@JvmSuppressWildcards RoleplayToolProviderFactory>,
+  private val accessPolicy: RoleplayToolAccessPolicy,
 ) : RoleplayToolOrchestrator {
   override suspend fun prepareTurnContext(request: RoleplayToolPreparationRequest): RoleplayPreparedToolContext {
     val collector =
@@ -29,6 +30,12 @@ class DefaultRoleplayToolOrchestrator @Inject constructor(
       )
     val providers =
       orderedFactories.mapNotNull { factory ->
+          if (!accessPolicy.canRegisterTool(factory.toolId)) {
+            logDebug(
+              "tool hidden turnId=${request.pendingMessage.assistantSeed.id} toolId=${factory.toolId}",
+            )
+            return@mapNotNull null
+          }
           factory.createToolProvider(
             pendingMessage = request.pendingMessage,
             collector = collector,

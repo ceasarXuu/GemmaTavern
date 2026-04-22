@@ -22,6 +22,7 @@ private const val TOOL_NAME = "getDeviceNetworkStatus"
 class DeviceNetworkStatusTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.DEVICE_NETWORK_STATUS
   override val priority: Int = 30
 
   internal var snapshotProvider: () -> DeviceNetworkStatusSnapshot = {

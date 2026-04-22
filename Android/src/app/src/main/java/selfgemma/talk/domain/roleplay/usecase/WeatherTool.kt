@@ -24,9 +24,10 @@ class WeatherTool @Inject constructor(
   @ApplicationContext private val appContext: Context,
   private val accessPolicy: RoleplayToolAccessPolicy,
 ) : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.WEATHER
   override val priority: Int = 90
 
-  internal var isAvailableProvider: () -> Boolean = { accessPolicy.canUseLocationTools() }
+  internal var isAvailableProvider: () -> Boolean = { accessPolicy.canRegisterTool(toolId) }
   internal var locationSnapshotProvider: () -> ApproximateLocationSnapshot = {
     ApproximateLocationSnapshot.capture(appContext)
   }

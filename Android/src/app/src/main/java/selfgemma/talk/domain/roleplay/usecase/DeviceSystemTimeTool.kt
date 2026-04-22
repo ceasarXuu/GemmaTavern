@@ -58,6 +58,7 @@ private val LUNAR_DAY_NAMES =
 
 @Singleton
 class DeviceSystemTimeTool @Inject constructor() : RoleplayToolProviderFactory {
+  override val toolId: String = RoleplayToolIds.DEVICE_SYSTEM_TIME
   override val priority: Int = 10
 
   internal var snapshotProvider: () -> DeviceSystemTimeSnapshot = { DeviceSystemTimeSnapshot.capture() }
