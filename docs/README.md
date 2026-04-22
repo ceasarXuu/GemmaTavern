@@ -23,6 +23,7 @@ Do not keep here:
 - `ui-material3-guardrails.md`
 - `roleplay-memory-system-architecture-v1.md`
 - `roleplay-tooling-architecture.md`
+- `roleplay-supported-tools.md`
 - `roleplay-context-budget-architecture.md`
 - `st-roleplay-compat-architecture.md`
 - `roleplay-memory-acceptance-standard.md`

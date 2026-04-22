@@ -10,6 +10,14 @@ Typical commands from the repository root:
 2. `./gradlew.bat :app:assembleDebug`
 3. `./gradlew.bat :app:testDebugUnitTest`
 
+If Gradle starts failing with Kotlin daemon or incremental cache errors such as
+`Storage ... is already registered`, do not keep retrying the same parallel or
+incremental path. Stop the daemon and rerun serially:
+
+1. `./gradlew.bat --stop`
+2. `./gradlew.bat :app:testDebugUnitTest --no-daemon`
+3. `./gradlew.bat :app:assembleDebug --no-daemon`
+
 For release validation, also run:
 
 1. `./gradlew.bat :app:lintRelease`
