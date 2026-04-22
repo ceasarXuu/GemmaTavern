@@ -6,6 +6,7 @@ import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.MotionEvent
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -160,6 +161,11 @@ fun RoleplayChatScreen(
   val focusManager = LocalFocusManager.current
   val keyboardController = LocalSoftwareKeyboardController.current
   val uiState by viewModel.uiState.collectAsState()
+  LaunchedEffect(uiState.statusMessage) {
+    uiState.statusMessage?.let { statusMessage ->
+      Toast.makeText(context, statusMessage, Toast.LENGTH_SHORT).show()
+    }
+  }
   val modelManagerUiState by modelManagerViewModel.uiState.collectAsState()
   val showLiveTokenSpeed =
     remember(modelManagerUiState.settingsUpdateTrigger) {
@@ -604,14 +610,6 @@ fun RoleplayChatScreen(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
       ) {
-        uiState.statusMessage?.let { statusMessage ->
-          Text(
-            text = statusMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-          )
-        }
-
         uiState.errorMessage?.let { errorMessage ->
           Text(
             text = errorMessage,
@@ -703,11 +701,11 @@ fun RoleplayChatScreen(
                   } else {
                     when (sendExecutionPlan.warmupAction) {
                       RoleplayWarmupAction.NONE -> {
-                      Log.d(
-                        TAG,
-                        "dispatch roleplay text send with existing or warming session sessionId=${uiState.session?.id} model=${currentModel.name}",
-                      )
-                      submitMessages()
+                        Log.d(
+                          TAG,
+                          "dispatch roleplay text send with existing or warming session sessionId=${uiState.session?.id} model=${currentModel.name}",
+                        )
+                        submitMessages()
                       }
                       RoleplayWarmupAction.TEXT_ONLY -> {
                         Log.d(

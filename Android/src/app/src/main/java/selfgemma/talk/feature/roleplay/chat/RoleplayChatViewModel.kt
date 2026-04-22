@@ -109,7 +109,7 @@ data class RoleplayChatUiState(
 private const val TAG = "RoleplayChatViewModel"
 private const val DEFAULT_BRANCH_ID = "main"
 private const val SEND_DISPATCH_DELAY_MS = 2_000L
-internal const val CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS = 4_000L
+internal const val CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS = 2_000L
 
 private fun logDebug(message: String) {
   runCatching {

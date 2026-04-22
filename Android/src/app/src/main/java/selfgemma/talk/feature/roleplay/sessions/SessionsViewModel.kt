@@ -43,7 +43,7 @@ data class SessionsUiState(
   val errorMessage: String? = null,
 )
 
-internal const val SESSIONS_STATUS_MESSAGE_AUTO_DISMISS_MS = 4_000L
+internal const val SESSIONS_STATUS_MESSAGE_AUTO_DISMISS_MS = 2_000L
 
 private fun logDebug(message: String) {
   runCatching {

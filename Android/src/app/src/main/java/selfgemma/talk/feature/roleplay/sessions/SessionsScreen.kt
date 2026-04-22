@@ -1,6 +1,7 @@
 package selfgemma.talk.feature.roleplay.sessions
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
@@ -42,6 +43,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -79,7 +81,13 @@ fun SessionsScreen(
   contentPadding: PaddingValues = PaddingValues(0.dp),
   viewModel: SessionsViewModel = hiltViewModel(),
 ) {
+  val context = LocalContext.current
   val uiState by viewModel.uiState.collectAsState()
+  LaunchedEffect(uiState.statusMessage) {
+    uiState.statusMessage?.let { statusMessage ->
+      Toast.makeText(context, statusMessage, Toast.LENGTH_SHORT).show()
+    }
+  }
   var pendingDeleteSessionId by rememberSaveable { mutableStateOf<String?>(null) }
   var pendingImportSessionId by rememberSaveable { mutableStateOf<String?>(null) }
   var pendingExportSessionId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -167,16 +175,6 @@ fun SessionsScreen(
             )
           }
         }
-        uiState.statusMessage?.let { statusMessage ->
-          item {
-            Text(
-              statusMessage,
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.primary,
-            )
-          }
-        }
-
         items(uiState.sessions, key = { it.id }) { session ->
           SessionCard(
             session = session,
@@ -208,6 +206,7 @@ fun SessionsScreen(
           )
         }
       }
+
     }
 
     val sessionToDelete = uiState.sessions.firstOrNull { it.id == pendingDeleteSessionId }

@@ -135,6 +135,19 @@ OpenStreetMap / Nominatim place lookup, prefer public endpoints with no project
 API key. That keeps the open-source build usable out of the box, but recheck
 rate limits and availability before adding more traffic-sensitive providers.
 
+## Debug export feedback
+
+Roleplay debug export success feedback now uses the system `Toast` with
+`Toast.LENGTH_SHORT` rather than an in-layout status line. When you verify this
+flow, do not expect a persistent message inside the chat or session list; the
+reliable regression checks are:
+
+1. `RoleplayChatViewModelTest` and `SessionsViewModelTest` for the 2-second
+   status lifecycle.
+2. `:app:assembleDebug` and `:app:installDebug`.
+3. Manual device confirmation that the toast appears and clears quickly after
+   export.
+
 ## Public documentation boundary
 
 - `README.md`, `DEVELOPMENT.md`, and `RELEASING.md` are the source of truth for build and release flow.
