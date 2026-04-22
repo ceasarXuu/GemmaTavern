@@ -18,6 +18,11 @@ incremental path. Stop the daemon and rerun serially:
 2. `./gradlew.bat :app:testDebugUnitTest --no-daemon`
 3. `./gradlew.bat :app:assembleDebug --no-daemon`
 
+Do not run two Gradle tasks in parallel against the same `Android/src` module
+directory. Concurrent unit-test and assemble runs collided on KAPT snapshot and
+incremental cache files in this workspace and produced false-negative build
+failures.
+
 For release validation, also run:
 
 1. `./gradlew.bat :app:lintRelease`

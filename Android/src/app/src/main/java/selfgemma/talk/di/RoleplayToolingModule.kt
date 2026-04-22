@@ -8,7 +8,9 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import selfgemma.talk.domain.roleplay.usecase.DefaultRoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.DeviceBatteryStatusTool
+import selfgemma.talk.domain.roleplay.usecase.DeviceContextTool
 import selfgemma.talk.domain.roleplay.usecase.DeviceNetworkStatusTool
+import selfgemma.talk.domain.roleplay.usecase.DeviceNextAlarmTool
 import selfgemma.talk.domain.roleplay.usecase.DeviceSystemTimeTool
 import selfgemma.talk.domain.roleplay.usecase.RoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.RoleplayToolProviderFactory
@@ -38,5 +40,17 @@ abstract class RoleplayToolingModule {
   @IntoSet
   abstract fun bindDeviceNetworkStatusTool(
     implementation: DeviceNetworkStatusTool,
+  ): RoleplayToolProviderFactory
+
+  @Binds
+  @IntoSet
+  abstract fun bindDeviceContextTool(
+    implementation: DeviceContextTool,
+  ): RoleplayToolProviderFactory
+
+  @Binds
+  @IntoSet
+  abstract fun bindDeviceNextAlarmTool(
+    implementation: DeviceNextAlarmTool,
   ): RoleplayToolProviderFactory
 }
