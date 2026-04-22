@@ -76,6 +76,37 @@ class DefaultDataStoreRepositoryTest {
       tempDir.deleteRecursively()
     }
   }
+
+  @Test
+  fun roleplayToolConsentFlags_roundTripThroughProtoDataStore() {
+    val tempDir = Files.createTempDirectory("datastore-repo-tool-flags").toFile()
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    try {
+      val settingsFile = File(tempDir, "settings.pb")
+      val repository =
+        DefaultDataStoreRepository(
+          dataStore = createDataStore(settingsFile, SettingsSerializer, scope),
+          userDataDataStore = createDataStore(File(tempDir, "user-data.pb"), UserDataSerializer, scope),
+          cutoutDataStore = createDataStore(File(tempDir, "cutouts.pb"), CutoutsSerializer, scope),
+          benchmarkResultsDataStore =
+            createDataStore(File(tempDir, "benchmark-results.pb"), BenchmarkResultsSerializer, scope),
+          skillsDataStore = createDataStore(File(tempDir, "skills.pb"), SkillsSerializer, scope),
+        )
+
+      repository.setRoleplayLocationToolsEnabled(true)
+      repository.setRoleplayCalendarToolsEnabled(true)
+
+      val persistedSettings = settingsFile.inputStream().use(Settings::parseFrom)
+
+      assertEquals(true, repository.isRoleplayLocationToolsEnabled())
+      assertEquals(true, repository.isRoleplayCalendarToolsEnabled())
+      assertEquals(true, persistedSettings.roleplayLocationToolsEnabled)
+      assertEquals(true, persistedSettings.roleplayCalendarToolsEnabled)
+    } finally {
+      scope.cancel()
+      tempDir.deleteRecursively()
+    }
+  }
 }
 
 private fun <T> createDataStore(

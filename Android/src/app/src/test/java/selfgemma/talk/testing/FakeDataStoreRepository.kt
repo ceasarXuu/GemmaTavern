@@ -26,6 +26,8 @@ class FakeDataStoreRepository(
   private var liveTokenSpeedEnabled = true
   private var streamingOutputEnabled = true
   private var roleplayToolDebugOutputEnabled = false
+  private var roleplayLocationToolsEnabled = false
+  private var roleplayCalendarToolsEnabled = false
   private var roleEditorAssistantModelId: String? = null
   private var lastUsedLlmModelId: String? = null
   private val benchmarkResults = mutableListOf<BenchmarkResult>()
@@ -140,6 +142,18 @@ class FakeDataStoreRepository(
   }
 
   override fun isRoleplayToolDebugOutputEnabled(): Boolean = roleplayToolDebugOutputEnabled
+
+  override fun setRoleplayLocationToolsEnabled(enabled: Boolean) {
+    roleplayLocationToolsEnabled = enabled
+  }
+
+  override fun isRoleplayLocationToolsEnabled(): Boolean = roleplayLocationToolsEnabled
+
+  override fun setRoleplayCalendarToolsEnabled(enabled: Boolean) {
+    roleplayCalendarToolsEnabled = enabled
+  }
+
+  override fun isRoleplayCalendarToolsEnabled(): Boolean = roleplayCalendarToolsEnabled
 
   override fun setRoleEditorAssistantModelId(modelId: String?) {
     roleEditorAssistantModelId = modelId

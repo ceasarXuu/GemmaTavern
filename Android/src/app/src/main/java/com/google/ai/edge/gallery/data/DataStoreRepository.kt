@@ -104,6 +104,14 @@ interface DataStoreRepository {
 
   fun isRoleplayToolDebugOutputEnabled(): Boolean
 
+  fun setRoleplayLocationToolsEnabled(enabled: Boolean)
+
+  fun isRoleplayLocationToolsEnabled(): Boolean
+
+  fun setRoleplayCalendarToolsEnabled(enabled: Boolean)
+
+  fun isRoleplayCalendarToolsEnabled(): Boolean
+
   fun setRoleEditorAssistantModelId(modelId: String?)
 
   fun getRoleEditorAssistantModelId(): String?
@@ -403,6 +411,34 @@ class DefaultDataStoreRepository(
   override fun isRoleplayToolDebugOutputEnabled(): Boolean {
     return runBlocking {
       dataStore.data.first().roleplayToolDebugOutputEnabled
+    }
+  }
+
+  override fun setRoleplayLocationToolsEnabled(enabled: Boolean) {
+    runBlocking {
+      dataStore.updateData { settings ->
+        settings.toBuilder().setRoleplayLocationToolsEnabled(enabled).build()
+      }
+    }
+  }
+
+  override fun isRoleplayLocationToolsEnabled(): Boolean {
+    return runBlocking {
+      dataStore.data.first().roleplayLocationToolsEnabled
+    }
+  }
+
+  override fun setRoleplayCalendarToolsEnabled(enabled: Boolean) {
+    runBlocking {
+      dataStore.updateData { settings ->
+        settings.toBuilder().setRoleplayCalendarToolsEnabled(enabled).build()
+      }
+    }
+  }
+
+  override fun isRoleplayCalendarToolsEnabled(): Boolean {
+    return runBlocking {
+      dataStore.data.first().roleplayCalendarToolsEnabled
     }
   }
 

@@ -241,6 +241,14 @@
   <string name="settings_dialog_streaming_output_summary">生成时逐步显示回复内容；若中途打断，会撤回当前未完成气泡，下一轮重新从头生成。</string>
   <string name="settings_roleplay_tool_debug_output_title">显示工具调试输出</string>
   <string name="settings_roleplay_tool_debug_output_summary">在聊天中将每次角色工具调用显示为居中的系统输出。</string>
+  <string name="settings_roleplay_location_tools_title">启用位置工具</string>
+  <string name="settings_roleplay_location_tools_summary_enabled">允许角色工具使用设备的近似位置，提供城市级上下文和本地天气。</string>
+  <string name="settings_roleplay_location_tools_summary_disabled">保持位置工具关闭，只有在你主动开启后才会向角色暴露城市级位置与本地天气能力。</string>
+  <string name="settings_roleplay_location_tools_summary_permission_required">需要先授予近似位置权限，角色才能使用城市级位置与本地天气工具。</string>
+  <string name="settings_roleplay_calendar_tools_title">启用日历工具</string>
+  <string name="settings_roleplay_calendar_tools_summary_enabled">允许角色工具读取本机近期日历事件的简短摘要。</string>
+  <string name="settings_roleplay_calendar_tools_summary_disabled">保持日历工具关闭，只有在你主动开启后角色才可读取近期事件摘要。</string>
+  <string name="settings_roleplay_calendar_tools_summary_permission_required">需要先授予日历权限，角色才能读取本机近期事件。</string>
   <string name="settings_role_editor_assistant_model_title">编辑助手模型</string>
   <string name="settings_role_editor_assistant_model_none">默认：第一个可用模型</string>
   <string name="settings_role_editor_assistant_model_empty">当前还没有可用本地模型。请先添加模型，再在角色编辑器中使用 AI 压缩。</string>

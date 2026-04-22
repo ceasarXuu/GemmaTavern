@@ -112,6 +112,8 @@ message Settings {
   bool disable_streaming_output = 15;
   StUserProfileSettings st_user_profile = 16;
   bool roleplay_tool_debug_output_enabled = 17;
+  bool roleplay_location_tools_enabled = 18;
+  bool roleplay_calendar_tools_enabled = 19;
 }
 
 message UserData {

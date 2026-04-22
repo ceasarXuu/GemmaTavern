@@ -21,7 +21,7 @@ interface RoleplayToolProviderFactory {
   fun createToolProvider(
     pendingMessage: PendingRoleplayMessage,
     collector: RoleplayToolTraceCollector,
-  ): ToolProvider
+  ): ToolProvider?
 }
 
 class RoleplayToolTraceCollector(

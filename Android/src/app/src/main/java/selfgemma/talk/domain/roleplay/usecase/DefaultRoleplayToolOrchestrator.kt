@@ -28,7 +28,7 @@ class DefaultRoleplayToolOrchestrator @Inject constructor(
         ),
       )
     val providers =
-      orderedFactories.map { factory ->
+      orderedFactories.mapNotNull { factory ->
           factory.createToolProvider(
             pendingMessage = request.pendingMessage,
             collector = collector,

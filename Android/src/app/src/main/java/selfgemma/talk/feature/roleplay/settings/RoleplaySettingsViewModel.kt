@@ -16,6 +16,8 @@ data class RoleplaySettingsUiState(
   val liveTokenSpeedEnabled: Boolean = true,
   val streamingOutputEnabled: Boolean = true,
   val roleplayToolDebugOutputEnabled: Boolean = false,
+  val roleplayLocationToolsEnabled: Boolean = false,
+  val roleplayCalendarToolsEnabled: Boolean = false,
   val roleEditorAssistantModelId: String? = null,
 )
 
@@ -32,6 +34,8 @@ constructor(
         liveTokenSpeedEnabled = dataStoreRepository.isLiveTokenSpeedEnabled(),
         streamingOutputEnabled = dataStoreRepository.isStreamingOutputEnabled(),
         roleplayToolDebugOutputEnabled = dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
+        roleplayLocationToolsEnabled = dataStoreRepository.isRoleplayLocationToolsEnabled(),
+        roleplayCalendarToolsEnabled = dataStoreRepository.isRoleplayCalendarToolsEnabled(),
         roleEditorAssistantModelId = dataStoreRepository.getRoleEditorAssistantModelId(),
       )
     )
@@ -40,30 +44,46 @@ constructor(
   fun setMessageSoundsEnabled(enabled: Boolean) {
     dataStoreRepository.setMessageSoundsEnabled(enabled)
     _uiState.value = _uiState.value.copy(messageSoundsEnabled = enabled)
-    Log.d(TAG, "message sounds updated enabled=$enabled")
+    logDebug("message sounds updated enabled=$enabled")
   }
 
   fun setLiveTokenSpeedEnabled(enabled: Boolean) {
     dataStoreRepository.setLiveTokenSpeedEnabled(enabled)
     _uiState.value = _uiState.value.copy(liveTokenSpeedEnabled = enabled)
-    Log.d(TAG, "live token speed updated enabled=$enabled")
+    logDebug("live token speed updated enabled=$enabled")
   }
 
   fun setStreamingOutputEnabled(enabled: Boolean) {
     dataStoreRepository.setStreamingOutputEnabled(enabled)
     _uiState.value = _uiState.value.copy(streamingOutputEnabled = enabled)
-    Log.d(TAG, "streaming output updated enabled=$enabled")
+    logDebug("streaming output updated enabled=$enabled")
   }
 
   fun setRoleplayToolDebugOutputEnabled(enabled: Boolean) {
     dataStoreRepository.setRoleplayToolDebugOutputEnabled(enabled)
     _uiState.value = _uiState.value.copy(roleplayToolDebugOutputEnabled = enabled)
-    Log.d(TAG, "roleplay tool debug output updated enabled=$enabled")
+    logDebug("roleplay tool debug output updated enabled=$enabled")
+  }
+
+  fun setRoleplayLocationToolsEnabled(enabled: Boolean) {
+    dataStoreRepository.setRoleplayLocationToolsEnabled(enabled)
+    _uiState.value = _uiState.value.copy(roleplayLocationToolsEnabled = enabled)
+    logDebug("roleplay location tools updated enabled=$enabled")
+  }
+
+  fun setRoleplayCalendarToolsEnabled(enabled: Boolean) {
+    dataStoreRepository.setRoleplayCalendarToolsEnabled(enabled)
+    _uiState.value = _uiState.value.copy(roleplayCalendarToolsEnabled = enabled)
+    logDebug("roleplay calendar tools updated enabled=$enabled")
   }
 
   fun setRoleEditorAssistantModelId(modelId: String?) {
     dataStoreRepository.setRoleEditorAssistantModelId(modelId)
     _uiState.value = _uiState.value.copy(roleEditorAssistantModelId = modelId)
-    Log.d(TAG, "role editor assistant model updated modelId=$modelId")
+    logDebug("role editor assistant model updated modelId=$modelId")
+  }
+
+  private fun logDebug(message: String) {
+    runCatching { Log.d(TAG, message) }
   }
 }

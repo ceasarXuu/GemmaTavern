@@ -289,6 +289,14 @@
   <string name="settings_dialog_streaming_output_summary">Show assistant replies incrementally while generating. If interrupted, the partial bubble is withdrawn and the next turn restarts from scratch.</string>
   <string name="settings_roleplay_tool_debug_output_title">Show tool debug output</string>
   <string name="settings_roleplay_tool_debug_output_summary">Display each roleplay tool call as a centered system output in chat.</string>
+  <string name="settings_roleplay_location_tools_title">Enable location tools</string>
+  <string name="settings_roleplay_location_tools_summary_enabled">Allow roleplay tools to use approximate device location for city-level context and local weather.</string>
+  <string name="settings_roleplay_location_tools_summary_disabled">Keep location tools available only after you turn them on. City-level location is used for local context and weather.</string>
+  <string name="settings_roleplay_location_tools_summary_permission_required">Approximate location permission is required before roleplay can use city-level location and local weather.</string>
+  <string name="settings_roleplay_calendar_tools_title">Enable calendar tools</string>
+  <string name="settings_roleplay_calendar_tools_summary_enabled">Allow roleplay tools to read a short snapshot of upcoming calendar events on this device.</string>
+  <string name="settings_roleplay_calendar_tools_summary_disabled">Keep calendar tools available only after you turn them on. The role can read a short snapshot of upcoming events.</string>
+  <string name="settings_roleplay_calendar_tools_summary_permission_required">Calendar permission is required before roleplay can read upcoming events from this device.</string>
   <string name="settings_role_editor_assistant_model_title">Editor assistant model</string>
   <string name="settings_role_editor_assistant_model_none">Default: first available model</string>
   <string name="settings_role_editor_assistant_model_empty">No local model is available yet. Add a model before using AI compression in the role editor.</string>
