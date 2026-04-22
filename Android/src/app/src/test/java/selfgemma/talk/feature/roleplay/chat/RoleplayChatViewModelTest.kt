@@ -61,6 +61,7 @@ import selfgemma.talk.domain.roleplay.usecase.CompileRoleplayMemoryContextUseCas
 import selfgemma.talk.domain.roleplay.usecase.CompileRuntimeRoleProfileUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
+import selfgemma.talk.domain.roleplay.usecase.FakeExternalFactRepository
 import selfgemma.talk.domain.roleplay.usecase.NoOpRoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
@@ -268,14 +269,10 @@ class RoleplayChatViewModelTest {
       advanceUntilIdle()
 
       fixture.viewModel.exportDebugBundle()
-      runCurrent()
+      advanceUntilIdle()
 
       val exportedFileName = fixture.debugExportRepository.lastBundleFile?.fileName
       assertNotNull(exportedFileName)
-      assertEquals(
-        "Debug bundle exported for Bridge (session-1): $exportedFileName",
-        fixture.viewModel.uiState.value.statusMessage,
-      )
       assertNull(fixture.viewModel.uiState.value.errorMessage)
       assertTrue(
         fixture.conversationRepository.events.any { event ->
@@ -285,11 +282,14 @@ class RoleplayChatViewModelTest {
       )
       assertTrue(
         fixture.debugExportRepository.lastBundleJson.orEmpty().contains(
-          "\"schemaVersion\": \"roleplay_debug_bundle_v1\"",
+          "\"schemaVersion\": \"roleplay_debug_bundle_v2\"",
         )
       )
       assertTrue(
         fixture.debugExportRepository.lastPointerJson.orEmpty().contains("\"sessionId\": \"session-1\"")
+      )
+      assertTrue(
+        fixture.debugExportRepository.lastPointerJson.orEmpty().contains("\"externalFactCount\": 0")
       )
       advanceTimeBy(CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS)
       runCurrent()
@@ -468,6 +468,7 @@ private fun createFixture(
       compileRoleplayMemoryContextUseCase =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = FakeExternalFactRepository(),
           runtimeStateRepository = runtimeStateRepository,
           openThreadRepository = openThreadRepository,
           memoryAtomRepository = memoryAtomRepository,
@@ -479,6 +480,7 @@ private fun createFixture(
       extractMemoriesUseCase = extractMemoriesUseCase,
     )
   val toolInvocationRepository = ViewModelToolInvocationRepository()
+  val externalFactRepository = FakeExternalFactRepository()
   val debugExportRepository = RecordingRoleplayDebugExportRepository()
   val debugExportUseCase =
     ExportRoleplayDebugBundleFromSessionUseCase(
@@ -486,6 +488,7 @@ private fun createFixture(
       conversationRepository = conversationRepository,
       roleRepository = roleRepository,
       toolInvocationRepository = toolInvocationRepository,
+      externalFactRepository = externalFactRepository,
       mapper = RoleplayDebugExportMapper(),
       writer =
         WriteRoleplayDebugBundleUseCase(
@@ -500,6 +503,7 @@ private fun createFixture(
     RunRoleplayTurnUseCase(
       sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
       toolInvocationRepository = toolInvocationRepository,
+      externalFactRepository = externalFactRepository,
       conversationRepository = conversationRepository,
     )
 

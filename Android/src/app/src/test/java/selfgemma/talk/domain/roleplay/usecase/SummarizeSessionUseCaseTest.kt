@@ -77,7 +77,7 @@ class SummarizeSessionUseCaseTest {
 
       val summary = conversationRepository.savedSummary
       assertNotNull(summary)
-      assertTrue(summary!!.summaryText.contains("Recent developments:"))
+      assertTrue(summary!!.summaryText.contains("Stable synopsis:"))
       assertTrue(summary.summaryText.contains("Captain Mae: We need a clean exit route."))
       assertTrue(summary.summaryText.contains("Assistant: The cargo elevator still works if we move now."))
       assertEquals(1, summary.version)
@@ -136,6 +136,94 @@ class SummarizeSessionUseCaseTest {
       assertEquals(CompactionSummaryType.SCENE, entry.summaryType)
       assertTrue(entry.compactText.contains("Scene window:"))
       assertTrue(conversationRepository.events.any { it.eventType == selfgemma.talk.domain.roleplay.model.SessionEventType.MEMORY_COMPACTION_UPSERTED })
+    }
+
+  @Test
+  fun invoke_excludesEphemeralToolBackedTurnFromStableSynopsis() =
+    runBlocking {
+      val now = System.currentTimeMillis()
+      val conversationRepository =
+        SummaryConversationRepository(
+          session =
+            Session(
+              id = "session-tool",
+              roleId = "role-1",
+              title = "Time Check",
+              activeModelId = "gemma-3n",
+              createdAt = now,
+              updatedAt = now,
+              lastMessageAt = now,
+              sessionUserProfile = StUserProfile(),
+            ),
+          messages =
+            listOf(
+              Message(
+                id = "message-1",
+                sessionId = "session-tool",
+                seq = 1,
+                side = MessageSide.USER,
+                content = "We still need a safe route out.",
+                status = MessageStatus.COMPLETED,
+                createdAt = now,
+                updatedAt = now,
+              ),
+              Message(
+                id = "message-2",
+                sessionId = "session-tool",
+                seq = 2,
+                side = MessageSide.ASSISTANT,
+                content = "The east corridor is still open.",
+                status = MessageStatus.COMPLETED,
+                createdAt = now,
+                updatedAt = now,
+              ),
+              Message(
+                id = "message-3",
+                sessionId = "session-tool",
+                seq = 3,
+                side = MessageSide.USER,
+                content = "What time is it right now?",
+                status = MessageStatus.COMPLETED,
+                createdAt = now,
+                updatedAt = now,
+              ),
+              Message(
+                id = "message-4",
+                sessionId = "session-tool",
+                seq = 4,
+                side = MessageSide.ASSISTANT,
+                content = "It is Thursday at 01:37 right now.",
+                status = MessageStatus.COMPLETED,
+                metadataJson =
+                  mergeRoleplayToolTurnMetadata(
+                    metadataJson = null,
+                    metadata =
+                      RoleplayToolTurnMetadata(
+                        userMessageIds = listOf("message-3"),
+                        toolNames = listOf("getDeviceSystemTime"),
+                        externalFactIds = listOf("fact-1"),
+                        excludeFromStableSynopsis = true,
+                        externalFactCount = 1,
+                      ),
+                  ),
+                createdAt = now,
+                updatedAt = now,
+              ),
+            ),
+        )
+
+      SummarizeSessionUseCase(
+        FakeDataStoreRepository(),
+        conversationRepository,
+        SummaryCompactionCacheRepository(),
+        TokenEstimator(),
+      )("session-tool")
+
+      val summary = requireNotNull(conversationRepository.savedSummary)
+      assertTrue(summary.summaryText.contains("We still need a safe route out."))
+      assertTrue(summary.summaryText.contains("The east corridor is still open."))
+      assertTrue(!summary.summaryText.contains("What time is it right now?"))
+      assertTrue(!summary.summaryText.contains("It is Thursday at 01:37 right now."))
     }
 }
 

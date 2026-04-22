@@ -17,10 +17,13 @@ class DeviceSystemTimeToolTest {
         snapshotProvider = {
           DeviceSystemTimeSnapshot(
             gregorianDate = "2026-04-22",
-            lunarDate = "三月初六",
+            weekdayLocalized = "\u661f\u671f\u4e8c",
+            weekdayIso = 2,
+            lunarDate = "\u4e09\u6708\u521d\u516d",
             time24h = "18:07",
             hour = 18,
             minute = 7,
+            epochMillis = 1_713_810_420_000L,
             timeZoneId = "Asia/Shanghai",
           )
         }
@@ -28,7 +31,7 @@ class DeviceSystemTimeToolTest {
     val collector = RoleplayToolTraceCollector(sessionId = "session-1", turnId = "assistant-2")
     val toolSet =
       tool.createToolSetForTurn(
-        pendingMessage = pendingMessage("随便问一句"),
+        pendingMessage = pendingMessage("Tell me the real device time."),
         collector = collector,
       )
 
@@ -38,19 +41,37 @@ class DeviceSystemTimeToolTest {
     val externalFacts = collector.snapshotExternalFacts()
 
     assertEquals("2026-04-22", result["gregorianDate"])
-    assertEquals("三月初六", result["lunarDate"])
+    assertEquals("\u661f\u671f\u4e8c", result["weekdayLocalized"])
+    assertEquals(2, result["weekdayIso"])
+    assertEquals("\u4e09\u6708\u521d\u516d", result["lunarDate"])
     assertEquals(1, invocations.size)
     assertEquals("getDeviceSystemTime", invocations.single().toolName)
-    assertTrue(invocations.single().resultSummary!!.contains("2026-04-22 18:07"))
+    assertTrue(
+      invocations.single().resultSummary!!.contains("2026-04-22 \u661f\u671f\u4e8c 18:07"),
+    )
+    assertTrue(invocations.single().resultSummary!!.contains("\u519c\u5386\u4e09\u6708\u521d\u516d"))
     assertEquals(1, externalFacts.size)
+    assertEquals("device.system_time", externalFacts.single().factType)
     assertTrue(externalFacts.single().content.contains("Asia/Shanghai"))
     assertTrue(externalFacts.single().ephemeral)
   }
 
   @Test
   fun formatLunarDate_rendersLeapMonthPrefix() {
-    assertEquals("闰三月初五", DeviceSystemTimeSnapshot.formatLunarDate(month = 2, day = 5, isLeapMonth = true))
-    assertEquals("冬月三十", DeviceSystemTimeSnapshot.formatLunarDate(month = 10, day = 30, isLeapMonth = false))
+    assertEquals(
+      "\u95f0\u4e09\u6708\u521d\u4e94",
+      DeviceSystemTimeSnapshot.formatLunarDate(month = 2, day = 5, isLeapMonth = true),
+    )
+    assertEquals(
+      "\u51ac\u6708\u4e09\u5341",
+      DeviceSystemTimeSnapshot.formatLunarDate(month = 10, day = 30, isLeapMonth = false),
+    )
+  }
+
+  @Test
+  fun formatWeekday_returnsLocalizedWeekday() {
+    assertEquals("\u661f\u671f\u4e00", DeviceSystemTimeSnapshot.formatWeekday(dayOfWeekIso = 1))
+    assertEquals("\u661f\u671f\u56db", DeviceSystemTimeSnapshot.formatWeekday(dayOfWeekIso = 4))
   }
 }
 

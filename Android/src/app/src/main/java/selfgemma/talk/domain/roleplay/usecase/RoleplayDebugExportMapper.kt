@@ -6,6 +6,7 @@ import selfgemma.talk.domain.roleplay.model.RoleCard
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugBundle
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportAppInfo
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportNotes
+import selfgemma.talk.domain.roleplay.model.RoleplayDebugExternalFactSnapshot
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugMessageSnapshot
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugRoleSnapshot
@@ -14,6 +15,7 @@ import selfgemma.talk.domain.roleplay.model.RoleplayDebugSessionSnapshot
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugSummarySnapshot
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugToolInvocationSnapshot
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugUserProfileSnapshot
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionSummary
@@ -32,6 +34,7 @@ constructor() {
     summary: SessionSummary?,
     messages: List<Message>,
     toolInvocations: List<ToolInvocation>,
+    externalFacts: List<RoleplayExternalFact>,
     sessionEvents: List<SessionEvent>,
     origin: RoleplayDebugExportOrigin,
   ): RoleplayDebugBundle {
@@ -50,6 +53,10 @@ constructor() {
         toolInvocations
           .sortedWith(compareBy<ToolInvocation>({ it.startedAt }, { it.stepIndex }, { it.id }))
           .map(ToolInvocation::toDebugSnapshot),
+      externalFacts =
+        externalFacts
+          .sortedWith(compareByDescending<RoleplayExternalFact> { it.capturedAt }.thenBy { it.id })
+          .map(RoleplayExternalFact::toDebugSnapshot),
       sessionEvents =
         sessionEvents
           .sortedWith(compareBy<SessionEvent>({ it.createdAt }, { it.id }))
@@ -161,6 +168,24 @@ private fun ToolInvocation.toDebugSnapshot(): RoleplayDebugToolInvocationSnapsho
     errorMessage = errorMessage,
     startedAt = startedAt,
     finishedAt = finishedAt,
+  )
+
+private fun RoleplayExternalFact.toDebugSnapshot(): RoleplayDebugExternalFactSnapshot =
+  RoleplayDebugExternalFactSnapshot(
+    id = id,
+    turnId = turnId,
+    toolInvocationId = toolInvocationId,
+    sourceToolName = sourceToolName,
+    title = title,
+    content = content,
+    factKey = factKey,
+    factType = factType,
+    structuredValueJson = structuredValueJson,
+    ephemeral = ephemeral,
+    summaryEligible = summaryEligible,
+    capturedAt = capturedAt,
+    freshnessTtlMillis = freshnessTtlMillis,
+    confidence = confidence,
   )
 
 private fun SessionEvent.toDebugSnapshot(): RoleplayDebugSessionEventSnapshot =

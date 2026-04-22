@@ -489,6 +489,7 @@ private fun createSendRoleplayFixture(
       ),
     )
   val memoryRepository = SendMessageMemoryRepository(emptyList())
+  val externalFactRepository = FakeExternalFactRepository()
   val compactionCacheRepository = SendMessageCompactionCacheRepository()
   val dataStoreRepository = FakeDataStoreRepository(stUserProfile = StUserProfile())
   val roleRepository = SendMessageRoleRepository(role)
@@ -519,6 +520,7 @@ private fun createSendRoleplayFixture(
       compileRoleplayMemoryContextUseCase =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = externalFactRepository,
           runtimeStateRepository = runtimeStateRepository,
           openThreadRepository = openThreadRepository,
           memoryAtomRepository = memoryAtomRepository,

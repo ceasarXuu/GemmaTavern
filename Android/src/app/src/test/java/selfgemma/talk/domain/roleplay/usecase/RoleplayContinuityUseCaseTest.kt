@@ -203,7 +203,7 @@ class RoleplayContinuityUseCaseTest {
       assertNotNull(summary)
       assertEquals(1, summary!!.version)
       assertEquals(4, summary.coveredUntilSeq)
-      assertTrue(summary.summaryText.contains("Recent developments:"))
+    assertTrue(summary.summaryText.contains("Stable synopsis:"))
       assertTrue(summary.summaryText.contains("Captain Mae: We need to reach the observatory before dawn. Why is the hatch open?"))
 
       assertTrue(compactionCacheRepository.listBySession(session.id).isEmpty())
@@ -708,6 +708,7 @@ private fun queueOnlySendRoleplayMessageUseCase(
     compileRoleplayMemoryContextUseCase =
       CompileRoleplayMemoryContextUseCase(
         conversationRepository = conversationRepository,
+        externalFactRepository = FakeExternalFactRepository(),
         runtimeStateRepository = ContinuityRuntimeStateRepository(),
         openThreadRepository = ContinuityOpenThreadRepository(),
         memoryAtomRepository = ContinuityMemoryAtomRepository(),

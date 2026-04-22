@@ -13,6 +13,7 @@ import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFactFreshness
 import selfgemma.talk.domain.roleplay.model.RoleRuntimeProfile
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.SessionSummary
@@ -24,6 +25,7 @@ import selfgemma.talk.domain.roleplay.model.summary
 import selfgemma.talk.domain.roleplay.model.systemPrompt
 import selfgemma.talk.domain.roleplay.model.userPersonaDescription
 import selfgemma.talk.domain.roleplay.model.worldSettings
+import selfgemma.talk.domain.roleplay.model.freshness
 
 private const val FULL_RECENT_DIALOGUE_TOKEN_BUDGET = 1800
 private const val COMPACT_RECENT_DIALOGUE_TOKEN_BUDGET = 640
@@ -144,7 +146,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
         addCandidate(
           PromptSectionCandidate(
             id = PromptSectionId.EXTERNAL_FACTS,
-            title = "External Tool Facts",
+            title = "External Evidence",
             fullBody = externalFactVariants.full,
             compactBody = externalFactVariants.compact,
             minimalBody = externalFactVariants.minimal,
@@ -267,7 +269,9 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
         listOfNotNull(
           "- The next incoming user message is the live message you must answer.",
           "- Use memory and summary when relevant, but prioritize natural conversation.",
-          "- Treat any external tool facts as authoritative only for this turn, and only when they answer the user's real-world request.",
+          "- Treat structured external evidence as more authoritative than prior natural-language replies about the real world.",
+          "- Do not defend an older real-world answer just because it appeared earlier in the chat; rely on fresh evidence or call a tool again.",
+          "- If external evidence is stale, incomplete, or the user questions it, prefer calling a tool again instead of guessing.",
           if (hasRuntimeTools) {
             "- When the user needs real-world device facts or actions, decide yourself whether to call an available tool instead of guessing."
           } else {
@@ -361,7 +365,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   private fun buildExternalFactVariants(externalFacts: List<RoleplayExternalFact>): MemoryVariants {
     val rendered =
       externalFacts.map { fact ->
-        "- ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace().take(MAX_EXTERNAL_FACT_LINE_LENGTH)}"
+        "- [${fact.freshnessLabel()}/${fact.sourceToolName.normalizeWhitespace()}] ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace().take(MAX_EXTERNAL_FACT_LINE_LENGTH)}"
       }
     return MemoryVariants(
       full = rendered.joinToString("\n"),
@@ -551,6 +555,14 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     private const val MAX_MEMORY_LINE_LENGTH = 180
     private const val MAX_EXTERNAL_FACT_LINE_LENGTH = 220
     private const val MAX_RUNTIME_STATE_VALUE_LENGTH = 180
+  }
+
+  private fun RoleplayExternalFact.freshnessLabel(): String {
+    return when (freshness()) {
+      RoleplayExternalFactFreshness.FRESH -> "fresh"
+      RoleplayExternalFactFreshness.STALE -> "stale"
+      RoleplayExternalFactFreshness.STABLE -> "stable"
+    }
   }
 }
 

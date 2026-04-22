@@ -1,168 +1,220 @@
 # Roleplay Tooling Architecture
 
-This document defines how roleplay sessions can use expandable tools without
-collapsing the existing roleplay runtime into a generic agent shell.
+This document defines how roleplay sessions use expandable tools without
+degrading into host-side rule heuristics or contaminating long-term memory with
+ephemeral real-world facts.
 
 ## Goals
 
-- Keep roleplay conversation flow as the primary product contract.
-- Add a turn-level orchestration layer that can decide when tools participate.
-- Persist tool traces for audit and debugging without polluting roleplay memory.
-- Make tool providers pluggable so future search, weather, map, and time tools
-  can be added without rewriting the roleplay pipeline again.
+- Keep roleplay chat as the primary product contract.
+- Let the runtime model decide whether to call tools.
+- Persist tool execution, external evidence, and audit logs separately.
+- Prevent stale assistant claims from feeding back into retrieval and summary.
+- Make new tools pluggable without rewriting the roleplay pipeline again.
 
 ## Non-goals
 
-- Do not make raw tool requests and raw tool results first-class chat messages.
-- Do not let tool providers bypass roleplay session state, queueing, or stop
-  semantics.
-- Do not bind the design to one provider technology such as LiteRT native
-  function calling or the existing WebView skill runner.
+- Do not use keyword, regex, or intent-rule heuristics to trigger tools.
+- Do not store raw tool traces as canonical chat messages.
+- Do not let session summary become a recursive text dump of prior summaries.
+- Do not treat transient device or web facts as long-term memory by default.
 
 ## Core principles
 
-### 1. Roleplay remains the source of truth
+### 1. The model decides whether tools run
 
-`RoleplayChatViewModel` keeps ownership of:
+Roleplay tool invocation is agent-driven. The host registers available
+`ToolProvider`s, enforces permissions and policy, and captures trace data, but
+it does not decide when a tool should fire.
 
-- queued user messages,
-- delayed dispatch,
-- merge-and-stop behavior,
-- regeneration,
-- UI error state.
+### 2. External evidence is a first-class state layer
 
-Tools can participate in a turn, but they do not replace the roleplay turn
-model.
+Tool results are stored as structured `RoleplayExternalFact` records rather than
+being flattened into assistant prose and then re-ingested later. Every fact can
+carry:
 
-### 2. Turn orchestration is a separate domain concern
+- `factKey`
+- `factType`
+- `turnId`
+- `toolInvocationId`
+- `capturedAt`
+- `freshnessTtlMillis`
+- `confidence`
+- `structuredValueJson`
 
-`RunRoleplayTurnUseCase` is the roleplay turn entrypoint. It owns:
+This is the authoritative source for real-world facts inside a roleplay turn.
 
-- enqueueing a staged turn,
-- invoking a tool orchestrator before the final assistant reply,
-- persisting tool traces,
-- appending tool lifecycle events,
-- falling back to the existing reply generation path when no tool chain handles
-  the turn.
+### 3. Canonical conversation, stable synopsis, and external evidence are separate
 
-This keeps the old `SendRoleplayMessageUseCase` usable as the canonical reply
-generator while moving orchestration concerns out of the ViewModel.
+The roleplay stack now has three distinct state layers:
 
-### 3. Tool traces are audit data, not prompt canon
+- `Canonical Conversation`
+  The actual user and assistant utterances shown in chat.
+- `Stable Synopsis`
+  A bounded session synopsis used for continuity. It keeps durable
+  relationship/story state and excludes tool-backed ephemeral turns by default.
+- `External Evidence`
+  Recent structured tool facts used for real-world grounding and re-checks.
 
-Tool activity is stored in `tool_invocations` plus `session_events`.
+These layers must not collapse into one another.
 
-It is intentionally not written into canonical roleplay messages, because the
-memory and open-thread systems already consume user and assistant text. Mixing
-raw tool traces into those channels would contaminate long-term memory with
-ephemeral external facts.
+### 4. Retrieval must prefer user intent over stale assistant claims
 
-### 4. Providers are adapters behind a stable domain model
+Retrieval query construction now uses current user input plus recent user-side
+context. It must not blindly reuse recent assistant factual claims, because a
+bad claim can otherwise poison memory retrieval and keep reinforcing itself.
 
-The roleplay domain only depends on:
+### 5. Tool traces are audit data, not prompt canon
 
-- `ToolInvocation`
-- `ToolArtifactRef`
-- `RoleplayToolOrchestrator`
+Tool execution remains visible and debuggable through:
 
-Provider-specific mechanisms such as native function calling, JavaScript
-skills, or future remote providers must sit behind adapter layers.
+- `tool_invocations`
+- `external_facts`
+- `session_events`
 
-## Current foundation
+These exist for observability, export, and optional UI trace rendering. They are
+not canonical dialogue history.
 
-The first architecture slice now exists in the app:
-
-- `RunRoleplayTurnUseCase` is the roleplay turn orchestration entrypoint.
-- `RoleplayToolOrchestrator` defines the orchestration boundary.
-- `NoOpRoleplayToolOrchestrator` preserves current behavior while the provider
-  layer is still empty.
-- `ToolInvocationEntity`, `ToolInvocationDao`, and
-  `RoomToolInvocationRepository` persist tool traces.
-- `SessionEventType` now includes tool lifecycle events for log-driven
-  debugging.
-
-This means later tool execution work can be added without reworking the roleplay
-send queue again.
-
-## Runtime flow
+## Implemented runtime flow
 
 ```mermaid
 flowchart TD
-    A["RoleplayChatViewModel"] --> B["RunRoleplayTurnUseCase.enqueueTurn"]
-    B --> C["PendingRoleplayMessage"]
-    C --> D["RunRoleplayTurnUseCase.runPrepared"]
-    D --> E["RoleplayToolOrchestrator"]
-    E --> F["ToolInvocationRepository"]
-    E --> G["Session Events"]
-    D --> H["SendRoleplayMessageUseCase.completePendingMessage"]
-    H --> I["Assistant Message"]
+    A["RoleplayChatViewModel"] --> B["RunRoleplayTurnUseCase"]
+    B --> C["RoleplayToolOrchestrator.prepareRuntimeTools"]
+    C --> D["ToolProvider list + trace collector"]
+    B --> E["SendRoleplayMessageUseCase.resetConversation(tools = ...)"]
+    E --> F["Runtime model inference"]
+    F --> G["Runtime tool calls"]
+    G --> H["RoleplayToolTraceCollector"]
+    H --> I["tool_invocations"]
+    H --> J["external_facts"]
+    H --> K["session_events"]
+    B --> L["Prompt assembly with Stable Synopsis + External Evidence"]
+    L --> M["Final assistant reply"]
 ```
 
 ## Storage boundaries
 
-### Canonical roleplay data
+### Canonical roleplay state
 
-These remain the sources that shape prompt assembly and long-term continuity:
+These continue to shape the main dialogue experience:
 
 - session
-- canonical user messages
-- canonical assistant messages
-- summaries
+- canonical messages
+- runtime state
 - open threads
 - memory atoms
-- runtime state
+- memory items
 
-### Tool audit data
+### Stable continuity state
 
-These exist for execution traceability and later UI affordances:
+This is optimized for continuity, not raw completeness:
+
+- session summary
+- compaction cache
+
+The stable synopsis excludes tool-backed ephemeral turns by default.
+
+### External evidence state
+
+This is optimized for real-world grounding:
+
+- `external_facts`
+- tool freshness metadata
+- structured tool payloads
+
+### Audit and debug state
+
+This is optimized for investigation and export:
 
 - `tool_invocations`
 - tool lifecycle `session_events`
-- future tool artifacts such as web results, map payloads, or structured cards
+- debug export bundles
+
+## Prompt contract
+
+Prompt assembly now treats external evidence as its own dedicated section.
+
+Important prompt rules:
+
+- structured external evidence is more authoritative than older assistant prose
+  about the real world,
+- if evidence is stale, incomplete, or directly challenged by the user, the
+  model should prefer calling a tool again,
+- stable synopsis is for persistent continuity, not transient device facts.
+
+## Summary contract
+
+`SummarizeSessionUseCase` no longer recursively nests prior summaries. Instead,
+it writes a bounded `Stable synopsis:` block from recent eligible messages.
+
+Excluded by default:
+
+- tool-backed assistant turns flagged with `excludeFromStableSynopsis`
+- their linked user turns when those turns only exist to acquire ephemeral
+  evidence
+
+This prevents transient facts such as time, battery, or current location from
+becoming sticky continuity state.
+
+## Retrieval contract
+
+`CompileRoleplayMemoryContextUseCase` now:
+
+- builds memory queries from current user input plus recent user-side text,
+- loads recent `external_facts` separately,
+- budgets external evidence independently from summary and memory text.
+
+This avoids the old failure mode where a wrong assistant claim became part of
+the retrieval query and then kept reappearing as if it were verified truth.
+
+## Tool contract requirements
+
+Authoritative fact tools must return complete fields so the model does not need
+to infer them. For example, `getDeviceSystemTime` now returns:
+
+- Gregorian date
+- localized weekday
+- ISO weekday number
+- lunar date
+- 24-hour time
+- hour and minute
+- epoch milliseconds
+- time zone
+
+If the tool can answer a fact directly, the model should not derive that fact
+from partial fields.
 
 ## Extension path
 
-### 1. Tool registry and policy
+### 1. New tool families
 
-Add a registry that resolves which tools are available for a role and model.
-Add policy gates so read-only tools can auto-run while device or write actions
-require explicit confirmation.
+New tools should plug into the existing runtime registration layer and emit:
 
-### 2. Native tool adapter
+- a runtime result payload,
+- structured external facts when appropriate,
+- tool lifecycle logs.
 
-Adapt LiteRT tool calling into the roleplay orchestration contract without
-leaking provider types into roleplay domain models.
+### 2. Freshness-aware UI and debugging
 
-### 3. JavaScript skill adapter
+The chat debug trace and export bundle can expose evidence freshness, source,
+and confidence without turning those records into user chat bubbles.
 
-Extract the existing WebView skill execution host into a reusable service that
-roleplay tooling can call without depending on `AgentChatScreen`.
+### 3. Higher-order evidence policies
 
-### 4. Result summarization contract
-
-Every tool execution should emit at least:
-
-- an audit payload,
-- a user-visible trace summary,
-- a model-facing summary.
-
-These are separate products and should not reuse the same raw text.
-
-### 5. Artifact rendering
-
-Add optional UI rendering for structured tool artifacts such as map previews or
-embedded web content. This should be additive and must not block plain-text
-fallback.
+Future work can add conflict detection, evidence supersession, and role/session
+scoped evidence policies without changing the core storage model.
 
 ## Acceptance standard
 
 A roleplay tool integration is only complete when all of the following are
 true:
 
-- queueing, stop, merge, and regeneration semantics still match current
-  roleplay behavior,
-- tool traces are visible in logs and persistence,
-- raw tool output does not enter memory extraction by default,
-- turns still complete normally when no tools are available,
-- provider failures degrade to a normal assistant reply or a controlled user
-  error instead of leaving the session stuck.
+- the runtime model decides whether to invoke the tool,
+- the tool result is persisted as audit data and structured evidence when
+  needed,
+- stable synopsis excludes ephemeral tool-backed turns by default,
+- retrieval is not polluted by stale assistant claims,
+- queue, stop, merge, regeneration, and export behavior still match roleplay
+  expectations,
+- provider failures degrade cleanly instead of leaving the session stuck.

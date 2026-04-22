@@ -60,9 +60,19 @@ class RoleplayToolTraceCollector(
         artifactRefs = artifactRefs,
         startedAt = startedAt,
         finishedAt = finishedAt,
-      )
+    )
     invocations += invocation
-    this.externalFacts += externalFacts
+    this.externalFacts +=
+      externalFacts.map { fact ->
+        applyRoleplayExternalFactPolicy(
+          toolName = toolName,
+          fact = fact,
+          resultJson = resultJson,
+          turnId = turnId,
+          toolInvocationId = invocation.id,
+          finishedAt = finishedAt,
+        )
+      }
     return invocation
   }
 

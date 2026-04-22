@@ -148,6 +148,42 @@ reliable regression checks are:
 3. Manual device confirmation that the toast appears and clears quickly after
    export.
 
+## Roleplay external evidence architecture
+
+When a roleplay tool returns real-world facts, do not let those facts flow only
+through assistant prose or recursive session summaries. The reliable pattern in
+this workspace is:
+
+1. persist the tool trace in `tool_invocations`,
+2. persist structured real-world facts in `external_facts`,
+3. render those facts in prompt assembly as a dedicated `External Evidence`
+   section,
+4. keep stable session summary and retrieval queries separate from stale
+   assistant factual claims.
+
+This prevents a wrong real-world answer from being repeated simply because it
+was present in recent assistant text or older summary text.
+
+## Android schema and migration verification
+
+For Room schema changes in this app, do not stop at `assembleDebug`. The
+reliable validation chain is:
+
+1. `:app:testDebugUnitTest` for the affected architecture slice,
+2. `:app:assembleDebug`,
+3. `:app:installDebug`,
+4. `:app:installDebugAndroidTest`,
+5. run at least one targeted instrumentation class if the change affects
+   exports, storage, or Android-only code,
+6. `adb shell am start -W -n selfgemma.talk/.MainActivity`,
+7. verify foreground state with `adb shell pidof selfgemma.talk` and
+   `adb shell dumpsys activity activities`.
+
+On this device, `run-as selfgemma.talk sqlite3 ...` was not a reliable shortcut
+for checking the database after migration because executing `sqlite3` under
+`run-as` failed with `Permission denied`. Use app launch plus instrumentation
+instead of assuming an in-shell SQLite client is available.
+
 ## Public documentation boundary
 
 - `README.md`, `DEVELOPMENT.md`, and `RELEASING.md` are the source of truth for build and release flow.

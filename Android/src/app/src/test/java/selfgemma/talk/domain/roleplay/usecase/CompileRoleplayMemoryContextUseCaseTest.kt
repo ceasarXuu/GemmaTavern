@@ -127,6 +127,7 @@ class CompileRoleplayMemoryContextUseCaseTest {
       val pack =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = FakeExternalFactRepository(),
           runtimeStateRepository = runtimeStateRepository,
           openThreadRepository = openThreadRepository,
           memoryAtomRepository = memoryAtomRepository,
@@ -240,6 +241,7 @@ class CompileRoleplayMemoryContextUseCaseTest {
       val pack =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = FakeExternalFactRepository(),
           runtimeStateRepository = MemoryContextRuntimeStateRepository(snapshot = null),
           openThreadRepository = MemoryContextOpenThreadRepository(emptyList()),
           memoryAtomRepository = memoryAtomRepository,
@@ -301,6 +303,61 @@ class CompileRoleplayMemoryContextUseCaseTest {
     }
 
   @Test
+  fun invoke_buildsQueryFromRecentUserContextWithoutAssistantFactPollution() =
+    runBlocking {
+      val now = System.currentTimeMillis()
+      val session = testSession(turnCount = 9, now = now)
+      val conversationRepository = MemoryContextConversationRepository(session = session)
+
+      val pack =
+        CompileRoleplayMemoryContextUseCase(
+          conversationRepository = conversationRepository,
+          externalFactRepository = FakeExternalFactRepository(),
+          runtimeStateRepository = MemoryContextRuntimeStateRepository(snapshot = null),
+          openThreadRepository = MemoryContextOpenThreadRepository(emptyList()),
+          memoryAtomRepository = MemoryContextMemoryAtomRepository(emptyList()),
+          memoryRepository = FakeLegacyMemoryRepository(emptyList()),
+          compactionCacheRepository = MemoryContextCompactionCacheRepository(),
+          tokenEstimator = TokenEstimator(),
+        )(
+          session = session,
+          role = testRole(memoryMaxItems = 3, now = now),
+          recentMessages =
+            listOf(
+              testMessage(
+                id = "user-9",
+                sessionId = session.id,
+                seq = 9,
+                side = MessageSide.USER,
+                content = "周几了",
+                now = now,
+              ),
+              testMessage(
+                id = "assistant-10",
+                sessionId = session.id,
+                seq = 10,
+                side = MessageSide.ASSISTANT,
+                content = "现在是星期一。",
+                now = now,
+              ),
+              testMessage(
+                id = "user-11",
+                sessionId = session.id,
+                seq = 11,
+                side = MessageSide.USER,
+                content = "你确定？",
+                now = now,
+              ),
+            ),
+          pendingUserInput = "再查一下到底星期几",
+        )
+
+      assertTrue(pack.retrievalIntent.query.contains("周几"))
+      assertTrue(pack.retrievalIntent.query.contains("星期"))
+      assertTrue(!pack.retrievalIntent.query.contains("星期一"))
+    }
+
+  @Test
   fun invoke_mergesCompactionCacheIntoFallbackSummaryForEpisodicRecall() =
     runBlocking {
       val now = System.currentTimeMillis()
@@ -335,6 +392,7 @@ class CompileRoleplayMemoryContextUseCaseTest {
       val pack =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = FakeExternalFactRepository(),
           runtimeStateRepository = MemoryContextRuntimeStateRepository(snapshot = null),
           openThreadRepository = MemoryContextOpenThreadRepository(emptyList()),
           memoryAtomRepository = MemoryContextMemoryAtomRepository(emptyList()),
@@ -476,6 +534,7 @@ class CompileRoleplayMemoryContextUseCaseTest {
       val pack =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = FakeExternalFactRepository(),
           runtimeStateRepository = runtimeStateRepository,
           openThreadRepository = openThreadRepository,
           memoryAtomRepository = memoryAtomRepository,

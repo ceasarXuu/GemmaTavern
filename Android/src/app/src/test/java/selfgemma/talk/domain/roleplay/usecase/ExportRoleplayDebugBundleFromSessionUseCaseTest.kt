@@ -48,12 +48,13 @@ class ExportRoleplayDebugBundleFromSessionUseCaseTest {
       assertEquals("Captain Astra", result.roleName)
       assertEquals(2, result.messageCount)
       assertEquals(1, result.toolInvocationCount)
+      assertEquals(0, result.externalFactCount)
       assertTrue(result.bundleFile.fileName.startsWith("roleplay-debug-session-1-"))
       assertEquals("latest-debug-export.json", result.pointerFile.fileName)
       assertNotNull(fixture.exportRepository.lastBundleJson)
       assertTrue(
         fixture.exportRepository.lastBundleJson.orEmpty().contains(
-          "\"schemaVersion\": \"roleplay_debug_bundle_v1\"",
+          "\"schemaVersion\": \"roleplay_debug_bundle_v2\"",
         )
       )
       assertTrue(
@@ -64,6 +65,9 @@ class ExportRoleplayDebugBundleFromSessionUseCaseTest {
       )
       assertTrue(
         fixture.exportRepository.lastPointerJson.orEmpty().contains("\"sessionId\": \"session-1\"")
+      )
+      assertTrue(
+        fixture.exportRepository.lastPointerJson.orEmpty().contains("\"externalFactCount\": 0")
       )
       assertTrue(
         fixture.conversationRepository.events.any { event ->
@@ -141,6 +145,7 @@ private fun createFixture(): ExportDebugBundleFixture {
       conversationRepository = conversationRepository,
       roleRepository = ExportDebugRoleRepository(role),
       toolInvocationRepository = ExportDebugToolInvocationRepository(session.id),
+      externalFactRepository = FakeExternalFactRepository(),
       mapper = RoleplayDebugExportMapper(),
       writer =
         WriteRoleplayDebugBundleUseCase(

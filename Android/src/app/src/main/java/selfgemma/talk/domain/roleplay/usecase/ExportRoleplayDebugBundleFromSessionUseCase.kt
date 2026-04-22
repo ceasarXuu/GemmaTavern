@@ -10,6 +10,7 @@ import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionEventType
 import selfgemma.talk.domain.roleplay.model.resolveUserProfile
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
+import selfgemma.talk.domain.roleplay.repository.ExternalFactRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 
@@ -20,6 +21,7 @@ constructor(
   private val conversationRepository: ConversationRepository,
   private val roleRepository: RoleRepository,
   private val toolInvocationRepository: ToolInvocationRepository,
+  private val externalFactRepository: ExternalFactRepository,
   private val mapper: RoleplayDebugExportMapper,
   private val writer: WriteRoleplayDebugBundleUseCase,
   private val serializer: RoleplayDebugExportJsonSerializer,
@@ -50,6 +52,7 @@ constructor(
         summary = conversationRepository.getSummary(sessionId),
         messages = conversationRepository.listMessages(sessionId),
         toolInvocations = toolInvocationRepository.listBySession(sessionId),
+        externalFacts = externalFactRepository.listBySession(sessionId),
         sessionEvents = conversationRepository.listEvents(sessionId),
         origin = origin,
       )
@@ -69,6 +72,7 @@ constructor(
               relativePath = result.bundleFile.relativePath,
               messageCount = result.messageCount,
               toolInvocationCount = result.toolInvocationCount,
+              externalFactCount = result.externalFactCount,
               schemaVersion = bundle.schemaVersion,
             )
           ),
@@ -87,5 +91,6 @@ private data class RoleplayDebugExportAuditPayload(
   val relativePath: String,
   val messageCount: Int,
   val toolInvocationCount: Int,
+  val externalFactCount: Int,
   val schemaVersion: String,
 )

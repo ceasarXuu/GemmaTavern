@@ -21,6 +21,7 @@ import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.OpenThreadStatus
 import selfgemma.talk.domain.roleplay.model.RoleCard
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
@@ -81,6 +82,15 @@ class RunRoleplayTurnUseCaseTest {
               resultJson = """{"gregorianDate":"2026-04-22"}""",
               resultSummary = "2026-04-22 18:07，农历三月初六",
               source = ToolExecutionSource.NATIVE,
+              externalFacts =
+                listOf(
+                  RoleplayExternalFact(
+                    id = "fact-time-1",
+                    sourceToolName = "getDeviceSystemTime",
+                    title = "Device system time",
+                    content = "Real-world device system time is 2026-04-22 18:07 in Asia/Shanghai.",
+                  )
+                ),
             )
           }
         )
@@ -103,6 +113,7 @@ class RunRoleplayTurnUseCaseTest {
       assertEquals(1, runtimeHelper.lastResetToolsCount)
       assertEquals(1, result.toolInvocations.size)
       assertEquals(1, fixture.toolInvocationRepository.invocations.size)
+      assertEquals(1, fixture.externalFactRepository.listBySession(fixture.session.id).size)
       assertEquals("getDeviceSystemTime", fixture.toolInvocationRepository.invocations.single().toolName)
       assertTrue(
         fixture.conversationRepository.events.any { event ->
@@ -122,6 +133,12 @@ class RunRoleplayTurnUseCaseTest {
             event.payloadJson.contains("\"invocationCount\":1")
         }
       )
+      assertTrue(
+        fixture.conversationRepository.events.any { event ->
+          event.eventType == SessionEventType.EXTERNAL_EVIDENCE_UPSERTED &&
+            event.payloadJson.contains("\"factCount\":1")
+        }
+      )
     }
 }
 
@@ -132,6 +149,7 @@ private data class RunRoleplayTurnFixture(
   val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
   val conversationRepository: TurnConversationRepository,
   val toolInvocationRepository: RecordingToolInvocationRepository,
+  val externalFactRepository: FakeExternalFactRepository,
 ) {
   suspend fun enqueuePendingTurn(userInput: String): PendingRoleplayMessage {
     val now = System.currentTimeMillis()
@@ -210,6 +228,7 @@ private fun createFixture(
   val conversationRepository = TurnConversationRepository(session = session)
   val roleRepository = TurnRoleRepository(role = role)
   val memoryRepository = TurnMemoryRepository()
+  val externalFactRepository = FakeExternalFactRepository()
   val runtimeStateRepository = TurnRuntimeStateRepository()
   val openThreadRepository = TurnOpenThreadRepository()
   val memoryAtomRepository = TurnMemoryAtomRepository()
@@ -242,6 +261,7 @@ private fun createFixture(
       compileRoleplayMemoryContextUseCase =
         CompileRoleplayMemoryContextUseCase(
           conversationRepository = conversationRepository,
+          externalFactRepository = externalFactRepository,
           runtimeStateRepository = runtimeStateRepository,
           openThreadRepository = openThreadRepository,
           memoryAtomRepository = memoryAtomRepository,
@@ -259,6 +279,7 @@ private fun createFixture(
     RunRoleplayTurnUseCase(
       sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
       toolInvocationRepository = toolInvocationRepository,
+      externalFactRepository = externalFactRepository,
       conversationRepository = conversationRepository,
     )
   return RunRoleplayTurnFixture(
@@ -268,6 +289,7 @@ private fun createFixture(
     runRoleplayTurnUseCase = runRoleplayTurnUseCase,
     conversationRepository = conversationRepository,
     toolInvocationRepository = toolInvocationRepository,
+    externalFactRepository = externalFactRepository,
   )
 }
 

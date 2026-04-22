@@ -100,6 +100,7 @@ internal fun createRoleplayMemoryAcceptanceFixture(
   val compileMemoryContextUseCase =
     CompileRoleplayMemoryContextUseCase(
       conversationRepository = conversationRepository,
+      externalFactRepository = FakeExternalFactRepository(),
       runtimeStateRepository = runtimeStateRepository,
       openThreadRepository = openThreadRepository,
       memoryAtomRepository = memoryAtomRepository,

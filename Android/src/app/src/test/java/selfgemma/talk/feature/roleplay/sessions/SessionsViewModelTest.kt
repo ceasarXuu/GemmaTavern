@@ -39,6 +39,7 @@ import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessi
 import selfgemma.talk.domain.roleplay.usecase.ExportStChatJsonlFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExportStChatJsonlToUriUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExportStChatJsonlUseCase
+import selfgemma.talk.domain.roleplay.usecase.FakeExternalFactRepository
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlFromUriUseCase
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlIntoSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlUseCase
@@ -133,6 +134,7 @@ private fun createFixture(): SessionsFixture {
       conversationRepository = conversationRepository,
       roleRepository = roleRepository,
       toolInvocationRepository = SessionsToolInvocationRepository(),
+      externalFactRepository = FakeExternalFactRepository(),
       mapper = RoleplayDebugExportMapper(),
       writer =
         WriteRoleplayDebugBundleUseCase(

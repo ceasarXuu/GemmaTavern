@@ -36,6 +36,7 @@ constructor(
         fileName = bundleFile.fileName,
         messageCount = bundle.messages.size,
         toolInvocationCount = bundle.toolInvocations.size,
+        externalFactCount = bundle.externalFacts.size,
       )
     val pointerFile = repository.writeLatestPointer(content = serializer.toJsonBytes(pointer))
     return RoleplayDebugExportResult(
@@ -45,6 +46,7 @@ constructor(
       roleName = bundle.role.name,
       messageCount = bundle.messages.size,
       toolInvocationCount = bundle.toolInvocations.size,
+      externalFactCount = bundle.externalFacts.size,
       origin = origin,
       bundleFile = bundleFile,
       pointerFile = pointerFile,

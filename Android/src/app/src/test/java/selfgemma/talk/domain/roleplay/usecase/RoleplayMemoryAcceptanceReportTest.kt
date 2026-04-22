@@ -556,7 +556,7 @@ private suspend fun runSceneContinuityProbe(): BooleanProbeResult {
   assertTrue(openThreads.any { it.type == OpenThreadType.PROMISE })
   assertTrue(atoms.any { !it.tombstone && it.objectValue.contains("reach the observatory before dawn") })
   assertTrue(atoms.none { !it.tombstone && it.objectValue.contains("blue delta") })
-  assertTrue(summary!!.summaryText.contains("Recent developments:"))
+    assertTrue(summary!!.summaryText.contains("Stable synopsis:"))
 
   return BooleanProbeResult(
     passed = true,

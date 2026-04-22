@@ -10,18 +10,22 @@ import selfgemma.talk.domain.roleplay.model.MemoryAtom
 import selfgemma.talk.domain.roleplay.model.MemoryItem
 import selfgemma.talk.domain.roleplay.model.Message
 import selfgemma.talk.domain.roleplay.model.MessageKind
+import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.ModelContextProfile
 import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.OpenThreadStatus
 import selfgemma.talk.domain.roleplay.model.OpenThreadType
 import selfgemma.talk.domain.roleplay.model.RoleCard
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
+import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
+import selfgemma.talk.domain.roleplay.model.freshness
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionEventType
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
+import selfgemma.talk.domain.roleplay.repository.ExternalFactRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryAtomRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryRepository
 import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
@@ -48,11 +52,13 @@ data class RoleplayMemoryPackBudgetReport(
   val targetTokens: Int,
   val estimatedTokens: Int,
   val mode: PromptBudgetMode,
+  val externalFactTokens: Int,
   val runtimeStateTokens: Int,
   val openThreadTokens: Int,
   val memoryAtomTokens: Int,
   val fallbackSummaryTokens: Int,
   val fallbackMemoryTokens: Int,
+  val droppedExternalFactCount: Int,
   val droppedOpenThreadCount: Int,
   val droppedMemoryAtomCount: Int,
   val droppedFallbackMemoryCount: Int,
@@ -76,6 +82,7 @@ data class RoleplayMemoryRetrievalIntent(
 
 data class RoleplayMemoryContextPack(
   val retrievalIntent: RoleplayMemoryRetrievalIntent,
+  val externalFacts: List<RoleplayExternalFact>,
   val runtimeState: RuntimeStateSnapshot?,
   val openThreads: List<OpenThread>,
   val memoryAtoms: List<MemoryAtom>,
@@ -87,6 +94,7 @@ data class RoleplayMemoryContextPack(
 
 class CompileRoleplayMemoryContextUseCase @Inject constructor(
   private val conversationRepository: ConversationRepository,
+  private val externalFactRepository: ExternalFactRepository,
   private val runtimeStateRepository: RuntimeStateRepository,
   private val openThreadRepository: OpenThreadRepository,
   private val memoryAtomRepository: MemoryAtomRepository,
@@ -136,6 +144,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
       } else {
         null
       }
+    val externalFacts = externalFactRepository.listRecentBySession(sessionId = session.id, limit = 4)
     val openThreads =
       if (retrievalIntent.includeOpenThreads) {
         rankOpenThreads(
@@ -201,12 +210,14 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
           add("entities", retrievalIntent.entities.toStringJsonArray())
           addProperty("timeScope", retrievalIntent.timeScope.name)
           addProperty("fallbackVerbatim", retrievalIntent.fallbackVerbatim)
+          addProperty("externalFactCount", externalFacts.size)
           addProperty("runtimeStateHit", runtimeState != null)
           addProperty("openThreadCount", openThreads.size)
           addProperty("memoryAtomCount", memoryAtoms.size)
           addProperty("compactionCount", compactionEntries.size)
           addProperty("fallbackMemoryCount", fallbackMemories.size)
           add("openThreadMatches", openThreads.toOpenThreadDebugJsonArray())
+          add("externalFacts", externalFacts.toExternalFactDebugJsonArray())
           add("memoryAtomMatches", memoryAtoms.toMemoryAtomDebugJsonArray())
           add("compactionMatches", compactionEntries.toCompactionDebugJsonArray())
           add("fallbackMemoryMatches", fallbackMemories.toLegacyMemoryDebugJsonArray())
@@ -216,6 +227,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
     val pack =
       applyPackBudget(
         retrievalIntent = retrievalIntent,
+        externalFacts = externalFacts,
         runtimeState = runtimeState,
         openThreads = openThreads,
         memoryAtoms = memoryAtoms,
@@ -233,6 +245,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
       memoryRepository.markUsed(pack.fallbackMemories.map { it.id }, System.currentTimeMillis())
     }
 
+    val externalFactTokens = tokenEstimator.estimate(pack.externalFacts.joinToString("\n") { renderExternalFact(it) })
     val runtimeStateTokens = tokenEstimator.estimate(renderRuntimeState(pack.runtimeState))
     val openThreadTokens = tokenEstimator.estimate(pack.openThreads.joinToString("\n") { renderOpenThread(it) })
     val memoryAtomTokens = tokenEstimator.estimate(pack.memoryAtoms.joinToString("\n") { renderMemoryAtom(it) })
@@ -249,6 +262,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
           add("entities", retrievalIntent.entities.toStringJsonArray())
           addProperty("timeScope", retrievalIntent.timeScope.name)
           addProperty("fallbackVerbatim", retrievalIntent.fallbackVerbatim)
+          addProperty("externalFactTokens", externalFactTokens)
           addProperty("runtimeStateTokens", runtimeStateTokens)
           addProperty("openThreadTokens", openThreadTokens)
           addProperty("memoryAtomTokens", memoryAtomTokens)
@@ -256,6 +270,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
           addProperty("fallbackMemoryTokens", fallbackMemoryTokens)
           addProperty("compactionCount", pack.compactionEntries.size)
           pack.budgetReport?.let { report -> add("budget", report.toDebugJsonObject()) }
+          add("externalFacts", pack.externalFacts.toExternalFactDebugJsonArray())
           add("runtimeState", pack.runtimeState.toDebugJsonObject())
           add("openThreads", pack.openThreads.toOpenThreadDebugJsonArray())
           add("memoryAtoms", pack.memoryAtoms.toMemoryAtomDebugJsonArray())
@@ -266,7 +281,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
     )
 
     debugLog(
-      "memory pack sessionId=${session.id} query=${retrievalIntent.query} mode=$budgetMode runtimeState=${pack.runtimeState != null} openThreads=${pack.openThreads.size}/${openThreads.size} memoryAtoms=${pack.memoryAtoms.size}/${memoryAtoms.size} compactions=${pack.compactionEntries.size}/${compactionEntries.size} fallbackMemories=${pack.fallbackMemories.size}/${fallbackMemories.size}",
+      "memory pack sessionId=${session.id} query=${retrievalIntent.query} mode=$budgetMode externalFacts=${pack.externalFacts.size}/${externalFacts.size} runtimeState=${pack.runtimeState != null} openThreads=${pack.openThreads.size}/${openThreads.size} memoryAtoms=${pack.memoryAtoms.size}/${memoryAtoms.size} compactions=${pack.compactionEntries.size}/${compactionEntries.size} fallbackMemories=${pack.fallbackMemories.size}/${fallbackMemories.size}",
     )
 
     return pack
@@ -286,13 +301,8 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
     budgetMode: PromptBudgetMode,
   ): RoleplayMemoryRetrievalIntent {
     val normalizedInput = pendingUserInput.normalizeWhitespace()
-    val recentText =
-      recentMessages
-        .asReversed()
-        .filter { it.kind == MessageKind.TEXT }
-        .take(3)
-        .joinToString(separator = " ") { it.content.normalizeWhitespace() }
-    val query = buildQuery(normalizedInput, recentText)
+    val recentUserText = buildRecentUserContext(recentMessages)
+    val query = buildQuery(normalizedInput, recentUserText)
     val entities = extractEntities(pendingUserInput = pendingUserInput, recentMessages = recentMessages, query = query)
     val includeOpenThreads =
       normalizedInput.containsAny(THREAD_TRIGGER_PATTERNS)
@@ -401,6 +411,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
         appendLine(pendingUserInput)
         recentMessages
           .asReversed()
+          .filter { message -> message.kind == MessageKind.TEXT && message.side == MessageSide.USER }
           .take(3)
           .forEach { appendLine(it.content) }
       }
@@ -425,6 +436,14 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
     return (quotedEntities + namedEntities + queryEntities)
       .distinctBy(String::lowercase)
       .take(4)
+  }
+
+  private fun buildRecentUserContext(recentMessages: List<Message>): String {
+    return recentMessages
+      .asReversed()
+      .filter { message -> message.kind == MessageKind.TEXT && message.side == MessageSide.USER }
+      .take(3)
+      .joinToString(separator = " ") { message -> message.content.normalizeWhitespace() }
   }
 
   private fun rankOpenThreads(
@@ -639,6 +658,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
 
   private fun applyPackBudget(
     retrievalIntent: RoleplayMemoryRetrievalIntent,
+    externalFacts: List<RoleplayExternalFact>,
     runtimeState: RuntimeStateSnapshot?,
     openThreads: List<OpenThread>,
     memoryAtoms: List<MemoryAtom>,
@@ -650,8 +670,23 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
   ): RoleplayMemoryContextPack {
     val targetTokens = contextProfile?.let { resolveMemoryPackTargetTokens(it, budgetMode) } ?: Int.MAX_VALUE
     val categoryBudget = resolveCategoryBudget(targetTokens = targetTokens, budgetMode = budgetMode)
+    val selectedExternalFacts =
+      selectItemsWithinBudget(
+        rankedItems = externalFacts,
+        itemLimit = 3,
+        tokenBudget = categoryBudget.externalFactTokens,
+        guaranteedCount = if (externalFacts.isNotEmpty()) 1 else 0,
+        tokenEstimate = { fact -> tokenEstimator.estimate(renderExternalFact(fact)) },
+      )
+    val selectedExternalFactTokens =
+      tokenEstimator.estimate(selectedExternalFacts.joinToString("\n") { renderExternalFact(it) })
     val runtimeStateTokens = tokenEstimator.estimate(renderRuntimeState(runtimeState))
-    var remainingTokens = if (targetTokens == Int.MAX_VALUE) Int.MAX_VALUE else (targetTokens - runtimeStateTokens).coerceAtLeast(0)
+    var remainingTokens =
+      if (targetTokens == Int.MAX_VALUE) {
+        Int.MAX_VALUE
+      } else {
+        (targetTokens - selectedExternalFactTokens - runtimeStateTokens).coerceAtLeast(0)
+      }
     val selectedOpenThreads =
       selectItemsWithinBudget(
         rankedItems = openThreads,
@@ -699,17 +734,20 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
         RoleplayMemoryPackBudgetReport(
           targetTokens = targetTokens,
           estimatedTokens =
+            selectedExternalFactTokens +
             runtimeStateTokens +
               selectedOpenThreadTokens +
               selectedMemoryAtomTokens +
               selectedFallbackSummaryTokens +
               selectedFallbackMemoryTokens,
           mode = budgetMode,
+          externalFactTokens = selectedExternalFactTokens,
           runtimeStateTokens = runtimeStateTokens,
           openThreadTokens = selectedOpenThreadTokens,
           memoryAtomTokens = selectedMemoryAtomTokens,
           fallbackSummaryTokens = selectedFallbackSummaryTokens,
           fallbackMemoryTokens = selectedFallbackMemoryTokens,
+          droppedExternalFactCount = (externalFacts.size - selectedExternalFacts.size).coerceAtLeast(0),
           droppedOpenThreadCount = (openThreads.size - selectedOpenThreads.size).coerceAtLeast(0),
           droppedMemoryAtomCount = (memoryAtoms.size - selectedMemoryAtoms.size).coerceAtLeast(0),
           droppedFallbackMemoryCount = (fallbackMemories.size - selectedFallbackMemories.size).coerceAtLeast(0),
@@ -719,6 +757,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
 
     return RoleplayMemoryContextPack(
       retrievalIntent = retrievalIntent,
+      externalFacts = selectedExternalFacts,
       runtimeState = runtimeState,
       openThreads = selectedOpenThreads,
       memoryAtoms = selectedMemoryAtoms,
@@ -753,11 +792,12 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
 
   private fun resolveCategoryBudget(targetTokens: Int, budgetMode: PromptBudgetMode): MemoryPackCategoryBudget {
     if (targetTokens == Int.MAX_VALUE) {
-      return MemoryPackCategoryBudget(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
+      return MemoryPackCategoryBudget(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE)
     }
     return when (budgetMode) {
       PromptBudgetMode.FULL ->
         MemoryPackCategoryBudget(
+          externalFactTokens = min((targetTokens * 0.16f).toInt(), 120).coerceAtLeast(48),
           openThreadTokens = min((targetTokens * 0.22f).toInt(), 120).coerceAtLeast(64),
           memoryAtomTokens = min((targetTokens * 0.34f).toInt(), 180).coerceAtLeast(80),
           fallbackSummaryTokens = min((targetTokens * 0.30f).toInt(), 220).coerceAtLeast(100),
@@ -765,6 +805,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
         )
       PromptBudgetMode.COMPACT ->
         MemoryPackCategoryBudget(
+          externalFactTokens = min((targetTokens * 0.14f).toInt(), 84).coerceAtLeast(40),
           openThreadTokens = min((targetTokens * 0.20f).toInt(), 84).coerceAtLeast(48),
           memoryAtomTokens = min((targetTokens * 0.28f).toInt(), 120).coerceAtLeast(64),
           fallbackSummaryTokens = min((targetTokens * 0.26f).toInt(), 140).coerceAtLeast(80),
@@ -772,6 +813,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
         )
       PromptBudgetMode.AGGRESSIVE ->
         MemoryPackCategoryBudget(
+          externalFactTokens = min((targetTokens * 0.12f).toInt(), 56).coerceAtLeast(28),
           openThreadTokens = min((targetTokens * 0.18f).toInt(), 56).coerceAtLeast(32),
           memoryAtomTokens = min((targetTokens * 0.22f).toInt(), 72).coerceAtLeast(40),
           fallbackSummaryTokens = min((targetTokens * 0.24f).toInt(), 96).coerceAtLeast(48),
@@ -829,6 +871,16 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
 
   private fun renderLegacyMemory(memory: MemoryItem): String {
     return "${memory.category.name.lowercase()}: ${memory.content.normalizeWhitespace()}"
+  }
+
+  private fun renderExternalFact(fact: RoleplayExternalFact): String {
+    val freshness =
+      when (fact.freshness()) {
+        selfgemma.talk.domain.roleplay.model.RoleplayExternalFactFreshness.FRESH -> "fresh"
+        selfgemma.talk.domain.roleplay.model.RoleplayExternalFactFreshness.STALE -> "stale"
+        selfgemma.talk.domain.roleplay.model.RoleplayExternalFactFreshness.STABLE -> "stable"
+      }
+    return "[$freshness/${fact.sourceToolName}] ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace()}"
   }
 
   private fun renderRuntimeState(snapshot: RuntimeStateSnapshot?): String {
@@ -912,6 +964,7 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
 }
 
 private data class MemoryPackCategoryBudget(
+  val externalFactTokens: Int,
   val openThreadTokens: Int,
   val memoryAtomTokens: Int,
   val fallbackSummaryTokens: Int,
@@ -951,15 +1004,39 @@ private fun RoleplayMemoryPackBudgetReport.toDebugJsonObject(): JsonObject {
     addProperty("targetTokens", targetTokens)
     addProperty("estimatedTokens", estimatedTokens)
     addProperty("mode", mode.name)
+    addProperty("externalFactTokens", externalFactTokens)
     addProperty("runtimeStateTokens", runtimeStateTokens)
     addProperty("openThreadTokens", openThreadTokens)
     addProperty("memoryAtomTokens", memoryAtomTokens)
     addProperty("fallbackSummaryTokens", fallbackSummaryTokens)
     addProperty("fallbackMemoryTokens", fallbackMemoryTokens)
+    addProperty("droppedExternalFactCount", droppedExternalFactCount)
     addProperty("droppedOpenThreadCount", droppedOpenThreadCount)
     addProperty("droppedMemoryAtomCount", droppedMemoryAtomCount)
     addProperty("droppedFallbackMemoryCount", droppedFallbackMemoryCount)
     addProperty("droppedFallbackSummary", droppedFallbackSummary)
+  }
+}
+
+private fun List<RoleplayExternalFact>.toExternalFactDebugJsonArray(): JsonArray {
+  return JsonArray().apply {
+    this@toExternalFactDebugJsonArray.forEach { fact ->
+      add(
+        JsonObject().apply {
+          addProperty("id", fact.id)
+          addProperty("sourceToolName", fact.sourceToolName)
+          addProperty("factKey", fact.factKey)
+          addProperty("factType", fact.factType)
+          addProperty("title", fact.title.compactForDebug(maxLength = 80))
+          addProperty("content", fact.content.compactForDebug(maxLength = 180))
+          addProperty("ephemeral", fact.ephemeral)
+          addProperty("summaryEligible", fact.summaryEligible)
+          addProperty("capturedAt", fact.capturedAt)
+          addProperty("freshnessTtlMillis", fact.freshnessTtlMillis ?: -1L)
+          addProperty("toolInvocationId", fact.toolInvocationId)
+        },
+      )
+    }
   }
 }
 

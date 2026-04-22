@@ -18,7 +18,6 @@ import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 
 private const val SUMMARY_RECENT_MESSAGE_COUNT = 8
-private const val SUMMARY_PREVIOUS_SUMMARY_LENGTH = 320
 private const val SUMMARY_MESSAGE_LINE_LENGTH = 180
 private const val MIN_COMPACTION_MESSAGE_COUNT = 12
 private const val MIN_SCENE_SHIFT_COMPACTION_MESSAGE_COUNT = 6
@@ -43,15 +42,17 @@ constructor(
           message.content.isNotBlank() &&
           (message.status == MessageStatus.COMPLETED || message.status == MessageStatus.INTERRUPTED)
       }
+    val excludedMessageIds = collectSynopsisExcludedMessageIds(relevantMessages)
+    val stableMessages = relevantMessages.filterNot { message -> message.id in excludedMessageIds }
 
-    if (relevantMessages.isEmpty()) {
+    if (stableMessages.isEmpty()) {
       return
     }
 
-    val recentMessages = relevantMessages.takeLast(SUMMARY_RECENT_MESSAGE_COUNT)
+    val recentMessages = stableMessages.takeLast(SUMMARY_RECENT_MESSAGE_COUNT)
     val now = System.currentTimeMillis()
     val userName = session.resolveUserProfile(dataStoreRepository.getStUserProfile()).userName
-    val summaryText = buildSummary(existingSummary?.summaryText, recentMessages, userName = userName)
+    val summaryText = buildSummary(recentMessages = recentMessages, userName = userName)
     val summary =
       SessionSummary(
         sessionId = sessionId,
@@ -75,25 +76,18 @@ constructor(
         sessionId = sessionId,
         eventType = SessionEventType.SUMMARY_UPDATE,
         payloadJson =
-          """{"version":${summary.version},"coveredUntilSeq":${summary.coveredUntilSeq}}""",
+          """{"version":${summary.version},"coveredUntilSeq":${summary.coveredUntilSeq},"stableMessageCount":${stableMessages.size},"excludedMessageCount":${excludedMessageIds.size},"summaryLineCount":${recentMessages.size}}""",
         createdAt = now,
       )
     )
   }
 
   private fun buildSummary(
-    previousSummary: String?,
     recentMessages: List<selfgemma.talk.domain.roleplay.model.Message>,
     userName: String,
   ): String {
     return buildString {
-      if (!previousSummary.isNullOrBlank()) {
-        appendLine("Earlier summary:")
-        appendLine(previousSummary.toSummaryLine(SUMMARY_PREVIOUS_SUMMARY_LENGTH))
-        appendLine()
-      }
-
-      appendLine("Recent developments:")
+      appendLine("Stable synopsis:")
       recentMessages.forEach { message ->
         appendLine(
           "- ${message.side.toSpeakerLabel(userName)}: ${message.content.toSummaryLine(SUMMARY_MESSAGE_LINE_LENGTH)}"
@@ -101,6 +95,21 @@ constructor(
       }
     }
       .trim()
+  }
+
+  private fun collectSynopsisExcludedMessageIds(messages: List<Message>): Set<String> {
+    val excludedIds = linkedSetOf<String>()
+    messages
+      .filter { message -> message.side == MessageSide.ASSISTANT }
+      .forEach { message ->
+        val metadata = parseRoleplayToolTurnMetadata(message.metadataJson) ?: return@forEach
+        if (!metadata.excludeFromStableSynopsis) {
+          return@forEach
+        }
+        excludedIds += message.id
+        excludedIds += metadata.userMessageIds
+      }
+    return excludedIds
   }
 
   private suspend fun maybeUpsertCompactionCache(

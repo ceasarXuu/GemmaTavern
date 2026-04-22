@@ -45,7 +45,7 @@ class WriteRoleplayDebugBundleAndroidTest {
 
     assertEquals("latest-debug-export.json", result.pointerFile.fileName)
     assertTrue(result.bundleFile.fileName.startsWith("roleplay-debug-export-test-"))
-    assertTrue(bundleJson.contains("\"schemaVersion\": \"roleplay_debug_bundle_v1\""))
+    assertTrue(bundleJson.contains("\"schemaVersion\": \"roleplay_debug_bundle_v2\""))
     assertTrue(bundleJson.contains("\"sessionId\": \"export-test\"").not())
     assertTrue(bundleJson.contains("\"id\": \"export-test\""))
     assertTrue(pointerJson.contains("\"sessionId\": \"export-test\""))
@@ -177,6 +177,7 @@ class WriteRoleplayDebugBundleAndroidTest {
             createdAt = 1_713_887_961_000L,
           )
         ),
+      externalFacts = emptyList(),
       notes =
         RoleplayDebugExportNotes(
           exportKind = "manual_debug_export",

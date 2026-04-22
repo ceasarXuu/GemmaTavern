@@ -50,6 +50,7 @@ data class SendRoleplayMessageResult(
   val interrupted: Boolean = false,
   val errorMessage: String? = null,
   val toolInvocations: List<ToolInvocation> = emptyList(),
+  val externalFacts: List<RoleplayExternalFact> = emptyList(),
 )
 
 data class PendingRoleplayMessage(
@@ -542,11 +543,16 @@ constructor(
         )
       appendBudgetEventIfNeeded(sessionId = sessionId, report = promptAssembly.budgetReport)
     }
-    finalMessage = normalizeFinalMessage(checkNotNull(finalMessage))
-    conversationRepository.updateMessage(finalMessage)
     val runtimeToolInvocations = turnToolContext.collector.snapshotInvocations()
     val runtimeExternalFacts = turnToolContext.collector.snapshotExternalFacts()
     val effectiveExternalFacts = pendingMessage.externalFacts + runtimeExternalFacts
+    finalMessage =
+      annotateToolBackedTurn(
+        message = normalizeFinalMessage(checkNotNull(finalMessage)),
+        userMessages = userMessages,
+        externalFacts = effectiveExternalFacts,
+      )
+    conversationRepository.updateMessage(finalMessage)
 
     if (finalMessage.status == MessageStatus.COMPLETED) {
       finalMessage =
@@ -589,6 +595,7 @@ constructor(
       interrupted = finalMessage.status == MessageStatus.INTERRUPTED,
       errorMessage = finalMessage.errorMessage,
       toolInvocations = runtimeToolInvocations,
+      externalFacts = runtimeExternalFacts,
     )
   }
 
@@ -614,11 +621,33 @@ constructor(
       openThreads = memoryContext.openThreads,
       memoryAtoms = memoryContext.memoryAtoms,
       pendingUserInput = trimmedInput,
-      externalFacts = externalFacts,
+      externalFacts = memoryContext.externalFacts + externalFacts,
       hasRuntimeTools = hasRuntimeTools,
       runtimeProfile = role.runtimeProfile,
       contextProfile = contextProfile,
       budgetMode = budgetMode,
+    )
+  }
+
+  private fun annotateToolBackedTurn(
+    message: Message,
+    userMessages: List<Message>,
+    externalFacts: List<RoleplayExternalFact>,
+  ): Message {
+    if (externalFacts.isEmpty()) {
+      return message
+    }
+    val metadata =
+      RoleplayToolTurnMetadata(
+        userMessageIds = userMessages.map(Message::id),
+        toolNames = externalFacts.map(RoleplayExternalFact::sourceToolName).distinct(),
+        externalFactIds = externalFacts.map(RoleplayExternalFact::id),
+        excludeFromStableSynopsis = externalFacts.any { it.ephemeral && !it.summaryEligible },
+        externalFactCount = externalFacts.size,
+      )
+    return message.copy(
+      metadataJson = mergeRoleplayToolTurnMetadata(message.metadataJson, metadata),
+      updatedAt = System.currentTimeMillis(),
     )
   }
 

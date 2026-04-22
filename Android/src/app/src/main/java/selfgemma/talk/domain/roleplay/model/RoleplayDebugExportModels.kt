@@ -1,7 +1,7 @@
 package selfgemma.talk.domain.roleplay.model
 
-const val ROLEPLAY_DEBUG_BUNDLE_SCHEMA_VERSION = "roleplay_debug_bundle_v1"
-const val ROLEPLAY_DEBUG_POINTER_SCHEMA_VERSION = "roleplay_debug_pointer_v1"
+const val ROLEPLAY_DEBUG_BUNDLE_SCHEMA_VERSION = "roleplay_debug_bundle_v2"
+const val ROLEPLAY_DEBUG_POINTER_SCHEMA_VERSION = "roleplay_debug_pointer_v2"
 
 enum class RoleplayDebugExportOrigin(val rawValue: String) {
   SESSIONS_LIST("sessions_list"),
@@ -109,6 +109,23 @@ data class RoleplayDebugToolInvocationSnapshot(
   val finishedAt: Long?,
 )
 
+data class RoleplayDebugExternalFactSnapshot(
+  val id: String,
+  val turnId: String?,
+  val toolInvocationId: String?,
+  val sourceToolName: String,
+  val title: String,
+  val content: String,
+  val factKey: String,
+  val factType: String,
+  val structuredValueJson: String?,
+  val ephemeral: Boolean,
+  val summaryEligible: Boolean,
+  val capturedAt: Long,
+  val freshnessTtlMillis: Long?,
+  val confidence: Float,
+)
+
 data class RoleplayDebugSessionEventSnapshot(
   val id: String,
   val eventType: String,
@@ -131,6 +148,7 @@ data class RoleplayDebugBundle(
   val summary: RoleplayDebugSummarySnapshot?,
   val messages: List<RoleplayDebugMessageSnapshot>,
   val toolInvocations: List<RoleplayDebugToolInvocationSnapshot>,
+  val externalFacts: List<RoleplayDebugExternalFactSnapshot>,
   val sessionEvents: List<RoleplayDebugSessionEventSnapshot>,
   val notes: RoleplayDebugExportNotes,
 )
@@ -145,6 +163,7 @@ data class RoleplayDebugExportPointer(
   val fileName: String,
   val messageCount: Int,
   val toolInvocationCount: Int,
+  val externalFactCount: Int,
 )
 
 data class RoleplayDebugStoredFile(
@@ -161,6 +180,7 @@ data class RoleplayDebugExportResult(
   val roleName: String,
   val messageCount: Int,
   val toolInvocationCount: Int,
+  val externalFactCount: Int,
   val origin: RoleplayDebugExportOrigin,
   val bundleFile: RoleplayDebugStoredFile,
   val pointerFile: RoleplayDebugStoredFile,

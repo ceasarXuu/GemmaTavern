@@ -10,7 +10,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import selfgemma.talk.data.roleplay.db.RoleplayDatabase
+import selfgemma.talk.data.roleplay.db.RoleplayDatabaseMigrations
 import selfgemma.talk.data.roleplay.db.dao.CompactionCacheDao
+import selfgemma.talk.data.roleplay.db.dao.ExternalFactDao
 import selfgemma.talk.data.roleplay.db.dao.MemoryDao
 import selfgemma.talk.data.roleplay.db.dao.MemoryAtomDao
 import selfgemma.talk.data.roleplay.db.dao.MessageDao
@@ -25,6 +27,7 @@ import selfgemma.talk.data.roleplay.repository.RoomConversationRepository
 import selfgemma.talk.data.roleplay.repository.AndroidRoleplayDebugExportRepository
 import selfgemma.talk.data.roleplay.repository.AndroidRoleplayInteropDocumentRepository
 import selfgemma.talk.data.roleplay.repository.RoomCompactionCacheRepository
+import selfgemma.talk.data.roleplay.repository.RoomExternalFactRepository
 import selfgemma.talk.data.roleplay.repository.RoomMemoryAtomRepository
 import selfgemma.talk.data.roleplay.repository.RoomMemoryRepository
 import selfgemma.talk.data.roleplay.repository.RoomOpenThreadRepository
@@ -33,6 +36,7 @@ import selfgemma.talk.data.roleplay.repository.RoomRuntimeStateRepository
 import selfgemma.talk.data.roleplay.repository.RoomToolInvocationRepository
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
+import selfgemma.talk.domain.roleplay.repository.ExternalFactRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryAtomRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryRepository
 import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
@@ -53,7 +57,8 @@ object RoleplayDatabaseModule {
   @Singleton
   fun provideRoleplayDatabase(@ApplicationContext context: Context): RoleplayDatabase {
     return Room.databaseBuilder(context, RoleplayDatabase::class.java, ROLEPLAY_DATABASE_NAME)
-      .fallbackToDestructiveMigration(true)
+      .addMigrations(RoleplayDatabaseMigrations.MIGRATION_9_10)
+      .fallbackToDestructiveMigrationFrom(1, 2, 3, 4, 5, 6, 7, 8)
       .build()
   }
 
@@ -110,6 +115,11 @@ object RoleplayDatabaseModule {
   @Provides
   fun provideToolInvocationDao(database: RoleplayDatabase): ToolInvocationDao {
     return database.toolInvocationDao()
+  }
+
+  @Provides
+  fun provideExternalFactDao(database: RoleplayDatabase): ExternalFactDao {
+    return database.externalFactDao()
   }
 }
 
@@ -177,4 +187,10 @@ abstract class RoleplayRepositoryModule {
   abstract fun bindToolInvocationRepository(
     implementation: RoomToolInvocationRepository,
   ): ToolInvocationRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindExternalFactRepository(
+    implementation: RoomExternalFactRepository,
+  ): ExternalFactRepository
 }

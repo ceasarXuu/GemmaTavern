@@ -190,22 +190,25 @@ class PromptAssemblerTest {
         summary = null,
         memories = emptyList(),
         recentMessages = emptyList(),
-        pendingUserInput = "现在几点？",
+        pendingUserInput = "What is the real device time right now?",
         externalFacts =
           listOf(
             RoleplayExternalFact(
               id = "fact-1",
               sourceToolName = "getDeviceSystemTime",
               title = "Device system time",
-              content = "Real-world device system time is 2026-04-22 18:07 in Asia/Shanghai. The lunar date is 三月初六.",
+              factType = "device.system_time",
+              content =
+                "Real-world device system time is 2026-04-22 \u661f\u671f\u4e09 18:07 in Asia/Shanghai. " +
+                  "The lunar date is \u4e09\u6708\u521d\u516d.",
             )
           ),
       )
 
-    assertTrue(prompt.contains("[External Tool Facts]"))
+    assertTrue(prompt.contains("[External Evidence]"))
     assertTrue(prompt.contains("Device system time"))
-    assertTrue(prompt.contains("2026-04-22 18:07"))
-    assertTrue(prompt.contains("三月初六"))
+    assertTrue(prompt.contains("2026-04-22 \u661f\u671f\u4e09 18:07"))
+    assertTrue(prompt.contains("\u4e09\u6708\u521d\u516d"))
   }
 
   @Test
