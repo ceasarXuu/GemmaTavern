@@ -33,13 +33,13 @@ It tracks:
 | P1 | `getDeviceBatteryStatus` | Implemented | None | No external dependency | Battery percent, charging state, battery saver |
 | P2 | `getDeviceNetworkStatus` | Implemented | None | `ACCESS_NETWORK_STATE` already declared | Online / offline, transport, validation, metered |
 | P3 | `getDeviceContext` | Implemented | None | No external dependency | Locale, region, weekday, 12h/24h preference, language |
-| P4 | `getApproximateLocation` | Planned | None | Location runtime permission | City / district scale context for grounded replies |
-| P5 | `getCalendarSnapshot` | Planned | None | Calendar runtime permission | Upcoming events and near-term schedule context |
-| P6 | `getNextAlarmHint` | Implemented | None | No external dependency | Natural “I need to wake up later” style grounding |
-| P7 | `queryWikipedia` | Planned | None | External network access only | Safe factual lookup without full web search scope |
-| P8 | `getWeather` | Planned | None | External weather service, likely after location | Weather grounding once location exists |
-| P9 | `placeLookupOrMapContext` | Deferred | None | External map or place service | Nearby place and map context, more agentic than humanizing |
-| P10 | `webSearch` | Avoid | None | Search backend or scraping complexity | Useful, but not the right first step for “alive” roleplay |
+| P4 | `getApproximateLocation` | Implemented | None | Explicit settings toggle plus location runtime permission | City / district scale context for grounded replies |
+| P5 | `getCalendarSnapshot` | Implemented | None | Explicit settings toggle plus calendar runtime permission | Upcoming events and near-term schedule context |
+| P6 | `getNextAlarmHint` | Implemented | None | No external dependency | Natural "I need to wake up later" style grounding |
+| P7 | `queryWikipedia` | Implemented | None | External network access only | Safe factual lookup without full web search scope |
+| P8 | `getWeather` | Implemented | None | External weather service plus location consent | Weather grounding once location exists |
+| P9 | `placeLookupOrMapContext` | Implemented | None | External OpenStreetMap / Nominatim lookup, optional location bias | Nearby place and map context, more agentic than humanizing |
+| P10 | `webSearch` | Avoid | None | Search backend or scraping complexity | Useful, but not the right first step for "alive" roleplay |
 
 ## Current implementation order
 
@@ -56,13 +56,17 @@ The current recommended implementation order is:
 9. `getWeather`
 10. `placeLookupOrMapContext`
 
-Permission-free local tools may ship slightly ahead of permission-gated tools
-when the approval UX for those higher-risk tools is not ready yet.
+Permission-gated tools are hidden from the model until the user explicitly
+enables them in Settings and grants the matching Android runtime permission.
 
 ## Notes on deferred or avoided tools
 
 - `webSearch` is intentionally not a near-term priority because it makes the
   role more capable at research, but does not by itself make the role feel more
   like a real person with a present-tense device context.
+- `queryWikipedia`, `getWeather`, and `placeLookupOrMapContext` use public
+  network endpoints with no project-owned API key. That keeps the open-source
+  build zero-config, but maintainers should still watch reliability and rate
+  limits over time.
 - High-privacy tools such as notification reading, contacts, SMS, or gallery
   crawling are out of scope for now even if they could increase realism.

@@ -90,6 +90,23 @@ Firebase is off by default for the public repository.
 - `ENABLE_FIREBASE` should remain `false` unless you maintain your own Firebase project.
 - If you fully wire Firebase for your fork, keep the Google Services plugin and runtime configuration aligned with that setup.
 
+## Roleplay tool permissions
+
+Permission-gated roleplay tools must stay hidden from the runtime model until
+both conditions are true:
+
+1. the user explicitly enables the tool family in Settings, and
+2. the matching Android runtime permission has already been granted.
+
+Do not register location or calendar tools speculatively and then let the
+model discover they cannot run. Filter them out before `resetConversation(...)`
+so the model only sees tools it can actually use in that turn.
+
+For zero-config network tools such as Wikipedia, Open-Meteo weather, or
+OpenStreetMap / Nominatim place lookup, prefer public endpoints with no project
+API key. That keeps the open-source build usable out of the box, but recheck
+rate limits and availability before adding more traffic-sensitive providers.
+
 ## Public documentation boundary
 
 - `README.md`, `DEVELOPMENT.md`, and `RELEASING.md` are the source of truth for build and release flow.
