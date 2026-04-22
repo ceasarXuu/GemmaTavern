@@ -11,8 +11,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
@@ -266,7 +268,7 @@ class RoleplayChatViewModelTest {
       advanceUntilIdle()
 
       fixture.viewModel.exportDebugBundle()
-      advanceUntilIdle()
+      runCurrent()
 
       val exportedFileName = fixture.debugExportRepository.lastBundleFile?.fileName
       assertNotNull(exportedFileName)
@@ -289,6 +291,9 @@ class RoleplayChatViewModelTest {
       assertTrue(
         fixture.debugExportRepository.lastPointerJson.orEmpty().contains("\"sessionId\": \"session-1\"")
       )
+      advanceTimeBy(CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS)
+      runCurrent()
+      assertNull(fixture.viewModel.uiState.value.statusMessage)
       uiCollector.cancel()
     }
 }

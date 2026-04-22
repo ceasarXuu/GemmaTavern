@@ -109,6 +109,7 @@ data class RoleplayChatUiState(
 private const val TAG = "RoleplayChatViewModel"
 private const val DEFAULT_BRANCH_ID = "main"
 private const val SEND_DISPATCH_DELAY_MS = 2_000L
+internal const val CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS = 4_000L
 
 private fun logDebug(message: String) {
   runCatching {
@@ -176,6 +177,7 @@ constructor(
   private val metaState = MutableStateFlow(RoleplayChatMetaState())
   private val stopRequested = MutableStateFlow(false)
   private var dispatchJob: Job? = null
+  private var statusMessageDismissJob: Job? = null
   private var lastDraftEditAtElapsed = 0L
   private var latestQueuedModel: Model? = null
   private var activeAssistantMessageId: String? = null
@@ -361,29 +363,19 @@ constructor(
           logDebug(
             "debug bundle exported sessionId=$sessionId file=${result.bundleFile.fileName} relativePath=${result.bundleFile.relativePath}",
           )
-          metaState.update { current ->
-            current.copy(
-              statusMessage =
-                appString(
-                  R.string.roleplay_debug_export_status,
-                  result.sessionTitle,
-                  displaySessionId(result.sessionId),
-                  result.bundleFile.fileName,
-                ),
-              errorMessage = null,
+          showStatusMessage(
+            appString(
+              R.string.roleplay_debug_export_status,
+              result.sessionTitle,
+              displaySessionId(result.sessionId),
+              result.bundleFile.fileName,
             )
-          }
+          )
           refreshSupplementalState()
         }
         .onFailure { error ->
           logError("failed to export debug bundle sessionId=$sessionId", error)
-          metaState.update { current ->
-            current.copy(
-              statusMessage = null,
-              errorMessage =
-                error.message ?: appString(R.string.roleplay_debug_export_error),
-            )
-          }
+          showErrorMessage(error.message ?: appString(R.string.roleplay_debug_export_error))
         }
     }
   }
@@ -1048,5 +1040,33 @@ constructor(
 
   private fun displaySessionId(sessionId: String): String {
     return if (sessionId.length <= 12) sessionId else sessionId.take(8)
+  }
+
+  private fun showStatusMessage(message: String) {
+    statusMessageDismissJob?.cancel()
+    logDebug("show status message sessionId=$sessionId message=$message")
+    metaState.update { current ->
+      current.copy(statusMessage = message, errorMessage = null)
+    }
+    statusMessageDismissJob =
+      viewModelScope.launch {
+        delay(CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS)
+        metaState.update { current ->
+          if (current.statusMessage == message) {
+            logDebug("auto-dismiss status message sessionId=$sessionId message=$message")
+            current.copy(statusMessage = null)
+          } else {
+            current
+          }
+        }
+      }
+  }
+
+  private fun showErrorMessage(message: String) {
+    statusMessageDismissJob?.cancel()
+    logWarn("show error message sessionId=$sessionId message=$message")
+    metaState.update { current ->
+      current.copy(statusMessage = null, errorMessage = message)
+    }
   }
 }

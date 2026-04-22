@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import selfgemma.talk.R
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
@@ -42,6 +43,20 @@ data class SessionsUiState(
   val errorMessage: String? = null,
 )
 
+internal const val SESSIONS_STATUS_MESSAGE_AUTO_DISMISS_MS = 4_000L
+
+private fun logDebug(message: String) {
+  runCatching {
+    Log.d("SessionsViewModel", message)
+  }
+}
+
+private fun logWarn(message: String) {
+  runCatching {
+    Log.w("SessionsViewModel", message)
+  }
+}
+
 @HiltViewModel
 class SessionsViewModel
 @Inject
@@ -54,11 +69,10 @@ constructor(
   private val exportStChatJsonlFromSessionUseCase: ExportStChatJsonlFromSessionUseCase,
   private val exportRoleplayDebugBundleFromSessionUseCase: ExportRoleplayDebugBundleFromSessionUseCase,
 ) : ViewModel() {
-  companion object {
-    private const val TAG = "SessionsViewModel"
-  }
-
   private val feedbackState = MutableStateFlow(SessionsUiState(loading = false))
+  private var statusMessageDismissJob: kotlinx.coroutines.Job? = null
+  internal var stringResolver: (Int, List<Any>) -> String =
+    { resId, args -> appContext.getString(resId, *args.toTypedArray()) }
 
   val uiState: StateFlow<SessionsUiState> =
     combine(
@@ -107,7 +121,7 @@ constructor(
       val session = conversationRepository.getSession(sessionId) ?: return@launch
       val now = System.currentTimeMillis()
       val nextPinned = !session.pinned
-      Log.d(TAG, "togglePin sessionId=$sessionId fromPinned=${session.pinned} toPinned=$nextPinned")
+      logDebug("togglePin sessionId=$sessionId fromPinned=${session.pinned} toPinned=$nextPinned")
       conversationRepository.updateSession(
         session.copy(pinned = nextPinned, updatedAt = now, lastMessageAt = session.lastMessageAt)
       )
@@ -132,20 +146,10 @@ constructor(
         importStChatJsonlIntoSessionUseCase.importIntoSession(sessionId = sessionId, uri = uri)
       }
         .onSuccess {
-          feedbackState.update {
-            it.copy(
-              statusMessage = appString(R.string.sessions_status_imported),
-              errorMessage = null,
-            )
-          }
+          showStatusMessage(appString(R.string.sessions_status_imported))
         }
         .onFailure { error ->
-          feedbackState.update {
-            it.copy(
-              statusMessage = null,
-              errorMessage = error.message ?: appString(R.string.sessions_error_import_failed),
-            )
-          }
+          showErrorMessage(error.message ?: appString(R.string.sessions_error_import_failed))
         }
     }
   }
@@ -156,20 +160,10 @@ constructor(
         exportStChatJsonlFromSessionUseCase.exportFromSession(sessionId = sessionId, uri = uri)
       }
         .onSuccess {
-          feedbackState.update {
-            it.copy(
-              statusMessage = appString(R.string.sessions_status_exported),
-              errorMessage = null,
-            )
-          }
+          showStatusMessage(appString(R.string.sessions_status_exported))
         }
         .onFailure { error ->
-          feedbackState.update {
-            it.copy(
-              statusMessage = null,
-              errorMessage = error.message ?: appString(R.string.sessions_error_export_failed),
-            )
-          }
+          showErrorMessage(error.message ?: appString(R.string.sessions_error_export_failed))
         }
     }
   }
@@ -183,36 +177,54 @@ constructor(
         )
       }
         .onSuccess { result ->
-          feedbackState.update {
-            it.copy(
-              statusMessage =
-                appString(
-                  R.string.roleplay_debug_export_status,
-                  result.sessionTitle,
-                  displaySessionId(result.sessionId),
-                  result.bundleFile.fileName,
-                ),
-              errorMessage = null,
+          showStatusMessage(
+            appString(
+              R.string.roleplay_debug_export_status,
+              result.sessionTitle,
+              displaySessionId(result.sessionId),
+              result.bundleFile.fileName,
             )
-          }
+          )
         }
         .onFailure { error ->
-          feedbackState.update {
-            it.copy(
-              statusMessage = null,
-              errorMessage =
-                error.message ?: appString(R.string.roleplay_debug_export_error),
-            )
-          }
+          showErrorMessage(error.message ?: appString(R.string.roleplay_debug_export_error))
         }
     }
   }
 
   private fun appString(@StringRes resId: Int, vararg args: Any): String {
-    return appContext.getString(resId, *args)
+    return stringResolver(resId, args.toList())
   }
 
   private fun displaySessionId(sessionId: String): String {
     return if (sessionId.length <= 12) sessionId else sessionId.take(8)
+  }
+
+  private fun showStatusMessage(message: String) {
+    statusMessageDismissJob?.cancel()
+    logDebug("show status message message=$message")
+    feedbackState.update { current ->
+      current.copy(statusMessage = message, errorMessage = null)
+    }
+    statusMessageDismissJob =
+      viewModelScope.launch {
+        delay(SESSIONS_STATUS_MESSAGE_AUTO_DISMISS_MS)
+        feedbackState.update { current ->
+          if (current.statusMessage == message) {
+            logDebug("auto-dismiss status message message=$message")
+            current.copy(statusMessage = null)
+          } else {
+            current
+          }
+        }
+      }
+  }
+
+  private fun showErrorMessage(message: String) {
+    statusMessageDismissJob?.cancel()
+    logWarn("show error message message=$message")
+    feedbackState.update { current ->
+      current.copy(statusMessage = null, errorMessage = message)
+    }
   }
 }
