@@ -63,6 +63,31 @@ Using Gradle runner-arg properties such as
 configuration failure around the Protobuf Gradle plugin on this setup, so avoid
 that path unless it is revalidated later.
 
+## Roleplay debug export retrieval
+
+The stable debug-time path for pulling a specific roleplay chat out of a real
+device is now the `Download/GemmaTavern/debug-exports/` bundle, not a live
+Room database copy.
+
+Recommended flow:
+
+1. Trigger `Export Debug Bundle` from the session list or the chat overflow menu.
+2. Read the latest pointer:
+   `adb shell cat /sdcard/Download/GemmaTavern/debug-exports/latest-debug-export.json`
+3. Pull the resolved bundle:
+   `adb pull /sdcard/Download/GemmaTavern/debug-exports/<fileName>.json <local-target>`
+
+If you are validating the MediaStore writer itself, the reliable device path on
+this workspace was:
+
+1. `Set-Location .\Android\src`
+2. `./gradlew.bat :app:installDebug :app:installDebugAndroidTest --no-daemon`
+3. `adb shell am instrument -w -r -e class selfgemma.talk.domain.roleplay.usecase.WriteRoleplayDebugBundleAndroidTest selfgemma.talk.test/androidx.test.runner.AndroidJUnitRunner`
+
+Do not fall back to hot-copying `selfgemma_talk.db` plus WAL/SHM while the app
+is live. That path produced malformed snapshots during debugging and is no
+longer the preferred export route.
+
 ## Optional service configuration
 
 The default open-source build intentionally ships without private service credentials.

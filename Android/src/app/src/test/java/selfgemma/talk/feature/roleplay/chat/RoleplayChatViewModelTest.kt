@@ -17,12 +17,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import selfgemma.talk.R
 import selfgemma.talk.data.Model
 import selfgemma.talk.domain.roleplay.model.MemoryAtom
 import selfgemma.talk.domain.roleplay.model.MemoryItem
@@ -33,9 +35,11 @@ import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.OpenThreadStatus
 import selfgemma.talk.domain.roleplay.model.RoleCard
+import selfgemma.talk.domain.roleplay.model.RoleplayDebugStoredFile
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
+import selfgemma.talk.domain.roleplay.model.SessionEventType
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.StUserProfile
 import selfgemma.talk.domain.roleplay.model.ToolExecutionSource
@@ -47,16 +51,20 @@ import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryAtomRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryRepository
 import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
+import selfgemma.talk.domain.roleplay.repository.RoleplayDebugExportRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
 import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.CompileRoleplayMemoryContextUseCase
 import selfgemma.talk.domain.roleplay.usecase.CompileRuntimeRoleProfileUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
+import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.NoOpRoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
 import selfgemma.talk.domain.roleplay.usecase.PromptAssembler
+import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugExportJsonSerializer
+import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugExportMapper
 import selfgemma.talk.domain.roleplay.usecase.RebuildRoleplayContinuityUseCase
 import selfgemma.talk.domain.roleplay.usecase.RollbackRoleplayContinuityUseCase
 import selfgemma.talk.domain.roleplay.usecase.RunRoleplayTurnUseCase
@@ -64,6 +72,7 @@ import selfgemma.talk.domain.roleplay.usecase.SendRoleplayMessageUseCase
 import selfgemma.talk.domain.roleplay.usecase.SummarizeSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.TokenEstimator
 import selfgemma.talk.domain.roleplay.usecase.ValidateMemoryAtomCandidateUseCase
+import selfgemma.talk.domain.roleplay.usecase.WriteRoleplayDebugBundleUseCase
 import selfgemma.talk.testing.FakeDataStoreRepository
 import selfgemma.talk.ui.common.chat.ChatMessageAudioClip
 import selfgemma.talk.ui.common.chat.ChatSide
@@ -248,6 +257,40 @@ class RoleplayChatViewModelTest {
       assertEquals("search_weather", fixture.viewModel.uiState.value.toolInvocations.single().toolName)
       uiCollector.cancel()
     }
+
+  @Test
+  fun exportDebugBundle_updatesStatusMessageAndLogsExportEvent() =
+    runTest {
+      val fixture = createFixture(installDebugExportStringResolver = true)
+      val uiCollector = backgroundScope.launch { fixture.viewModel.uiState.collect() }
+      advanceUntilIdle()
+
+      fixture.viewModel.exportDebugBundle()
+      advanceUntilIdle()
+
+      val exportedFileName = fixture.debugExportRepository.lastBundleFile?.fileName
+      assertNotNull(exportedFileName)
+      assertEquals(
+        "Debug bundle exported for Bridge (session-1): $exportedFileName",
+        fixture.viewModel.uiState.value.statusMessage,
+      )
+      assertNull(fixture.viewModel.uiState.value.errorMessage)
+      assertTrue(
+        fixture.conversationRepository.events.any { event ->
+          event.eventType == SessionEventType.EXPORT &&
+            event.payloadJson.contains("chat_screen")
+        }
+      )
+      assertTrue(
+        fixture.debugExportRepository.lastBundleJson.orEmpty().contains(
+          "\"schemaVersion\": \"roleplay_debug_bundle_v1\"",
+        )
+      )
+      assertTrue(
+        fixture.debugExportRepository.lastPointerJson.orEmpty().contains("\"sessionId\": \"session-1\"")
+      )
+      uiCollector.cancel()
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -267,6 +310,7 @@ private data class RoleplayChatViewModelFixture(
   val viewModel: RoleplayChatViewModel,
   val conversationRepository: ViewModelConversationRepository,
   val toolInvocationRepository: ViewModelToolInvocationRepository,
+  val debugExportRepository: RecordingRoleplayDebugExportRepository,
   val session: Session,
 ) {
   fun queuedUserMessage(message: Message): Any {
@@ -279,6 +323,7 @@ private data class RoleplayChatViewModelFixture(
   fun setMetaState(
     pendingMessages: List<Any> = emptyList(),
     inProgress: Boolean = false,
+    statusMessage: String? = null,
     errorMessage: String? = null,
   ) {
     val metaStateField = RoleplayChatViewModel::class.java.getDeclaredField("metaState")
@@ -294,6 +339,7 @@ private data class RoleplayChatViewModelFixture(
         List::class.java,
         Boolean::class.javaPrimitiveType,
         String::class.java,
+        String::class.java,
       )
     constructor.isAccessible = true
     metaStateFlow.value =
@@ -303,6 +349,7 @@ private data class RoleplayChatViewModelFixture(
         RoleplayContinuityDebugState(),
         pendingMessages,
         inProgress,
+        statusMessage,
         errorMessage,
       )
   }
@@ -324,7 +371,7 @@ private data class RoleplayChatViewModelFixture(
   }
 }
 
-private class TestAppContext :
+private open class TestAppContext :
   ContextWrapper(null) {
   private val filesDirectory: File =
     Files.createTempDirectory("roleplay-chat-viewmodel-test").toFile().apply { mkdirs() }
@@ -332,7 +379,10 @@ private class TestAppContext :
   override fun getFilesDir(): File = filesDirectory
 }
 
-private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): RoleplayChatViewModelFixture {
+private fun createFixture(
+  appContext: ContextWrapper = TestAppContext(),
+  installDebugExportStringResolver: Boolean = false,
+): RoleplayChatViewModelFixture {
   val now = System.currentTimeMillis()
   val session = testSession(now)
   val role = testRole(now)
@@ -424,6 +474,23 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
       extractMemoriesUseCase = extractMemoriesUseCase,
     )
   val toolInvocationRepository = ViewModelToolInvocationRepository()
+  val debugExportRepository = RecordingRoleplayDebugExportRepository()
+  val debugExportUseCase =
+    ExportRoleplayDebugBundleFromSessionUseCase(
+      dataStoreRepository = dataStoreRepository,
+      conversationRepository = conversationRepository,
+      roleRepository = roleRepository,
+      toolInvocationRepository = toolInvocationRepository,
+      mapper = RoleplayDebugExportMapper(),
+      writer =
+        WriteRoleplayDebugBundleUseCase(
+          repository = debugExportRepository,
+          serializer = RoleplayDebugExportJsonSerializer(),
+        ),
+      serializer = RoleplayDebugExportJsonSerializer(),
+    ).also { useCase ->
+      useCase.nowProvider = { 1_713_888_000_000L }
+    }
   val runRoleplayTurnUseCase =
     RunRoleplayTurnUseCase(
       sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
@@ -445,6 +512,7 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
       compactionCacheRepository = compactionCacheRepository,
       toolInvocationRepository = toolInvocationRepository,
       runRoleplayTurnUseCase = runRoleplayTurnUseCase,
+      exportRoleplayDebugBundleFromSessionUseCase = debugExportUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
       rollbackRoleplayContinuityUseCase = rollbackUseCase,
       prepareRoleplayEditUseCase =
@@ -462,13 +530,52 @@ private fun createFixture(appContext: ContextWrapper = ContextWrapper(null)): Ro
   viewModel.elapsedRealtimeProvider = { 1_000L }
   viewModel.ioDispatcher = Dispatchers.Main
   viewModel.defaultDispatcher = Dispatchers.Main
+  if (installDebugExportStringResolver) {
+    viewModel.stringResolver =
+      { resId, args ->
+        when (resId) {
+          R.string.roleplay_debug_export_status ->
+            "Debug bundle exported for ${args[0]} (${args[1]}): ${args[2]}"
+          R.string.roleplay_debug_export_error -> "Failed to export the debug bundle"
+          else -> error("Unexpected string resource request: $resId")
+        }
+      }
+  }
 
   return RoleplayChatViewModelFixture(
     viewModel = viewModel,
     conversationRepository = conversationRepository,
     toolInvocationRepository = toolInvocationRepository,
+    debugExportRepository = debugExportRepository,
     session = session,
   )
+}
+
+private class RecordingRoleplayDebugExportRepository : RoleplayDebugExportRepository {
+  var lastBundleFile: RoleplayDebugStoredFile? = null
+  var lastPointerFile: RoleplayDebugStoredFile? = null
+  var lastBundleJson: String? = null
+  var lastPointerJson: String? = null
+
+  override suspend fun writeBundle(displayName: String, content: ByteArray): RoleplayDebugStoredFile {
+    lastBundleJson = content.toString(Charsets.UTF_8)
+    return RoleplayDebugStoredFile(
+      fileName = displayName,
+      relativePath = "Download/GemmaTavern/debug-exports/$displayName",
+      adbPath = "/sdcard/Download/GemmaTavern/debug-exports/$displayName",
+      contentUri = "content://debug/$displayName",
+    ).also { lastBundleFile = it }
+  }
+
+  override suspend fun writeLatestPointer(content: ByteArray): RoleplayDebugStoredFile {
+    lastPointerJson = content.toString(Charsets.UTF_8)
+    return RoleplayDebugStoredFile(
+      fileName = "latest-debug-export.json",
+      relativePath = "Download/GemmaTavern/debug-exports/latest-debug-export.json",
+      adbPath = "/sdcard/Download/GemmaTavern/debug-exports/latest-debug-export.json",
+      contentUri = "content://debug/latest-debug-export.json",
+    ).also { lastPointerFile = it }
+  }
 }
 
 private class ViewModelConversationRepository(

@@ -782,4 +782,10 @@
   <string name="builtin_role_gemma_tag_hostess">老板娘</string>
   <string name="builtin_role_gemma_tag_flirty">暧昧</string>
   <string name="sessions_archive">归档</string>
+  <string name="sessions_import_chat">导入聊天记录</string>
+  <string name="sessions_export_chat">导出聊天记录</string>
+  <string name="sessions_export_debug_bundle">导出调试包</string>
+  <string name="chat_export_debug_bundle_action">导出调试包</string>
+  <string name="roleplay_debug_export_status">已为 %1$s（%2$s）导出调试包：%3$s</string>
+  <string name="roleplay_debug_export_error">导出调试包失败</string>
 </resources>

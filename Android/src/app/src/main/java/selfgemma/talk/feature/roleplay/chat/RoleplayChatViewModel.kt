@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import selfgemma.talk.R
 import selfgemma.talk.data.ConfigKeys
 import selfgemma.talk.data.DataStoreRepository
 import selfgemma.talk.data.Model
@@ -43,6 +45,7 @@ import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachment
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.model.RoleCard
+import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
@@ -60,6 +63,7 @@ import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
 import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
+import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
 import selfgemma.talk.domain.roleplay.usecase.RollbackRoleplayContinuityUseCase
@@ -98,6 +102,7 @@ data class RoleplayChatUiState(
   val continuityDebug: RoleplayContinuityDebugState = RoleplayContinuityDebugState(),
   val inProgress: Boolean = false,
   val hasPendingSends: Boolean = false,
+  val statusMessage: String? = null,
   val errorMessage: String? = null,
 )
 
@@ -134,6 +139,7 @@ private data class RoleplayChatMetaState(
   val continuityDebug: RoleplayContinuityDebugState = RoleplayContinuityDebugState(),
   val pendingUserMessages: List<QueuedUserMessage> = emptyList(),
   val inProgress: Boolean = false,
+  val statusMessage: String? = null,
   val errorMessage: String? = null,
 )
 
@@ -159,6 +165,7 @@ constructor(
   private val compactionCacheRepository: CompactionCacheRepository,
   private val toolInvocationRepository: ToolInvocationRepository,
   private val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
+  private val exportRoleplayDebugBundleFromSessionUseCase: ExportRoleplayDebugBundleFromSessionUseCase,
   private val extractMemoriesUseCase: ExtractMemoriesUseCase,
   private val rollbackRoleplayContinuityUseCase: RollbackRoleplayContinuityUseCase,
   private val prepareRoleplayEditUseCase: PrepareRoleplayEditUseCase,
@@ -176,6 +183,8 @@ constructor(
   internal var elapsedRealtimeProvider: () -> Long = { SystemClock.elapsedRealtime() }
   internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
   internal var defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+  internal var stringResolver: (Int, List<Any>) -> String =
+    { resId, args -> appContext.getString(resId, *args.toTypedArray()) }
 
   private val sessionFlow =
     conversationRepository.observeSessions().map { sessions ->
@@ -222,6 +231,7 @@ constructor(
         continuityDebug = transientState.meta.continuityDebug,
         inProgress = transientState.meta.inProgress,
         hasPendingSends = transientState.meta.pendingUserMessages.isNotEmpty(),
+        statusMessage = transientState.meta.statusMessage,
         errorMessage = transientState.meta.errorMessage,
       )
     }
@@ -336,6 +346,45 @@ constructor(
       )
       metaState.update { current -> current.copy(errorMessage = null) }
       refreshSupplementalState()
+    }
+  }
+
+  fun exportDebugBundle() {
+    viewModelScope.launch {
+      runCatching {
+        exportRoleplayDebugBundleFromSessionUseCase.exportFromSession(
+          sessionId = sessionId,
+          origin = RoleplayDebugExportOrigin.CHAT_SCREEN,
+        )
+      }
+        .onSuccess { result ->
+          logDebug(
+            "debug bundle exported sessionId=$sessionId file=${result.bundleFile.fileName} relativePath=${result.bundleFile.relativePath}",
+          )
+          metaState.update { current ->
+            current.copy(
+              statusMessage =
+                appString(
+                  R.string.roleplay_debug_export_status,
+                  result.sessionTitle,
+                  displaySessionId(result.sessionId),
+                  result.bundleFile.fileName,
+                ),
+              errorMessage = null,
+            )
+          }
+          refreshSupplementalState()
+        }
+        .onFailure { error ->
+          logError("failed to export debug bundle sessionId=$sessionId", error)
+          metaState.update { current ->
+            current.copy(
+              statusMessage = null,
+              errorMessage =
+                error.message ?: appString(R.string.roleplay_debug_export_error),
+            )
+          }
+        }
     }
   }
 
@@ -991,5 +1040,13 @@ constructor(
       return
     }
     RoleplaySoundEffectPlayer.playReceive(appContext)
+  }
+
+  private fun appString(@StringRes resId: Int, vararg args: Any): String {
+    return stringResolver(resId, args.toList())
+  }
+
+  private fun displaySessionId(sessionId: String): String {
+    return if (sessionId.length <= 12) sessionId else sessionId.take(8)
   }
 }

@@ -22,6 +22,7 @@ import selfgemma.talk.data.roleplay.db.dao.SessionEventDao
 import selfgemma.talk.data.roleplay.db.dao.SessionSummaryDao
 import selfgemma.talk.data.roleplay.db.dao.ToolInvocationDao
 import selfgemma.talk.data.roleplay.repository.RoomConversationRepository
+import selfgemma.talk.data.roleplay.repository.AndroidRoleplayDebugExportRepository
 import selfgemma.talk.data.roleplay.repository.AndroidRoleplayInteropDocumentRepository
 import selfgemma.talk.data.roleplay.repository.RoomCompactionCacheRepository
 import selfgemma.talk.data.roleplay.repository.RoomMemoryAtomRepository
@@ -35,6 +36,7 @@ import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryAtomRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryRepository
 import selfgemma.talk.domain.roleplay.repository.OpenThreadRepository
+import selfgemma.talk.domain.roleplay.repository.RoleplayDebugExportRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RoleplayInteropDocumentRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
@@ -157,6 +159,12 @@ abstract class RoleplayRepositoryModule {
   abstract fun bindRoleplayInteropDocumentRepository(
     implementation: AndroidRoleplayInteropDocumentRepository
   ): RoleplayInteropDocumentRepository
+
+  @Binds
+  @Singleton
+  abstract fun bindRoleplayDebugExportRepository(
+    implementation: AndroidRoleplayDebugExportRepository
+  ): RoleplayDebugExportRepository
 
   @Binds
   @Singleton

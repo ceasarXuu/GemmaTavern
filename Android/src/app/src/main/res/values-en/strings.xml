@@ -762,4 +762,10 @@
   <string name="builtin_role_gemma_tag_hostess">hostess</string>
   <string name="builtin_role_gemma_tag_flirty">flirty</string>
   <string name="sessions_archive">Archive</string>
+  <string name="sessions_import_chat">Import chat</string>
+  <string name="sessions_export_chat">Export chat</string>
+  <string name="sessions_export_debug_bundle">Export debug bundle</string>
+  <string name="chat_export_debug_bundle_action">Export Debug Bundle</string>
+  <string name="roleplay_debug_export_status">Debug bundle exported for %1$s (%2$s): %3$s</string>
+  <string name="roleplay_debug_export_error">Failed to export the debug bundle</string>
 </resources>

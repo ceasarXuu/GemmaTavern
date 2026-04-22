@@ -19,6 +19,8 @@ import selfgemma.talk.R
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.usecase.EnsureRoleplaySeedDataUseCase
+import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin
+import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExportStChatJsonlFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlIntoSessionUseCase
 import selfgemma.talk.domain.roleplay.model.primaryAvatarUri
@@ -50,6 +52,7 @@ constructor(
   ensureRoleplaySeedData: EnsureRoleplaySeedDataUseCase,
   private val importStChatJsonlIntoSessionUseCase: ImportStChatJsonlIntoSessionUseCase,
   private val exportStChatJsonlFromSessionUseCase: ExportStChatJsonlFromSessionUseCase,
+  private val exportRoleplayDebugBundleFromSessionUseCase: ExportRoleplayDebugBundleFromSessionUseCase,
 ) : ViewModel() {
   companion object {
     private const val TAG = "SessionsViewModel"
@@ -171,7 +174,45 @@ constructor(
     }
   }
 
+  fun exportDebugBundle(sessionId: String) {
+    viewModelScope.launch {
+      runCatching {
+        exportRoleplayDebugBundleFromSessionUseCase.exportFromSession(
+          sessionId = sessionId,
+          origin = RoleplayDebugExportOrigin.SESSIONS_LIST,
+        )
+      }
+        .onSuccess { result ->
+          feedbackState.update {
+            it.copy(
+              statusMessage =
+                appString(
+                  R.string.roleplay_debug_export_status,
+                  result.sessionTitle,
+                  displaySessionId(result.sessionId),
+                  result.bundleFile.fileName,
+                ),
+              errorMessage = null,
+            )
+          }
+        }
+        .onFailure { error ->
+          feedbackState.update {
+            it.copy(
+              statusMessage = null,
+              errorMessage =
+                error.message ?: appString(R.string.roleplay_debug_export_error),
+            )
+          }
+        }
+    }
+  }
+
   private fun appString(@StringRes resId: Int, vararg args: Any): String {
     return appContext.getString(resId, *args)
+  }
+
+  private fun displaySessionId(sessionId: String): String {
+    return if (sessionId.length <= 12) sessionId else sessionId.take(8)
   }
 }

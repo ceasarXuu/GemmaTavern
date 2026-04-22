@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Archive
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
@@ -194,6 +195,10 @@ fun SessionsScreen(
                 session.roleName.ifBlank { "session" }.replace(Regex("[^a-zA-Z0-9._-]"), "_")
               exportLauncher.launch("${fileName}-${session.id.take(8)}.jsonl")
             },
+            onExportDebugBundle = {
+              expandedSessionId = null
+              viewModel.exportDebugBundle(session.id)
+            },
             onTogglePin = {
               expandedSessionId = null
               viewModel.togglePin(session.id)
@@ -242,11 +247,12 @@ private fun SessionCard(
   onOpen: () -> Unit,
   onImportChat: () -> Unit,
   onExportChat: () -> Unit,
+  onExportDebugBundle: () -> Unit,
   onTogglePin: () -> Unit,
   onArchive: () -> Unit,
   onDelete: () -> Unit,
 ) {
-  var offsetX by remember(isExpanded) { mutableFloatStateOf(if (isExpanded) -360f else 0f) }
+  var offsetX by remember(isExpanded) { mutableFloatStateOf(if (isExpanded) SESSION_CARD_EXPANDED_OFFSET else 0f) }
   val context = LocalContext.current
 
   val animatedOffsetX by animateFloatAsState(
@@ -303,6 +309,22 @@ private fun SessionCard(
         Icon(
           Icons.Rounded.Download,
           contentDescription = stringResource(R.string.sessions_export_chat),
+          modifier = Modifier.size(26.dp),
+        )
+      }
+      Spacer(Modifier.width(8.dp))
+      FilledTonalIconButton(
+        onClick = onExportDebugBundle,
+        modifier = Modifier.size(52.dp),
+        colors =
+          IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          ),
+      ) {
+        Icon(
+          Icons.Rounded.BugReport,
+          contentDescription = stringResource(R.string.sessions_export_debug_bundle),
           modifier = Modifier.size(26.dp),
         )
       }
@@ -376,13 +398,13 @@ private fun SessionCard(
               },
               onHorizontalDrag = { change, dragAmount ->
                 change.consume()
-                val newOffset = (offsetX + dragAmount).coerceIn(-380f, 0f)
+                val newOffset = (offsetX + dragAmount).coerceIn(SESSION_CARD_DRAG_MIN_OFFSET, 0f)
                 offsetX = newOffset
               },
               onDragEnd = {
                 when {
-                  offsetX < -160f -> {
-                    offsetX = -360f
+                  offsetX < SESSION_CARD_DRAG_THRESHOLD -> {
+                    offsetX = SESSION_CARD_EXPANDED_OFFSET
                     onExpandChange(true)
                   }
                   else -> {
@@ -476,6 +498,10 @@ private fun SessionCard(
     }
   }
 }
+
+private const val SESSION_CARD_EXPANDED_OFFSET = -432f
+private const val SESSION_CARD_DRAG_MIN_OFFSET = -452f
+private const val SESSION_CARD_DRAG_THRESHOLD = -200f
 
 private fun formatTime(timestamp: Long, context: android.content.Context): String {
   val now = System.currentTimeMillis()

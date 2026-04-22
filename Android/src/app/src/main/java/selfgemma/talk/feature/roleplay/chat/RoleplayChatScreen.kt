@@ -48,6 +48,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.AlertDialog
@@ -493,6 +494,16 @@ fun RoleplayChatScreen(
                   showContinuityDebug = true
                 },
               )
+              DropdownMenuItem(
+                text = { Text(stringResource(R.string.chat_export_debug_bundle_action)) },
+                onClick = {
+                  showMenu = false
+                  viewModel.exportDebugBundle()
+                },
+                leadingIcon = {
+                  Icon(Icons.Rounded.BugReport, contentDescription = null)
+                },
+              )
             }
           },
         )
@@ -593,6 +604,14 @@ fun RoleplayChatScreen(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
       ) {
+        uiState.statusMessage?.let { statusMessage ->
+          Text(
+            text = statusMessage,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+          )
+        }
+
         uiState.errorMessage?.let { errorMessage ->
           Text(
             text = errorMessage,
