@@ -39,6 +39,10 @@ constructor(
     return sessionDao.observeActiveSessions().map { sessions -> sessions.map { it.toDomain() } }
   }
 
+  override fun observeArchivedSessions(): Flow<List<Session>> {
+    return sessionDao.observeArchivedSessions().map { sessions -> sessions.map { it.toDomain() } }
+  }
+
   override fun observeMessages(sessionId: String): Flow<List<Message>> {
     return messageDao.observeBySession(sessionId).map { messages -> messages.map { it.toDomain() } }
   }
@@ -82,6 +86,10 @@ constructor(
 
   override suspend fun archiveSession(sessionId: String) {
     sessionDao.archive(sessionId, System.currentTimeMillis())
+  }
+
+  override suspend fun restoreSession(sessionId: String) {
+    sessionDao.restore(sessionId, System.currentTimeMillis())
   }
 
   override suspend fun deleteSession(sessionId: String) {

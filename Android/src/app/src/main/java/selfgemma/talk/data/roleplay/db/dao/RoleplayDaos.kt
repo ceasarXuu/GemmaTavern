@@ -51,6 +51,15 @@ interface SessionDao {
   )
   fun observeActiveSessions(): Flow<List<SessionEntity>>
 
+  @Query(
+    """
+    SELECT * FROM sessions
+    WHERE archived = 1
+    ORDER BY updatedAt DESC
+    """
+  )
+  fun observeArchivedSessions(): Flow<List<SessionEntity>>
+
   @Query("SELECT * FROM sessions WHERE id = :sessionId LIMIT 1")
   suspend fun getById(sessionId: String): SessionEntity?
 
@@ -62,6 +71,9 @@ interface SessionDao {
 
   @Query("UPDATE sessions SET archived = 1, updatedAt = :updatedAt WHERE id = :sessionId")
   suspend fun archive(sessionId: String, updatedAt: Long): Int
+
+  @Query("UPDATE sessions SET archived = 0, updatedAt = :updatedAt WHERE id = :sessionId")
+  suspend fun restore(sessionId: String, updatedAt: Long): Int
 
   @Query("DELETE FROM sessions WHERE id = :sessionId")
   suspend fun delete(sessionId: String): Int

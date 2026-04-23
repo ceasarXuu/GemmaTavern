@@ -18,6 +18,17 @@ incremental path. Stop the daemon and rerun serially:
 2. `./gradlew.bat :app:testDebugUnitTest --no-daemon`
 3. `./gradlew.bat :app:assembleDebug --no-daemon`
 
+If Gradle fails with `Unable to delete directory ... compileDebugKotlin\cacheable`
+on Windows, treat it as the same class of stale-daemon file-lock issue. The
+fastest recovery path on this workspace is:
+
+1. `./gradlew.bat --stop`
+2. rerun the exact build command once
+
+Do not start manually deleting `app/build/kotlin/.../cacheable` while Android
+Studio or a daemon may still hold open handles. Release the lock first, then
+retry the build.
+
 Do not run two Gradle tasks in parallel against the same `Android/src` module
 directory. Concurrent unit-test and assemble runs collided on KAPT snapshot and
 incremental cache files in this workspace and produced false-negative build

@@ -1,6 +1,7 @@
 package selfgemma.talk.domain.roleplay.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import selfgemma.talk.domain.roleplay.model.MemoryItem
 import selfgemma.talk.domain.roleplay.model.Message
 import selfgemma.talk.domain.roleplay.model.RoleCard
@@ -11,6 +12,8 @@ import selfgemma.talk.domain.roleplay.model.StUserProfile
 
 interface ConversationRepository {
   fun observeSessions(): Flow<List<Session>>
+
+  fun observeArchivedSessions(): Flow<List<Session>> = flowOf(emptyList())
 
   fun observeMessages(sessionId: String): Flow<List<Message>>
 
@@ -27,6 +30,8 @@ interface ConversationRepository {
   suspend fun updateSession(session: Session)
 
   suspend fun archiveSession(sessionId: String)
+
+  suspend fun restoreSession(sessionId: String) = Unit
 
   suspend fun deleteSession(sessionId: String)
 

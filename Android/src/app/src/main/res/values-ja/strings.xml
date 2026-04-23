@@ -238,6 +238,10 @@
   <string name="settings_role_editor_assistant_model_none">既定: 最初に利用可能なモデル</string>
   <string name="settings_role_editor_assistant_model_empty">まだローカルモデルがありません。ロールエディタで AI 圧縮を使う前にモデルを追加してください。</string>
   <string name="settings_role_editor_assistant_model_reset_default">既定を使う</string>
+  <string name="settings_archived_sessions_title">アーカイブ済みセッション</string>
+  <string name="settings_archived_sessions_summary">アーカイブ済みの会話を確認し、メッセージタブへ復元します。</string>
+  <string name="archived_sessions_empty">アーカイブ済みの会話はまだありません。</string>
+  <string name="archived_sessions_restore">復元</string>
   <string name="role_editor_ai_compress_action">AI 圧縮</string>
   <string name="role_editor_ai_compress_running">圧縮中...</string>
   <string name="role_editor_ai_compress_success">%1$d/%2$d 文字まで圧縮しました。</string>

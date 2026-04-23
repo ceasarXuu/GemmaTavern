@@ -130,6 +130,7 @@ constructor(
 
   fun archiveSession(sessionId: String) {
     viewModelScope.launch {
+      logDebug("archiveSession sessionId=$sessionId")
       conversationRepository.archiveSession(sessionId)
     }
   }

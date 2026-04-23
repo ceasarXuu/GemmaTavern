@@ -77,7 +77,7 @@ import selfgemma.talk.feature.roleplay.profile.MyProfileScreen
 import selfgemma.talk.feature.roleplay.roles.RoleEditorScreen
 import selfgemma.talk.feature.roleplay.roles.RoleCatalogScreen
 import selfgemma.talk.feature.roleplay.maintab.MainTabScreen
-import selfgemma.talk.feature.roleplay.sessions.SessionsScreen
+import selfgemma.talk.feature.roleplay.sessions.ArchivedSessionsScreen
 import selfgemma.talk.feature.roleplay.settings.RoleplaySettingsScreen
 import selfgemma.talk.AnalyticsEvent
 import selfgemma.talk.customtasks.common.CustomTaskData
@@ -115,6 +115,9 @@ private const val EXIT_ANIMATION_DURATION_MS = 500
 private val EXIT_ANIMATION_EASING = EaseOutExpo
 private const val CHAT_ENTER_ANIMATION_DURATION_MS = 140
 private const val CHAT_EXIT_ANIMATION_DURATION_MS = 110
+private const val MAIN_TAB_TARGET_KEY = "main_tab_target"
+private const val MAIN_TAB_TARGET_NONE = -1
+private const val MAIN_TAB_TARGET_MESSAGES = 0
 
 private fun enterTween(): FiniteAnimationSpec<IntOffset> {
   return tween(
@@ -251,7 +254,11 @@ fun AppNavHost(
     enterTransition = { EnterTransition.None },
     exitTransition = { ExitTransition.None },
   ) {
-    composable(route = RoleplayRoutes.SESSIONS) {
+    composable(route = RoleplayRoutes.SESSIONS) { backStackEntry ->
+      val requestedTabIndex by
+        backStackEntry.savedStateHandle
+          .getStateFlow(MAIN_TAB_TARGET_KEY, MAIN_TAB_TARGET_NONE)
+          .collectAsState()
       MainTabScreen(
         modelManagerViewModel = modelManagerViewModel,
         onOpenSession = { sessionId ->
@@ -260,6 +267,7 @@ fun AppNavHost(
         },
         onOpenRoleCatalog = { navController.navigate(RoleplayRoutes.ROLE_CATALOG) },
         onOpenSettings = { navController.navigate(RoleplayRoutes.SETTINGS) },
+        onOpenArchivedSessions = { navController.navigate(RoleplayRoutes.ARCHIVED_SESSIONS) },
         onOpenToolManagement = { navController.navigate(RoleplayRoutes.TOOL_MANAGEMENT) },
         onOpenModelLibrary = { navController.navigate(ROUTE_MODEL_MANAGER) },
         onOpenChat = { sessionId ->
@@ -271,6 +279,10 @@ fun AppNavHost(
         onCreateRole = { navController.navigate(RoleplayRoutes.roleEditor()) },
         onEditRole = { roleId -> navController.navigate(RoleplayRoutes.roleEditor(roleId)) },
         navigateUp = { navController.navigateUp() },
+        requestedTabIndex = requestedTabIndex.takeIf { it != MAIN_TAB_TARGET_NONE },
+        onRequestedTabConsumed = {
+          backStackEntry.savedStateHandle[MAIN_TAB_TARGET_KEY] = MAIN_TAB_TARGET_NONE
+        },
       )
     }
 
@@ -347,8 +359,24 @@ composable(route = RoleplayRoutes.ROLE_CATALOG, enterTransition = { slideEnter()
         modelManagerViewModel = modelManagerViewModel,
         navigateUp = { navController.navigateUp() },
         onOpenModelLibrary = { navController.navigate(ROUTE_MODEL_MANAGER) },
+        onOpenArchivedSessions = { navController.navigate(RoleplayRoutes.ARCHIVED_SESSIONS) },
         onOpenToolManagement = { navController.navigate(RoleplayRoutes.TOOL_MANAGEMENT) },
         showNavigateUp = true,
+      )
+    }
+
+    composable(
+      route = RoleplayRoutes.ARCHIVED_SESSIONS,
+      enterTransition = { slideUpEnter() },
+      exitTransition = { slideDownExit() },
+    ) {
+      ArchivedSessionsScreen(
+        navigateUp = { navController.navigateUp() },
+        onSessionRestored = {
+          navController.getBackStackEntry(RoleplayRoutes.SESSIONS)
+            .savedStateHandle[MAIN_TAB_TARGET_KEY] = MAIN_TAB_TARGET_MESSAGES
+          navController.popBackStack(RoleplayRoutes.SESSIONS, false)
+        },
       )
     }
 

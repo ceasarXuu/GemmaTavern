@@ -256,6 +256,10 @@
   <string name="settings_role_editor_assistant_model_none">Default: first available model</string>
   <string name="settings_role_editor_assistant_model_empty">No local model is available yet. Add a model before using AI compression in the role editor.</string>
   <string name="settings_role_editor_assistant_model_reset_default">Use default</string>
+  <string name="settings_archived_sessions_title">Archived Sessions</string>
+  <string name="settings_archived_sessions_summary">Browse archived conversations and restore them to the messages tab.</string>
+  <string name="archived_sessions_empty">No archived conversations yet.</string>
+  <string name="archived_sessions_restore">Restore</string>
 
   <!-- Model Manager -->
   <string name="model_manager">Model Manager</string>

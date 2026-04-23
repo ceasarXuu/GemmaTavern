@@ -52,6 +52,7 @@ private val tabs = listOf(
 )
 
 private const val TAG = "MainTabScreen"
+private const val MESSAGES_TAB_INDEX = 0
 
 @Composable
 fun MainTabScreen(
@@ -59,12 +60,15 @@ fun MainTabScreen(
   onOpenSession: (String) -> Unit,
   onOpenRoleCatalog: () -> Unit,
   onOpenSettings: () -> Unit,
+  onOpenArchivedSessions: () -> Unit,
   onOpenToolManagement: () -> Unit,
   onOpenModelLibrary: () -> Unit,
   onOpenChat: (String) -> Unit,
   onCreateRole: () -> Unit,
   onEditRole: (String) -> Unit,
   navigateUp: () -> Unit,
+  requestedTabIndex: Int? = null,
+  onRequestedTabConsumed: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -74,18 +78,18 @@ fun MainTabScreen(
   val targetPage by remember { derivedStateOf { pagerState.targetPage } }
   val isScrollInProgress by remember { derivedStateOf { pagerState.isScrollInProgress } }
   val currentPageName = when (currentPage) {
-    0 -> "messages"
+    MESSAGES_TAB_INDEX -> "messages"
     1 -> "roles"
     2 -> "me"
     else -> "settings"
   }
   val handleNavigateUp: () -> Unit = {
-    if (currentPage == 0) {
+    if (currentPage == MESSAGES_TAB_INDEX) {
       Log.d(TAG, "navigate up from root tab, delegating to host")
       navigateUp()
     } else {
       Log.d(TAG, "navigate up from secondary tab page=$currentPage, returning to messages tab")
-      scope.launch { pagerState.animateScrollToPage(page = 0) }
+      scope.launch { pagerState.animateScrollToPage(page = MESSAGES_TAB_INDEX) }
     }
   }
 
@@ -97,7 +101,18 @@ fun MainTabScreen(
     }
   }
 
-  BackHandler(enabled = currentPage != 0) { handleNavigateUp() }
+  LaunchedEffect(requestedTabIndex) {
+    val targetIndex = requestedTabIndex ?: return@LaunchedEffect
+    if (targetIndex in tabs.indices) {
+      if (currentPage != targetIndex) {
+        pagerState.scrollToPage(page = targetIndex)
+        Log.d(TAG, "main tab restored targetPage=$targetIndex")
+      }
+      onRequestedTabConsumed()
+    }
+  }
+
+  BackHandler(enabled = currentPage != MESSAGES_TAB_INDEX) { handleNavigateUp() }
 
   Scaffold(
     modifier = modifier,
@@ -203,6 +218,7 @@ fun MainTabScreen(
             modelManagerViewModel = modelManagerViewModel,
             navigateUp = handleNavigateUp,
             onOpenModelLibrary = onOpenModelLibrary,
+            onOpenArchivedSessions = onOpenArchivedSessions,
             onOpenToolManagement = onOpenToolManagement,
             showNavigateUp = false,
             contentPadding = innerPadding,

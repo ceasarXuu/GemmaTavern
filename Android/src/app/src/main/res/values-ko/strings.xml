@@ -238,6 +238,10 @@
   <string name="settings_role_editor_assistant_model_none">기본값: 첫 번째 사용 가능한 모델</string>
   <string name="settings_role_editor_assistant_model_empty">아직 로컬 모델이 없습니다. 역할 편집기에서 AI 압축을 쓰기 전에 모델을 추가하세요.</string>
   <string name="settings_role_editor_assistant_model_reset_default">기본값 사용</string>
+  <string name="settings_archived_sessions_title">보관된 세션</string>
+  <string name="settings_archived_sessions_summary">보관된 대화를 확인하고 메시지 탭으로 복원합니다.</string>
+  <string name="archived_sessions_empty">보관된 대화가 아직 없습니다.</string>
+  <string name="archived_sessions_restore">복원</string>
   <string name="role_editor_ai_compress_action">AI 압축</string>
   <string name="role_editor_ai_compress_running">압축 중...</string>
   <string name="role_editor_ai_compress_success">%1$d/%2$d자로 압축했습니다.</string>

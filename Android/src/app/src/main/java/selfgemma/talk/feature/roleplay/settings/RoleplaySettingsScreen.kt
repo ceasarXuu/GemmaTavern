@@ -46,6 +46,7 @@ fun RoleplaySettingsScreen(
   modelManagerViewModel: ModelManagerViewModel,
   navigateUp: () -> Unit,
   onOpenModelLibrary: () -> Unit,
+  onOpenArchivedSessions: () -> Unit,
   onOpenToolManagement: () -> Unit,
   showNavigateUp: Boolean = false,
   modifier: Modifier = Modifier,
@@ -142,6 +143,11 @@ fun RoleplaySettingsScreen(
         title = stringResource(R.string.settings_tool_management_title),
         summary = stringResource(R.string.settings_tool_management_entry_summary),
         onClick = onOpenToolManagement,
+      )
+      AppPreferenceCard(
+        title = stringResource(R.string.settings_archived_sessions_title),
+        summary = stringResource(R.string.settings_archived_sessions_summary),
+        onClick = onOpenArchivedSessions,
       )
       AppPreferenceCard(
         title = stringResource(R.string.settings_model_library_title),

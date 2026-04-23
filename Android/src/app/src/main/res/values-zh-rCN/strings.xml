@@ -243,6 +243,10 @@
   <string name="settings_roleplay_tool_debug_output_summary">在聊天中将每次角色工具调用显示为居中的系统输出。</string>
   <string name="settings_tool_management_title">工具管理</string>
   <string name="settings_tool_management_entry_summary">管理角色可用工具、单工具开关，以及聊天中的工具调用展示。</string>
+  <string name="settings_archived_sessions_title">已归档会话</string>
+  <string name="settings_archived_sessions_summary">查看已归档的对话，并将它们恢复回消息页。</string>
+  <string name="archived_sessions_empty">暂时没有已归档的对话。</string>
+  <string name="archived_sessions_restore">恢复</string>
   <string name="settings_tool_management_all_tools_title">全部打开</string>
   <string name="settings_tool_management_all_tools_summary_enabled">当前所有支持的角色工具都已开启。</string>
   <string name="settings_tool_management_all_tools_summary_disabled">打开后会一次性启用所有支持的角色工具。</string>
