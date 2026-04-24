@@ -39,6 +39,15 @@ For Android device verification, prefer an in-place install that preserves app d
 2. `adb install -r .\app\build\outputs\apk\release\app-release.apk`
 3. `adb shell am start -W -n selfgemma.talk/.MainActivity`
 
+After launch, inspect startup crashes before publishing the APK:
+
+1. `adb logcat -c`
+2. Launch the installed release APK.
+3. `adb logcat -d -v time AndroidRuntime:E ActivityTaskManager:W ActivityManager:W selfgemma.talk:E '*:S'`
+
+If release minification is enabled, treat any startup `FATAL EXCEPTION` as a release blocker even when
+`am start -W` returns `Status: ok`.
+
 ## Repository hygiene before tagging
 
 - Do not commit Android build outputs or backup artifacts.
