@@ -195,6 +195,22 @@ for checking the database after migration because executing `sqlite3` under
 `run-as` failed with `Permission denied`. Use app launch plus instrumentation
 instead of assuming an in-shell SQLite client is available.
 
+## Device UI verification notes
+
+When validating density-sensitive Compose gestures, avoid reasoning from raw
+drag constants alone. Pointer deltas and `graphicsLayer.translationX` are pixel
+values, while most button sizes are defined in `dp`; convert the intended reveal
+width through `LocalDensity` before comparing or assigning offsets.
+
+For a quick post-install sanity check on the real device:
+
+1. `:app:compileDebugKotlin` catches Compose extraction mistakes quickly.
+2. `:app:assembleDebug` and `:app:installDebug` cover the installed APK.
+3. `adb shell am start -W -n selfgemma.talk/.MainActivity` confirms launch.
+4. `adb shell uiautomator dump ...` is useful for checking exposed action
+   bounds after a swipe; the foreground card should no longer overlap the
+   intended action button bounds.
+
 ## Public documentation boundary
 
 - `README.md`, `DEVELOPMENT.md`, and `RELEASING.md` are the source of truth for build and release flow.
