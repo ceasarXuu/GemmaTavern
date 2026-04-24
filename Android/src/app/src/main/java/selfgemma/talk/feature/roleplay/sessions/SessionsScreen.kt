@@ -167,10 +167,6 @@ fun SessionsScreen(
                 session.roleName.ifBlank { "session" }.replace(Regex("[^a-zA-Z0-9._-]"), "_")
               exportLauncher.launch("${fileName}-${session.id.take(8)}.jsonl")
             },
-            onExportDebugBundle = {
-              expandedSessionId = null
-              viewModel.exportDebugBundle(session.id)
-            },
             onTogglePin = {
               expandedSessionId = null
               viewModel.togglePin(session.id)

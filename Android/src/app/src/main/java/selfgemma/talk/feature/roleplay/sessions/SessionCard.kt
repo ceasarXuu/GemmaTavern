@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Archive
-import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
@@ -61,7 +60,6 @@ internal fun SessionCard(
   onOpen: () -> Unit,
   onImportChat: () -> Unit,
   onExportChat: () -> Unit,
-  onExportDebugBundle: () -> Unit,
   onTogglePin: () -> Unit,
   onArchive: () -> Unit,
   onDelete: () -> Unit,
@@ -97,7 +95,6 @@ internal fun SessionCard(
       session = session,
       onImportChat = onImportChat,
       onExportChat = onExportChat,
-      onExportDebugBundle = onExportDebugBundle,
       onTogglePin = onTogglePin,
       onArchive = onArchive,
       onDelete = onDelete,
@@ -159,7 +156,6 @@ private fun SessionCardActions(
   session: SessionListItemUiState,
   onImportChat: () -> Unit,
   onExportChat: () -> Unit,
-  onExportDebugBundle: () -> Unit,
   onTogglePin: () -> Unit,
   onArchive: () -> Unit,
   onDelete: () -> Unit,
@@ -183,14 +179,6 @@ private fun SessionCardActions(
       contentDescription = stringResource(R.string.sessions_export_chat),
       containerColor = MaterialTheme.colorScheme.secondaryContainer,
       contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-    )
-    SessionActionButtonSpacer()
-    SessionActionButton(
-      onClick = onExportDebugBundle,
-      icon = Icons.Rounded.BugReport,
-      contentDescription = stringResource(R.string.sessions_export_debug_bundle),
-      containerColor = MaterialTheme.colorScheme.primaryContainer,
-      contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     )
     SessionActionButtonSpacer()
     SessionActionButton(
