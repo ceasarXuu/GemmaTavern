@@ -15,3 +15,16 @@
 
 # LiteRT LM native code calls Java/Kotlin API methods by name through JNI.
 -keep class com.google.ai.edge.litertlm.** { *; }
+
+# Roleplay interop JSON is persisted in Room and must keep stable field names in release builds.
+-keep class selfgemma.talk.domain.roleplay.model.StCharacterCard { *; }
+-keep class selfgemma.talk.domain.roleplay.model.StCharacterCardData { *; }
+-keep class selfgemma.talk.domain.roleplay.model.StCharacterBook { *; }
+-keep class selfgemma.talk.domain.roleplay.model.StCharacterBookEntry { *; }
+-keep class selfgemma.talk.domain.roleplay.model.StUserProfile { *; }
+-keep class selfgemma.talk.domain.roleplay.model.StPersonaDescriptor { *; }
+-keep class selfgemma.talk.domain.roleplay.model.StPersonaConnection { *; }
+-keep class selfgemma.talk.domain.roleplay.model.RoleRuntimeProfile { *; }
+-keep class selfgemma.talk.domain.roleplay.model.RoleInteropState { *; }
+-keep class selfgemma.talk.domain.roleplay.model.RoleMediaProfile { *; }
+-keep class selfgemma.talk.domain.roleplay.model.RoleMediaAsset { *; }
