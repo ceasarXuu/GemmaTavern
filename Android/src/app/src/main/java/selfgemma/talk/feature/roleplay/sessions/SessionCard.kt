@@ -328,8 +328,8 @@ private fun SessionPinnedBadge() {
   }
 }
 
-private val SESSION_CARD_ACTION_REVEAL_WIDTH_DP = 196.dp
-private val SESSION_CARD_ACTION_DRAG_LIMIT_DP = 212.dp
+private val SESSION_CARD_ACTION_REVEAL_WIDTH_DP = 176.dp
+private val SESSION_CARD_ACTION_DRAG_LIMIT_DP = 192.dp
 private val SESSION_CARD_ACTION_DRAG_THRESHOLD_DP = 96.dp
 
 private fun formatTime(timestamp: Long, context: android.content.Context): String {
