@@ -1006,9 +1006,7 @@ constructor(
         }
 
         if (modelAllowlist == null) {
-          _uiState.update {
-            uiState.value.copy(loadingModelAllowlistError = "Failed to load model list")
-          }
+          publishModelAllowlistFailure("Failed to load model list")
           return@launch
         }
 
@@ -1083,9 +1081,25 @@ constructor(
         // Process pending downloads.
         processPendingDownloads()
       } catch (e: Exception) {
-        e.printStackTrace()
+        Log.e(TAG, "Failed to load model allowlist", e)
+        publishModelAllowlistFailure("Failed to load model list")
       }
     }
+  }
+
+  private fun publishModelAllowlistFailure(message: String) {
+    val curTasks = getActiveCustomTasks().map { it.task }
+    processTasks()
+    _uiState.update {
+      createUiState()
+        .copy(
+          loadingModelAllowlist = false,
+          tasks = curTasks,
+          loadingModelAllowlistError = message,
+          tasksByCategory = groupTasksByCategory(),
+        )
+    }
+    preloadLastUsedLlmModel()
   }
 
   fun clearLoadModelAllowlistError() {
