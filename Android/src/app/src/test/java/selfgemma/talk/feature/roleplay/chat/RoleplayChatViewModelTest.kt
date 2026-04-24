@@ -66,6 +66,7 @@ import selfgemma.talk.domain.roleplay.usecase.NoOpRoleplayToolOrchestrator
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
 import selfgemma.talk.domain.roleplay.usecase.PromptAssembler
+import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugBundleExportLauncher
 import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugExportJsonSerializer
 import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugExportMapper
 import selfgemma.talk.domain.roleplay.usecase.RebuildRoleplayContinuityUseCase
@@ -499,6 +500,17 @@ private fun createFixture(
     ).also { useCase ->
       useCase.nowProvider = { 1_713_888_000_000L }
     }
+  val debugExportLauncher =
+    object : RoleplayDebugBundleExportLauncher {
+      override suspend fun exportFromSession(
+        sessionId: String,
+        origin: selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin,
+      ): String {
+        val result = debugExportUseCase.exportFromSession(sessionId = sessionId, origin = origin)
+        val displaySessionId = if (result.sessionId.length <= 12) result.sessionId else result.sessionId.take(8)
+        return "Debug bundle exported for ${result.sessionTitle} ($displaySessionId): ${result.bundleFile.fileName}"
+      }
+    }
   val runRoleplayTurnUseCase =
     RunRoleplayTurnUseCase(
       sendRoleplayMessageUseCase = sendRoleplayMessageUseCase,
@@ -521,7 +533,7 @@ private fun createFixture(
       compactionCacheRepository = compactionCacheRepository,
       toolInvocationRepository = toolInvocationRepository,
       runRoleplayTurnUseCase = runRoleplayTurnUseCase,
-      exportRoleplayDebugBundleFromSessionUseCase = debugExportUseCase,
+      roleplayDebugBundleExportLauncher = debugExportLauncher,
       extractMemoriesUseCase = extractMemoriesUseCase,
       rollbackRoleplayContinuityUseCase = rollbackUseCase,
       prepareRoleplayEditUseCase =

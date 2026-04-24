@@ -43,6 +43,7 @@ import selfgemma.talk.domain.roleplay.usecase.FakeExternalFactRepository
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlFromUriUseCase
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlIntoSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlUseCase
+import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugBundleExportLauncher
 import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugExportJsonSerializer
 import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugExportMapper
 import selfgemma.talk.domain.roleplay.usecase.RoleplaySeedCatalog
@@ -145,6 +146,17 @@ private fun createFixture(): SessionsFixture {
     ).also { useCase ->
       useCase.nowProvider = { 1_713_888_000_000L }
     }
+  val debugExportLauncher =
+    object : RoleplayDebugBundleExportLauncher {
+      override suspend fun exportFromSession(
+        sessionId: String,
+        origin: selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin,
+      ): String {
+        val result = exportDebugUseCase.exportFromSession(sessionId = sessionId, origin = origin)
+        val displaySessionId = if (result.sessionId.length <= 12) result.sessionId else result.sessionId.take(8)
+        return "Debug bundle exported for ${result.sessionTitle} ($displaySessionId): ${result.bundleFile.fileName}"
+      }
+    }
   val interopDocumentRepository = SessionsInteropDocumentRepository()
   val viewModel =
     SessionsViewModel(
@@ -176,7 +188,7 @@ private fun createFixture(): SessionsFixture {
               exportStChatJsonlUseCase = ExportStChatJsonlUseCase(),
             ),
         ),
-      exportRoleplayDebugBundleFromSessionUseCase = exportDebugUseCase,
+      roleplayDebugBundleExportLauncher = debugExportLauncher,
     )
   viewModel.stringResolver =
     { resId, args ->
