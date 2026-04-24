@@ -80,6 +80,7 @@ import selfgemma.talk.feature.roleplay.maintab.MainTabScreen
 import selfgemma.talk.feature.roleplay.sessions.ArchivedSessionsScreen
 import selfgemma.talk.feature.roleplay.settings.RoleplaySettingsScreen
 import selfgemma.talk.AnalyticsEvent
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.customtasks.common.CustomTaskData
 import selfgemma.talk.customtasks.common.CustomTaskDataForBuiltinTask
 import selfgemma.talk.data.ModelDownloadStatusType
@@ -606,6 +607,10 @@ composable(route = RoleplayRoutes.ROLE_CATALOG, enterTransition = { slideEnter()
           navController.navigate("$ROUTE_MODEL/${task.id}/${model.name}")
         },
         onBenchmarkClicked = { model ->
+          if (!BuildConfig.ENABLE_BENCHMARK_UI) {
+            Log.w(TAG, "benchmark route blocked for this build model=${model.name}")
+            return@GlobalModelManager
+          }
           firebaseAnalytics?.logEvent(
             AnalyticsEvent.CAPABILITY_SELECT.id,
             Bundle().apply { putString("capability_name", "benchmark_${model.name}") },
@@ -615,24 +620,26 @@ composable(route = RoleplayRoutes.ROLE_CATALOG, enterTransition = { slideEnter()
       )
     }
 
-    // Benchmark creation page.
-    composable(
-      route = "$ROUTE_BENCHMARK/{modelName}",
-      arguments = listOf(navArgument("modelName") { type = NavType.StringType }),
-      enterTransition = { slideEnter() },
-      exitTransition = { slideExit() },
-    ) { backStackEntry ->
-      val modelName = backStackEntry.arguments?.getString("modelName") ?: ""
+    if (BuildConfig.ENABLE_BENCHMARK_UI) {
+      // Benchmark creation page.
+      composable(
+        route = "$ROUTE_BENCHMARK/{modelName}",
+        arguments = listOf(navArgument("modelName") { type = NavType.StringType }),
+        enterTransition = { slideEnter() },
+        exitTransition = { slideExit() },
+      ) { backStackEntry ->
+        val modelName = backStackEntry.arguments?.getString("modelName") ?: ""
 
-      modelManagerViewModel.getModelByName(name = modelName)?.let { model ->
-        BenchmarkScreen(
-          initialModel = model,
-          modelManagerViewModel = modelManagerViewModel,
-          onBackClicked = {
-            enableModelListAnimation = false
-            navController.navigateUp()
-          },
-        )
+        modelManagerViewModel.getModelByName(name = modelName)?.let { model ->
+          BenchmarkScreen(
+            initialModel = model,
+            modelManagerViewModel = modelManagerViewModel,
+            onBackClicked = {
+              enableModelListAnimation = false
+              navController.navigateUp()
+            },
+          )
+        }
       }
     }
   }

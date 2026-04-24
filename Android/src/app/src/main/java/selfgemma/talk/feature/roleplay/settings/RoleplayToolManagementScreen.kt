@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import selfgemma.talk.AppTopBar
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.R
 import selfgemma.talk.data.AppBarAction
 import selfgemma.talk.data.AppBarActionType
@@ -98,15 +99,17 @@ fun RoleplayToolManagementScreen(
           .verticalScroll(rememberScrollState()),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      AppPreferenceSwitchCard(
-        title = stringResource(R.string.settings_roleplay_tool_debug_output_title),
-        summary = stringResource(R.string.settings_roleplay_tool_debug_output_summary),
-        checked = uiState.roleplayToolDebugOutputEnabled,
-        onCheckedChange = { enabled ->
-          viewModel.setRoleplayToolDebugOutputEnabled(enabled)
-          modelManagerViewModel.updateSettingsUpdateTrigger()
-        },
-      )
+      if (BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS) {
+        AppPreferenceSwitchCard(
+          title = stringResource(R.string.settings_roleplay_tool_debug_output_title),
+          summary = stringResource(R.string.settings_roleplay_tool_debug_output_summary),
+          checked = uiState.roleplayToolDebugOutputEnabled,
+          onCheckedChange = { enabled ->
+            viewModel.setRoleplayToolDebugOutputEnabled(enabled)
+            modelManagerViewModel.updateSettingsUpdateTrigger()
+          },
+        )
+      }
       AppPreferenceSwitchCard(
         title = stringResource(R.string.settings_tool_management_all_tools_title),
         summary =

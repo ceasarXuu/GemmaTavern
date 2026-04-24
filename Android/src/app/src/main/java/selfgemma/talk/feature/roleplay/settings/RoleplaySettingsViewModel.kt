@@ -7,6 +7,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.data.DataStoreRepository
 import selfgemma.talk.domain.roleplay.usecase.RoleplayToolIds
 
@@ -41,7 +42,9 @@ constructor(
         messageSoundsEnabled = dataStoreRepository.areMessageSoundsEnabled(),
         liveTokenSpeedEnabled = dataStoreRepository.isLiveTokenSpeedEnabled(),
         streamingOutputEnabled = dataStoreRepository.isStreamingOutputEnabled(),
-        roleplayToolDebugOutputEnabled = dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
+        roleplayToolDebugOutputEnabled =
+          BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS &&
+            dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
         toolStates = buildToolStates(),
         roleEditorAssistantModelId = dataStoreRepository.getRoleEditorAssistantModelId(),
       )
@@ -67,9 +70,10 @@ constructor(
   }
 
   fun setRoleplayToolDebugOutputEnabled(enabled: Boolean) {
-    dataStoreRepository.setRoleplayToolDebugOutputEnabled(enabled)
-    _uiState.value = _uiState.value.copy(roleplayToolDebugOutputEnabled = enabled)
-    logDebug("roleplay tool debug output updated enabled=$enabled")
+    val allowed = BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS && enabled
+    dataStoreRepository.setRoleplayToolDebugOutputEnabled(allowed)
+    _uiState.value = _uiState.value.copy(roleplayToolDebugOutputEnabled = allowed)
+    logDebug("roleplay tool debug output updated enabled=$allowed")
   }
 
   fun setRoleplayToolEnabled(toolId: String, enabled: Boolean) {

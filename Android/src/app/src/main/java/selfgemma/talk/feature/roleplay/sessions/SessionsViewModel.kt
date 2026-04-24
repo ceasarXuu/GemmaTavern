@@ -16,14 +16,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.R
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.usecase.EnsureRoleplaySeedDataUseCase
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin
-import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExportStChatJsonlFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.ImportStChatJsonlIntoSessionUseCase
+import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugBundleExportLauncher
 import selfgemma.talk.domain.roleplay.model.primaryAvatarUri
 
 data class SessionListItemUiState(
@@ -67,7 +68,7 @@ constructor(
   ensureRoleplaySeedData: EnsureRoleplaySeedDataUseCase,
   private val importStChatJsonlIntoSessionUseCase: ImportStChatJsonlIntoSessionUseCase,
   private val exportStChatJsonlFromSessionUseCase: ExportStChatJsonlFromSessionUseCase,
-  private val exportRoleplayDebugBundleFromSessionUseCase: ExportRoleplayDebugBundleFromSessionUseCase,
+  private val roleplayDebugBundleExportLauncher: RoleplayDebugBundleExportLauncher,
 ) : ViewModel() {
   private val feedbackState = MutableStateFlow(SessionsUiState(loading = false))
   private var statusMessageDismissJob: kotlinx.coroutines.Job? = null
@@ -170,25 +171,22 @@ constructor(
   }
 
   fun exportDebugBundle(sessionId: String) {
+    if (!BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS) {
+      logDebug("ignore debug bundle export in release build sessionId=$sessionId")
+      return
+    }
     viewModelScope.launch {
       runCatching {
-        exportRoleplayDebugBundleFromSessionUseCase.exportFromSession(
+        roleplayDebugBundleExportLauncher.exportFromSession(
           sessionId = sessionId,
           origin = RoleplayDebugExportOrigin.SESSIONS_LIST,
-        )
+        ) ?: return@launch
       }
-        .onSuccess { result ->
-          showStatusMessage(
-            appString(
-              R.string.roleplay_debug_export_status,
-              result.sessionTitle,
-              displaySessionId(result.sessionId),
-              result.bundleFile.fileName,
-            )
-          )
+        .onSuccess { statusMessage ->
+          showStatusMessage(statusMessage)
         }
         .onFailure { error ->
-          showErrorMessage(error.message ?: appString(R.string.roleplay_debug_export_error))
+          showErrorMessage(error.message ?: "Failed to export the debug bundle")
         }
     }
   }

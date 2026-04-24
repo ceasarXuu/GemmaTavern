@@ -93,6 +93,7 @@ private fun RoleplayBenchmarkSurfaceHost(
         modelManagerViewModel = modelManagerViewModel,
         navigateUp = finishActivity,
         onOpenChat = {},
+        onOpenModelLibrary = {},
         onCreateRole = {},
         onEditRole = {},
       )

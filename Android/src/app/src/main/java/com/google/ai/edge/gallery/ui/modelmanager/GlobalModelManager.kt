@@ -92,6 +92,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.R
 import selfgemma.talk.data.Model
 import selfgemma.talk.data.RuntimeType
@@ -360,7 +361,8 @@ fun GlobalModelManager(
                     onModelClicked = handleClickModel,
                     onBenchmarkClicked = onBenchmarkClicked,
                     expanded = expanded,
-                    showBenchmarkButton = model.runtimeType == RuntimeType.LITERT_LM,
+                    showBenchmarkButton =
+                      BuildConfig.ENABLE_BENCHMARK_UI && model.runtimeType == RuntimeType.LITERT_LM,
                     downloadStatusOverride = uiState.modelDownloadStatus[model.name],
                     onExpanded = { modelItemExpandedStates[model.name] = it },
                   )
@@ -374,7 +376,8 @@ fun GlobalModelManager(
                     onModelClicked = handleClickModel,
                     onBenchmarkClicked = onBenchmarkClicked,
                     expanded = true,
-                    showBenchmarkButton = model.runtimeType == RuntimeType.LITERT_LM,
+                    showBenchmarkButton =
+                      BuildConfig.ENABLE_BENCHMARK_UI && model.runtimeType == RuntimeType.LITERT_LM,
                     downloadStatusOverride = uiState.modelDownloadStatus[model.name],
                   )
                 }

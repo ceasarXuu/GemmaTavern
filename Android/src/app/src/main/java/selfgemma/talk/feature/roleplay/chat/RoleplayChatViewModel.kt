@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.R
 import selfgemma.talk.data.ConfigKeys
 import selfgemma.talk.data.DataStoreRepository
@@ -63,9 +64,9 @@ import selfgemma.talk.domain.roleplay.repository.RoleRepository
 import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
 import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
-import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayEditUseCase
 import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
+import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugBundleExportLauncher
 import selfgemma.talk.domain.roleplay.usecase.RollbackRoleplayContinuityUseCase
 import selfgemma.talk.domain.roleplay.usecase.RunRoleplayTurnUseCase
 import selfgemma.talk.domain.roleplay.usecase.StagedRoleplayTurn
@@ -166,7 +167,7 @@ constructor(
   private val compactionCacheRepository: CompactionCacheRepository,
   private val toolInvocationRepository: ToolInvocationRepository,
   private val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
-  private val exportRoleplayDebugBundleFromSessionUseCase: ExportRoleplayDebugBundleFromSessionUseCase,
+  private val roleplayDebugBundleExportLauncher: RoleplayDebugBundleExportLauncher,
   private val extractMemoriesUseCase: ExtractMemoriesUseCase,
   private val rollbackRoleplayContinuityUseCase: RollbackRoleplayContinuityUseCase,
   private val prepareRoleplayEditUseCase: PrepareRoleplayEditUseCase,
@@ -352,30 +353,25 @@ constructor(
   }
 
   fun exportDebugBundle() {
+    if (!BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS) {
+      logDebug("ignore debug bundle export in release build sessionId=$sessionId")
+      return
+    }
     viewModelScope.launch {
       runCatching {
-        exportRoleplayDebugBundleFromSessionUseCase.exportFromSession(
+        roleplayDebugBundleExportLauncher.exportFromSession(
           sessionId = sessionId,
           origin = RoleplayDebugExportOrigin.CHAT_SCREEN,
-        )
+        ) ?: return@launch
       }
-        .onSuccess { result ->
-          logDebug(
-            "debug bundle exported sessionId=$sessionId file=${result.bundleFile.fileName} relativePath=${result.bundleFile.relativePath}",
-          )
-          showStatusMessage(
-            appString(
-              R.string.roleplay_debug_export_status,
-              result.sessionTitle,
-              displaySessionId(result.sessionId),
-              result.bundleFile.fileName,
-            )
-          )
+        .onSuccess { statusMessage ->
+          logDebug("debug bundle exported sessionId=$sessionId")
+          showStatusMessage(statusMessage)
           refreshSupplementalState()
         }
         .onFailure { error ->
           logError("failed to export debug bundle sessionId=$sessionId", error)
-          showErrorMessage(error.message ?: appString(R.string.roleplay_debug_export_error))
+          showErrorMessage(error.message ?: "Failed to export the debug bundle")
         }
     }
   }

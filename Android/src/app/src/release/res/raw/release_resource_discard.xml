@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:discard="@string/chat_export_debug_bundle_action,@string/roleplay_debug_export_status,@string/roleplay_debug_export_error" />

@@ -110,6 +110,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import selfgemma.talk.AppTopBar
+import selfgemma.talk.BuildConfig
 import selfgemma.talk.data.AppBarAction
 import selfgemma.talk.data.AppBarActionType
 import selfgemma.talk.data.BuiltInTaskId
@@ -167,13 +168,14 @@ fun RoleplayChatScreen(
     }
   }
   val modelManagerUiState by modelManagerViewModel.uiState.collectAsState()
+  val internalDiagnosticsEnabled = BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS
   val showLiveTokenSpeed =
     remember(modelManagerUiState.settingsUpdateTrigger) {
       modelManagerViewModel.isLiveTokenSpeedEnabled()
     }
   val showToolDebugOutput =
-    remember(modelManagerUiState.settingsUpdateTrigger) {
-      modelManagerViewModel.isRoleplayToolDebugOutputEnabled()
+    remember(modelManagerUiState.settingsUpdateTrigger, internalDiagnosticsEnabled) {
+      internalDiagnosticsEnabled && modelManagerViewModel.isRoleplayToolDebugOutputEnabled()
     }
   val activeModel = uiState.session?.activeModelId?.let(modelManagerViewModel::getModelByName)
   val historicalWarmupRequirements =
@@ -268,6 +270,7 @@ fun RoleplayChatScreen(
   var showMenu by remember { mutableStateOf(false) }
   var showModelPicker by remember { mutableStateOf(false) }
   var showContinuityDebug by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
+  val showContinuityDebugDialog = internalDiagnosticsEnabled && showContinuityDebug
   var selectedMessageActionId by rememberSaveable(uiState.session?.id) { mutableStateOf<String?>(null) }
   val selectedMessageForAction =
     remember(uiState.messages, selectedMessageActionId) {
@@ -284,7 +287,7 @@ fun RoleplayChatScreen(
         showModelPicker = false
         Log.d(TAG, "dismiss model picker before navigating up sessionId=${uiState.session?.id}")
       }
-      showContinuityDebug -> {
+      showContinuityDebugDialog -> {
         showContinuityDebug = false
         Log.d(TAG, "dismiss continuity debug before navigating up sessionId=${uiState.session?.id}")
       }
@@ -311,7 +314,7 @@ fun RoleplayChatScreen(
     onOpenPersonaEditor(slotId)
   }
 
-  BackHandler(enabled = showMenu || showModelPicker || showContinuityDebug) {
+  BackHandler(enabled = showMenu || showModelPicker || showContinuityDebugDialog) {
     Log.d(
       TAG,
       "intercept back to dismiss transient chat UI sessionId=${uiState.session?.id} showMenu=$showMenu showModelPicker=$showModelPicker",
@@ -493,23 +496,25 @@ fun RoleplayChatScreen(
                   Icon(Icons.Rounded.FolderOpen, contentDescription = null)
                 },
               )
-              DropdownMenuItem(
-                text = { Text(stringResource(R.string.chat_continuity_debug_action)) },
-                onClick = {
-                  showMenu = false
-                  showContinuityDebug = true
-                },
-              )
-              DropdownMenuItem(
-                text = { Text(stringResource(R.string.chat_export_debug_bundle_action)) },
-                onClick = {
-                  showMenu = false
-                  viewModel.exportDebugBundle()
-                },
-                leadingIcon = {
-                  Icon(Icons.Rounded.BugReport, contentDescription = null)
-                },
-              )
+              if (internalDiagnosticsEnabled) {
+                DropdownMenuItem(
+                  text = { Text(stringResource(R.string.chat_continuity_debug_action)) },
+                  onClick = {
+                    showMenu = false
+                    showContinuityDebug = true
+                  },
+                )
+                DropdownMenuItem(
+                  text = { Text(stringResource(R.string.chat_export_debug_bundle_action)) },
+                  onClick = {
+                    showMenu = false
+                    viewModel.exportDebugBundle()
+                  },
+                  leadingIcon = {
+                    Icon(Icons.Rounded.BugReport, contentDescription = null)
+                  },
+                )
+              }
             }
           },
         )
@@ -800,7 +805,7 @@ fun RoleplayChatScreen(
     )
   }
 
-  if (showContinuityDebug) {
+  if (showContinuityDebugDialog) {
     ContinuityDebugDialog(
       debugState = uiState.continuityDebug,
       onDismiss = { showContinuityDebug = false },

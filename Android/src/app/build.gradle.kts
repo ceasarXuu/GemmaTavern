@@ -74,14 +74,23 @@ android {
   }
 
   buildTypes {
+    debug {
+      buildConfigField("boolean", "ENABLE_INTERNAL_DIAGNOSTICS", "true")
+      buildConfigField("boolean", "ENABLE_BENCHMARK_UI", "true")
+    }
     release {
-      isMinifyEnabled = false
+      buildConfigField("boolean", "ENABLE_INTERNAL_DIAGNOSTICS", "false")
+      buildConfigField("boolean", "ENABLE_BENCHMARK_UI", "false")
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("debug")
     }
     create("benchmark") {
       initWith(getByName("release"))
       matchingFallbacks += listOf("release")
+      buildConfigField("boolean", "ENABLE_INTERNAL_DIAGNOSTICS", "true")
+      buildConfigField("boolean", "ENABLE_BENCHMARK_UI", "true")
       signingConfig = signingConfigs.getByName("debug")
     }
   }

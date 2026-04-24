@@ -693,7 +693,8 @@ constructor(
   }
 
   fun isRoleplayToolDebugOutputEnabled(): Boolean {
-    return dataStoreRepository.isRoleplayToolDebugOutputEnabled()
+    return BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS &&
+      dataStoreRepository.isRoleplayToolDebugOutputEnabled()
   }
 
   fun getModelUrlResponse(model: Model, accessToken: String? = null): Int {
