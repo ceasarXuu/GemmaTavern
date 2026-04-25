@@ -23,6 +23,56 @@ Expected APK output:
 
 - `Android/src/app/build/outputs/apk/release/app-release.apk`
 
+## Release signing
+
+Public release APKs should not use the Android debug certificate. Local signing
+configuration is read from `Android/src/release-signing.properties`, which is
+ignored by Git and must not be committed.
+
+Expected local file shape:
+
+```properties
+storeFile=keystores/gemmatavern-release.jks
+storePassword=...
+keyAlias=gemmatavern_release
+keyPassword=...
+```
+
+If this file is absent, Gradle falls back to debug signing and prints a warning.
+Treat that APK as a local test build only, not a public release asset.
+
+If a previously published APK used the debug certificate, Android will reject
+in-place upgrades to a release-signed APK with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+That transition requires uninstalling the old debug-signed app before installing
+the release-signed app.
+
+To inspect the certificate used by an APK:
+
+```powershell
+$buildTools = Get-ChildItem "$env:LOCALAPPDATA\Android\Sdk\build-tools" -Directory |
+  Sort-Object Name -Descending |
+  Select-Object -First 1
+& (Join-Path $buildTools.FullName 'apksigner.bat') verify --print-certs .\app\build\outputs\apk\release\app-release.apk
+```
+
+## Public APK install-surface hygiene
+
+The GitHub release APK is sideloaded, so some device vendors can still show
+non-store install warnings. Keep the release package as quiet as possible:
+
+- sign with the local release keystore, not the debug key,
+- keep debug and benchmark entry points out of release builds,
+- remove unused Firebase, GCM, advertising, account, phone-state, and legacy
+  external-storage manifest entries from the public release surface,
+- verify the merged release permissions before publishing:
+
+```powershell
+$buildTools = Get-ChildItem "$env:LOCALAPPDATA\Android\Sdk\build-tools" -Directory |
+  Sort-Object Name -Descending |
+  Select-Object -First 1
+& (Join-Path $buildTools.FullName 'aapt2.exe') dump permissions .\app\build\outputs\apk\release\app-release.apk
+```
+
 ## Optional integration caveats
 
 The repository intentionally does not ship private service credentials.

@@ -11,6 +11,8 @@ tmp_*
 Android/src/.gradle/
 Android/src/.kotlin/
 Android/src/local.properties
+Android/src/release-signing.properties
+Android/src/keystores/
 Android/src/build/
 Android/src/build-backups/
 Android/src/.idea/

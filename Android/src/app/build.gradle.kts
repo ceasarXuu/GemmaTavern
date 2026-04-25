@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   // Note: set apply to true to enable google-services (requires google-services.json).
@@ -41,6 +43,16 @@ fun resolveAuthRedirectScheme(redirectUri: String): String {
 val huggingFaceClientId = providers.gradleProperty("HUGGINGFACE_CLIENT_ID").orElse("")
 val huggingFaceRedirectUri = providers.gradleProperty("HUGGINGFACE_REDIRECT_URI").orElse("")
 val firebaseEnabled = parseBooleanGradleProperty(providers.gradleProperty("ENABLE_FIREBASE").orNull)
+val releaseSigningPropertiesFile = rootProject.file("release-signing.properties")
+val releaseSigningProperties =
+  Properties().apply {
+    if (releaseSigningPropertiesFile.isFile) {
+      releaseSigningPropertiesFile.inputStream().use { input -> load(input) }
+    }
+  }
+val releaseSigningConfigured =
+  listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+    .all { key -> !releaseSigningProperties.getProperty(key).isNullOrBlank() }
 
 android {
   namespace = "selfgemma.talk"
@@ -73,6 +85,17 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  signingConfigs {
+    create("release") {
+      if (releaseSigningConfigured) {
+        storeFile = rootProject.file(releaseSigningProperties.getProperty("storeFile"))
+        storePassword = releaseSigningProperties.getProperty("storePassword")
+        keyAlias = releaseSigningProperties.getProperty("keyAlias")
+        keyPassword = releaseSigningProperties.getProperty("keyPassword")
+      }
+    }
+  }
+
   buildTypes {
     debug {
       buildConfigField("boolean", "ENABLE_INTERNAL_DIAGNOSTICS", "true")
@@ -84,7 +107,16 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("debug")
+      signingConfig =
+        if (releaseSigningConfigured) {
+          signingConfigs.getByName("release")
+        } else {
+          logger.warn(
+            "Release signing is not configured. Falling back to the debug signing key; " +
+              "this APK is not suitable for public distribution.",
+          )
+          signingConfigs.getByName("debug")
+        }
     }
     create("benchmark") {
       initWith(getByName("release"))
