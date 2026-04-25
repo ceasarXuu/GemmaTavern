@@ -22,6 +22,7 @@ Run from the repository root:
 Expected APK output:
 
 - `Android/src/app/build/outputs/apk/release/app-release.apk`
+- `Android/src/app/build/outputs/apk/release/versioned/GemmaTavern-<version>-release.apk`
 
 ## Release signing
 

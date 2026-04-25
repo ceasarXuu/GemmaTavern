@@ -40,6 +40,8 @@ fun resolveAuthRedirectScheme(redirectUri: String): String {
   return if (scheme.isBlank()) "selfgemma.talk.auth" else scheme
 }
 
+val appVersionCode = 26
+val appVersionName = "0.1.2"
 val huggingFaceClientId = providers.gradleProperty("HUGGINGFACE_CLIENT_ID").orElse("")
 val huggingFaceRedirectUri = providers.gradleProperty("HUGGINGFACE_REDIRECT_URI").orElse("")
 val firebaseEnabled = parseBooleanGradleProperty(providers.gradleProperty("ENABLE_FIREBASE").orNull)
@@ -62,8 +64,8 @@ android {
     applicationId = "selfgemma.talk"
     minSdk = 31
     targetSdk = 35
-    versionCode = 25
-    versionName = "0.1.1"
+    versionCode = appVersionCode
+    versionName = appVersionName
 
     buildConfigField(
       "String",
@@ -146,6 +148,19 @@ android {
 androidComponents {
   beforeVariants(selector().withBuildType("benchmark")) { variantBuilder ->
     variantBuilder.enableAndroidTest = false
+  }
+}
+
+val copyVersionedReleaseApk =
+  tasks.register<Copy>("copyVersionedReleaseApk") {
+    from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+    into(layout.buildDirectory.dir("outputs/apk/release/versioned"))
+    rename { "GemmaTavern-$appVersionName-release.apk" }
+  }
+
+afterEvaluate {
+  tasks.named("assembleRelease") {
+    finalizedBy(copyVersionedReleaseApk)
   }
 }
 
