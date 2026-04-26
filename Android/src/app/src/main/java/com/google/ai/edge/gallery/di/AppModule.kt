@@ -33,9 +33,16 @@ import selfgemma.talk.data.DefaultDataStoreRepository
 import selfgemma.talk.data.DefaultDownloadRepository
 import selfgemma.talk.data.DownloadRepository
 import selfgemma.talk.data.cloudllm.AndroidCloudCredentialStore
+import selfgemma.talk.data.cloudllm.AndroidCloudNetworkStatusProvider
+import selfgemma.talk.data.cloudllm.ClaudeAdapter
 import selfgemma.talk.data.cloudllm.CloudCredentialStore
 import selfgemma.talk.data.cloudllm.CloudHttpClient
+import selfgemma.talk.data.cloudllm.DeepSeekAdapter
+import selfgemma.talk.data.cloudllm.DefaultCloudProviderAdapterResolver
+import selfgemma.talk.data.cloudllm.OpenRouterAdapter
 import selfgemma.talk.data.cloudllm.UrlConnectionCloudHttpClient
+import selfgemma.talk.domain.cloudllm.CloudNetworkStatusProvider
+import selfgemma.talk.domain.cloudllm.CloudProviderAdapterResolver
 import selfgemma.talk.proto.BenchmarkResults
 import selfgemma.talk.proto.CutoutCollection
 import selfgemma.talk.proto.Settings
@@ -190,6 +197,28 @@ internal object AppModule {
   @Singleton
   fun provideCloudHttpClient(): CloudHttpClient {
     return UrlConnectionCloudHttpClient()
+  }
+
+  @Provides
+  @Singleton
+  fun provideCloudProviderAdapterResolver(
+    openRouterAdapter: OpenRouterAdapter,
+    deepSeekAdapter: DeepSeekAdapter,
+    claudeAdapter: ClaudeAdapter,
+  ): CloudProviderAdapterResolver {
+    return DefaultCloudProviderAdapterResolver(
+      openRouterAdapter = openRouterAdapter,
+      deepSeekAdapter = deepSeekAdapter,
+      claudeAdapter = claudeAdapter,
+    )
+  }
+
+  @Provides
+  @Singleton
+  fun provideCloudNetworkStatusProvider(
+    @ApplicationContext context: Context,
+  ): CloudNetworkStatusProvider {
+    return AndroidCloudNetworkStatusProvider(context)
   }
 
   // Provides DownloadRepository

@@ -268,9 +268,10 @@ private fun createFixture(
           memoryRepository = memoryRepository,
           compactionCacheRepository = compactionCacheRepository,
           tokenEstimator = TokenEstimator(),
-        ),
+      ),
       summarizeSessionUseCase = summarizeSessionUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
+      cloudInferenceCoordinator = disabledCloudInferenceCoordinator(conversationRepository),
     ).also { useCase ->
       useCase.runtimeHelperResolver = { runtimeHelper }
     }

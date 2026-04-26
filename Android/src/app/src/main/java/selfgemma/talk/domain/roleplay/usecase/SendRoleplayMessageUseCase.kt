@@ -98,7 +98,7 @@ private data class StyleRepairDirective(
   val prompt: String,
 )
 
-private data class CurrentTurnMedia(
+internal data class CurrentTurnMedia(
   val images: List<Bitmap> = emptyList(),
   val audioClips: List<ByteArray> = emptyList(),
   val historicalImageCount: Int = 0,
@@ -161,6 +161,7 @@ constructor(
   private val compileRoleplayMemoryContextUseCase: CompileRoleplayMemoryContextUseCase,
   private val summarizeSessionUseCase: SummarizeSessionUseCase,
   private val extractMemoriesUseCase: ExtractMemoriesUseCase,
+  private val cloudInferenceCoordinator: CloudRoleplayInferenceCoordinator,
 ) {
   companion object {
     private const val MODEL_READY_TIMEOUT_MS = 60_000L
@@ -410,138 +411,160 @@ constructor(
         )
     }
     appendBudgetEventIfNeeded(sessionId = sessionId, report = promptAssembly.budgetReport)
+    applyUpdatedChatMetadata(session = session, promptAssembly = promptAssembly)
 
-    var finalMessage: Message? = null
-    var overflowRetries = 0
-    while (true) {
-      applyUpdatedChatMetadata(session = session, promptAssembly = promptAssembly)
-      val preparationResult =
-        prepareConversation(
-          assistantSeed = assistantSeed,
-          model = model,
-          promptAssembly = promptAssembly,
-          turnToolContext = turnToolContext,
-          currentTurnMedia = currentTurnMedia,
-          sessionId = sessionId,
-          recentMessages = recentMessages,
-          memoryContext = memoryContext,
-          trigger = runtimeSession.generationTrigger,
-          startTime = startTime,
-        )
-      if (preparationResult.failureMessage != null) {
-        if (
-          preparationResult.overflowDetected &&
-            overflowRetries < ContextOverflowRecovery.MAX_OVERFLOW_RETRIES
-        ) {
-          overflowRetries += 1
-          attemptMode = PromptBudgetMode.AGGRESSIVE
-          warnLog(
-            "context overflow during reset sessionId=$sessionId retry=$overflowRetries message=${preparationResult.failureMessage.errorMessage}",
+    var finalMessage: Message? =
+      when (
+        val cloudOutcome =
+          cloudInferenceCoordinator.tryGenerate(
+            CloudRoleplayInferenceRequest(
+              sessionId = sessionId,
+              assistantSeed = assistantSeed,
+              promptAssembly = promptAssembly,
+              input = effectiveInput,
+              userMessages = userMessages,
+              currentTurnMedia = currentTurnMedia,
+              turnToolContext = turnToolContext,
+              enableStreamingOutput = enableStreamingOutput,
+              isStopRequested = isStopRequested,
+            )
           )
-          appendOverflowRecoveryEvent(
-            sessionId = sessionId,
-            stage = "reset",
-            retry = overflowRetries,
-            report = promptAssembly.budgetReport,
-          )
-          memoryContext =
-            compileMemoryContext(
-              session = session,
-              role = role,
-              recentMessages = recentMessages,
-              pendingUserInput = effectiveInput,
-              contextProfile = contextProfile,
-              budgetMode = attemptMode,
-            )
-          promptAssembly =
-            assemblePrompt(
-              runtimeRole = runtimeRole,
-              runtimeSession = runtimeSession,
-              memoryContext = memoryContext,
-              recentMessages = recentMessages,
-              trimmedInput = effectiveInput,
-              externalFacts = pendingMessage.externalFacts,
-              hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
-              role = promptRole,
-              contextProfile = contextProfile,
-              budgetMode = attemptMode,
-            )
-          currentTurnMedia =
-            loadConversationMedia(
-              dialogueWindow = promptAssembly.dialogueWindow,
-              currentMessages = userMessages,
-            )
-          appendBudgetEventIfNeeded(sessionId = sessionId, report = promptAssembly.budgetReport)
-          continue
-        }
-        val failedMessage = preparationResult.failureMessage
-        conversationRepository.updateMessage(failedMessage)
-        return SendRoleplayMessageResult(
-          assistantMessage = failedMessage,
-          errorMessage = failedMessage.errorMessage,
-        )
-      }
-
-      val inferenceResult =
-        runInferenceAttempt(
-          assistantSeed = assistantSeed,
-          model = model,
-          input = effectiveInput,
-          currentTurnMedia = currentTurnMedia,
-          role = role,
-          sessionId = sessionId,
-          startTime = startTime,
-          enableStreamingOutput = enableStreamingOutput,
-          isStopRequested = isStopRequested,
-        )
-      finalMessage = inferenceResult.message
-      if (
-        !inferenceResult.overflowDetected ||
-          finalMessage.status == MessageStatus.INTERRUPTED ||
-          overflowRetries >= ContextOverflowRecovery.MAX_OVERFLOW_RETRIES
       ) {
-        break
+        is CloudRoleplayInferenceOutcome.Completed -> cloudOutcome.message
+        else -> null
       }
+    if (finalMessage == null) {
+      var overflowRetries = 0
+      while (true) {
+        applyUpdatedChatMetadata(session = session, promptAssembly = promptAssembly)
+        val preparationResult =
+          prepareConversation(
+            assistantSeed = assistantSeed,
+            model = model,
+            promptAssembly = promptAssembly,
+            turnToolContext = turnToolContext,
+            currentTurnMedia = currentTurnMedia,
+            sessionId = sessionId,
+            recentMessages = recentMessages,
+            memoryContext = memoryContext,
+            trigger = runtimeSession.generationTrigger,
+            startTime = startTime,
+          )
+        if (preparationResult.failureMessage != null) {
+          if (
+            preparationResult.overflowDetected &&
+              overflowRetries < ContextOverflowRecovery.MAX_OVERFLOW_RETRIES
+          ) {
+            overflowRetries += 1
+            attemptMode = PromptBudgetMode.AGGRESSIVE
+            warnLog(
+              "context overflow during reset sessionId=$sessionId retry=$overflowRetries message=${preparationResult.failureMessage.errorMessage}",
+            )
+            appendOverflowRecoveryEvent(
+              sessionId = sessionId,
+              stage = "reset",
+              retry = overflowRetries,
+              report = promptAssembly.budgetReport,
+            )
+            memoryContext =
+              compileMemoryContext(
+                session = session,
+                role = role,
+                recentMessages = recentMessages,
+                pendingUserInput = effectiveInput,
+                contextProfile = contextProfile,
+                budgetMode = attemptMode,
+              )
+            promptAssembly =
+              assemblePrompt(
+                runtimeRole = runtimeRole,
+                runtimeSession = runtimeSession,
+                memoryContext = memoryContext,
+                recentMessages = recentMessages,
+                trimmedInput = effectiveInput,
+                externalFacts = pendingMessage.externalFacts,
+                hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
+                role = promptRole,
+                contextProfile = contextProfile,
+                budgetMode = attemptMode,
+              )
+            currentTurnMedia =
+              loadConversationMedia(
+                dialogueWindow = promptAssembly.dialogueWindow,
+                currentMessages = userMessages,
+              )
+            appendBudgetEventIfNeeded(sessionId = sessionId, report = promptAssembly.budgetReport)
+            continue
+          }
+          val failedMessage = preparationResult.failureMessage
+          conversationRepository.updateMessage(failedMessage)
+          return SendRoleplayMessageResult(
+            assistantMessage = failedMessage,
+            errorMessage = failedMessage.errorMessage,
+          )
+        }
 
-      overflowRetries += 1
-      attemptMode = PromptBudgetMode.AGGRESSIVE
-      warnLog(
-        "context overflow retry sessionId=$sessionId retry=$overflowRetries message=${finalMessage.errorMessage}",
-      )
-      appendOverflowRecoveryEvent(
-        sessionId = sessionId,
-        stage = "inference",
-        retry = overflowRetries,
-        report = promptAssembly.budgetReport,
-      )
-      memoryContext =
-        compileMemoryContext(
-          session = session,
-          role = role,
-          recentMessages = recentMessages,
-          pendingUserInput = effectiveInput,
-          contextProfile = contextProfile,
-          budgetMode = attemptMode,
+        val inferenceResult =
+          runInferenceAttempt(
+            assistantSeed = assistantSeed,
+            model = model,
+            input = effectiveInput,
+            currentTurnMedia = currentTurnMedia,
+            role = role,
+            sessionId = sessionId,
+            startTime = startTime,
+            enableStreamingOutput = enableStreamingOutput,
+            isStopRequested = isStopRequested,
+          )
+        finalMessage = inferenceResult.message
+        if (
+          !inferenceResult.overflowDetected ||
+            finalMessage.status == MessageStatus.INTERRUPTED ||
+            overflowRetries >= ContextOverflowRecovery.MAX_OVERFLOW_RETRIES
+        ) {
+          break
+        }
+
+        overflowRetries += 1
+        attemptMode = PromptBudgetMode.AGGRESSIVE
+        warnLog(
+          "context overflow retry sessionId=$sessionId retry=$overflowRetries message=${finalMessage.errorMessage}",
         )
-      promptAssembly =
-        assemblePrompt(
-          runtimeRole = runtimeRole,
-          runtimeSession = runtimeSession,
-          memoryContext = memoryContext,
-          recentMessages = recentMessages,
-          trimmedInput = effectiveInput,
-          externalFacts = pendingMessage.externalFacts,
-          hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
-          role = promptRole,
-          contextProfile = contextProfile,
-          budgetMode = attemptMode,
+        appendOverflowRecoveryEvent(
+          sessionId = sessionId,
+          stage = "inference",
+          retry = overflowRetries,
+          report = promptAssembly.budgetReport,
         )
-      currentTurnMedia =
-        loadConversationMedia(
-          dialogueWindow = promptAssembly.dialogueWindow,
-          currentMessages = userMessages,
-        )
-      appendBudgetEventIfNeeded(sessionId = sessionId, report = promptAssembly.budgetReport)
+        memoryContext =
+          compileMemoryContext(
+            session = session,
+            role = role,
+            recentMessages = recentMessages,
+            pendingUserInput = effectiveInput,
+            contextProfile = contextProfile,
+            budgetMode = attemptMode,
+          )
+        promptAssembly =
+          assemblePrompt(
+            runtimeRole = runtimeRole,
+            runtimeSession = runtimeSession,
+            memoryContext = memoryContext,
+            recentMessages = recentMessages,
+            trimmedInput = effectiveInput,
+            externalFacts = pendingMessage.externalFacts,
+            hasRuntimeTools = turnToolContext.tools.isNotEmpty(),
+            role = promptRole,
+            contextProfile = contextProfile,
+            budgetMode = attemptMode,
+          )
+        currentTurnMedia =
+          loadConversationMedia(
+            dialogueWindow = promptAssembly.dialogueWindow,
+            currentMessages = userMessages,
+          )
+        appendBudgetEventIfNeeded(sessionId = sessionId, report = promptAssembly.budgetReport)
+      }
     }
     val runtimeToolInvocations = turnToolContext.collector.snapshotInvocations()
     val runtimeExternalFacts = turnToolContext.collector.snapshotExternalFacts()

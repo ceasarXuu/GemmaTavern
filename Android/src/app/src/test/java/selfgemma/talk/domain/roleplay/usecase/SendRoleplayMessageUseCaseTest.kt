@@ -527,9 +527,10 @@ private fun createSendRoleplayFixture(
           memoryRepository = memoryRepository,
           compactionCacheRepository = compactionCacheRepository,
           tokenEstimator = TokenEstimator(),
-        ),
+      ),
       summarizeSessionUseCase = summarizeSessionUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
+      cloudInferenceCoordinator = disabledCloudInferenceCoordinator(conversationRepository),
     )
   useCase.runtimeHelperResolver = { runtimeHelper }
   val model =

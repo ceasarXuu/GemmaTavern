@@ -749,6 +749,7 @@ private fun createRoleplaySendAcceptanceFixture(
       compileRoleplayMemoryContextUseCase = fixture.compileMemoryContextUseCase,
       summarizeSessionUseCase = fixture.summarizeSessionUseCase,
       extractMemoriesUseCase = fixture.extractMemoriesUseCase,
+      cloudInferenceCoordinator = disabledCloudInferenceCoordinator(fixture.conversationRepository),
     )
   useCase.runtimeHelperResolver = { runtimeHelper }
   val model =

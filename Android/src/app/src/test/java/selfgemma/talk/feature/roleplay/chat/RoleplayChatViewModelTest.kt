@@ -59,6 +59,7 @@ import selfgemma.talk.domain.roleplay.repository.RuntimeStateRepository
 import selfgemma.talk.domain.roleplay.repository.ToolInvocationRepository
 import selfgemma.talk.domain.roleplay.usecase.CompileRoleplayMemoryContextUseCase
 import selfgemma.talk.domain.roleplay.usecase.CompileRuntimeRoleProfileUseCase
+import selfgemma.talk.domain.roleplay.usecase.disabledCloudInferenceCoordinator
 import selfgemma.talk.domain.roleplay.usecase.ExtractMemoriesUseCase
 import selfgemma.talk.domain.roleplay.usecase.ExportRoleplayDebugBundleFromSessionUseCase
 import selfgemma.talk.domain.roleplay.usecase.FakeExternalFactRepository
@@ -476,9 +477,10 @@ private fun createFixture(
           memoryRepository = memoryRepository,
           compactionCacheRepository = compactionCacheRepository,
           tokenEstimator = TokenEstimator(),
-        ),
+      ),
       summarizeSessionUseCase = summarizeSessionUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
+      cloudInferenceCoordinator = disabledCloudInferenceCoordinator(conversationRepository),
     )
   val toolInvocationRepository = ViewModelToolInvocationRepository()
   val externalFactRepository = FakeExternalFactRepository()

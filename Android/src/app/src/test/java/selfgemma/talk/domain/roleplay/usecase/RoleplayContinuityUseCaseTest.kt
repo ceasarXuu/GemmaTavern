@@ -732,6 +732,7 @@ private fun queueOnlySendRoleplayMessageUseCase(
         conversationRepository = conversationRepository,
         validateMemoryAtomCandidateUseCase = ValidateMemoryAtomCandidateUseCase(),
       ),
+    cloudInferenceCoordinator = disabledCloudInferenceCoordinator(conversationRepository),
   )
 }
 
