@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import selfgemma.talk.BuildConfig
 import selfgemma.talk.data.DataStoreRepository
+import selfgemma.talk.data.cloudllm.CloudModelConfigRepository
+import selfgemma.talk.domain.cloudllm.CloudModelConfig
+import selfgemma.talk.domain.cloudllm.CloudProviderId
 import selfgemma.talk.domain.roleplay.usecase.RoleplayToolIds
 
 data class RoleplayToolToggleUiState(
@@ -25,6 +28,8 @@ data class RoleplaySettingsUiState(
   val roleplayToolDebugOutputEnabled: Boolean = false,
   val toolStates: List<RoleplayToolToggleUiState> = emptyList(),
   val roleEditorAssistantModelId: String? = null,
+  val cloudModelConfig: CloudModelConfig = CloudModelConfig(),
+  val cloudApiKeySaved: Boolean = false,
 ) {
   val allToolsEnabled: Boolean
     get() = toolStates.isNotEmpty() && toolStates.all(RoleplayToolToggleUiState::enabled)
@@ -35,19 +40,24 @@ class RoleplaySettingsViewModel
 @Inject
 constructor(
   private val dataStoreRepository: DataStoreRepository,
+  private val cloudModelConfigRepository: CloudModelConfigRepository,
 ) : ViewModel() {
   private val _uiState =
     MutableStateFlow(
-      RoleplaySettingsUiState(
-        messageSoundsEnabled = dataStoreRepository.areMessageSoundsEnabled(),
-        liveTokenSpeedEnabled = dataStoreRepository.isLiveTokenSpeedEnabled(),
-        streamingOutputEnabled = dataStoreRepository.isStreamingOutputEnabled(),
-        roleplayToolDebugOutputEnabled =
-          BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS &&
-            dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
-        toolStates = buildToolStates(),
-        roleEditorAssistantModelId = dataStoreRepository.getRoleEditorAssistantModelId(),
-      )
+      dataStoreRepository.getCloudModelConfig().let { cloudConfig ->
+        RoleplaySettingsUiState(
+          messageSoundsEnabled = dataStoreRepository.areMessageSoundsEnabled(),
+          liveTokenSpeedEnabled = dataStoreRepository.isLiveTokenSpeedEnabled(),
+          streamingOutputEnabled = dataStoreRepository.isStreamingOutputEnabled(),
+          roleplayToolDebugOutputEnabled =
+            BuildConfig.ENABLE_INTERNAL_DIAGNOSTICS &&
+              dataStoreRepository.isRoleplayToolDebugOutputEnabled(),
+          toolStates = buildToolStates(),
+          roleEditorAssistantModelId = dataStoreRepository.getRoleEditorAssistantModelId(),
+          cloudModelConfig = cloudConfig,
+          cloudApiKeySaved = cloudModelConfigRepository.getApiKey(cloudConfig.providerId) != null,
+        )
+      }
     )
   val uiState: StateFlow<RoleplaySettingsUiState> = _uiState.asStateFlow()
 
@@ -92,6 +102,33 @@ constructor(
     dataStoreRepository.setRoleEditorAssistantModelId(modelId)
     _uiState.value = _uiState.value.copy(roleEditorAssistantModelId = modelId)
     logDebug("role editor assistant model updated modelId=$modelId")
+  }
+
+  fun saveCloudModelSettings(config: CloudModelConfig, apiKeyInput: String) {
+    val normalizedConfig = config.copy(modelName = config.modelName.trim())
+    cloudModelConfigRepository.saveConfig(normalizedConfig)
+    if (apiKeyInput.isNotBlank()) {
+      cloudModelConfigRepository.saveApiKey(normalizedConfig.providerId, apiKeyInput)
+    }
+    _uiState.value =
+      _uiState.value.copy(
+        cloudModelConfig = normalizedConfig,
+        cloudApiKeySaved =
+          cloudModelConfigRepository.getApiKey(normalizedConfig.providerId) != null,
+      )
+    logDebug(
+      "cloud model settings updated provider=${normalizedConfig.providerId.storageId} enabled=${normalizedConfig.enabled} model=${normalizedConfig.modelName} mediaUpload=${normalizedConfig.allowRawMediaUpload}",
+    )
+  }
+
+  fun clearCloudApiKey(providerId: CloudProviderId) {
+    cloudModelConfigRepository.deleteApiKey(providerId)
+    _uiState.value =
+      _uiState.value.copy(
+        cloudApiKeySaved =
+          cloudModelConfigRepository.getApiKey(_uiState.value.cloudModelConfig.providerId) != null,
+      )
+    logDebug("cloud api key cleared provider=${providerId.storageId}")
   }
 
   private fun logDebug(message: String) {

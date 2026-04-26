@@ -60,9 +60,16 @@ fun RoleplaySettingsScreen(
   // Keep roleplay-facing settings toggles here so they match what the user sees in the tab UI.
   var showLanguageDialog by remember { mutableStateOf(false) }
   var showAssistantModelDialog by remember { mutableStateOf(false) }
+  var showCloudModelDialog by remember { mutableStateOf(false) }
   val currentLocaleTag = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore(',')
   val uiState by viewModel.uiState.collectAsState()
   val downloadedModels = modelManagerViewModel.getAllDownloadedModels()
+  val cloudModelSummary =
+    if (uiState.cloudModelConfig.enabled && uiState.cloudModelConfig.modelName.isNotBlank()) {
+      "${cloudProviderDisplayName(uiState.cloudModelConfig.providerId)} - ${uiState.cloudModelConfig.modelName}"
+    } else {
+      stringResource(R.string.settings_cloud_model_summary_disabled)
+    }
   val resolvedAssistantModel =
     downloadedModels.firstOrNull { it.name == uiState.roleEditorAssistantModelId }
       ?: downloadedModels.firstOrNull()
@@ -73,13 +80,18 @@ fun RoleplaySettingsScreen(
     } else if (showAssistantModelDialog) {
       showAssistantModelDialog = false
       Log.d(TAG, "dismiss assistant model dialog before navigating up")
+    } else if (showCloudModelDialog) {
+      showCloudModelDialog = false
+      Log.d(TAG, "dismiss cloud model dialog before navigating up")
     } else {
       Log.d(TAG, "navigate up from settings")
       navigateUp()
     }
   }
 
-  BackHandler(enabled = showNavigateUp || showLanguageDialog || showAssistantModelDialog) { handleNavigateUp() }
+  BackHandler(enabled = showNavigateUp || showLanguageDialog || showAssistantModelDialog || showCloudModelDialog) {
+    handleNavigateUp()
+  }
 
   Scaffold(
     modifier = modifier,
@@ -140,6 +152,11 @@ fun RoleplaySettingsScreen(
         },
       )
       AppPreferenceCard(
+        title = stringResource(R.string.settings_cloud_model_title),
+        summary = cloudModelSummary,
+        onClick = { showCloudModelDialog = true },
+      )
+      AppPreferenceCard(
         title = stringResource(R.string.settings_tool_management_title),
         summary = stringResource(R.string.settings_tool_management_entry_summary),
         onClick = onOpenToolManagement,
@@ -197,6 +214,20 @@ fun RoleplaySettingsScreen(
         viewModel.setRoleEditorAssistantModelId(null)
         showAssistantModelDialog = false
       },
+    )
+  }
+
+  if (showCloudModelDialog) {
+    CloudModelSettingsDialog(
+      initialConfig = uiState.cloudModelConfig,
+      apiKeySaved = uiState.cloudApiKeySaved,
+      onDismiss = { showCloudModelDialog = false },
+      onSave = { config, apiKeyInput ->
+        viewModel.saveCloudModelSettings(config, apiKeyInput)
+        modelManagerViewModel.updateSettingsUpdateTrigger()
+        showCloudModelDialog = false
+      },
+      onClearApiKey = viewModel::clearCloudApiKey,
     )
   }
 }
