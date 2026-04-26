@@ -1,5 +1,7 @@
 param(
   [string]$DeviceSerial = "",
+  [ValidateSet("Debug", "Release")]
+  [string]$BuildType = "Debug",
   [switch]$SkipDevice
 )
 
@@ -9,7 +11,14 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $androidRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $runRoot = Join-Path $androidRoot "build\smoke-tests\$timestamp"
-$debugApkPath = Join-Path $androidRoot "app\build\outputs\apk\debug\app-debug.apk"
+$assembleTask = if ($BuildType -eq "Release") { ":app:assembleRelease" } else { ":app:assembleDebug" }
+$apkPath =
+  if ($BuildType -eq "Release") {
+    Join-Path $androidRoot "app\build\outputs\apk\release\app-release.apk"
+  }
+  else {
+    Join-Path $androidRoot "app\build\outputs\apk\debug\app-debug.apk"
+  }
 
 New-Item -ItemType Directory -Path $runRoot -Force | Out-Null
 
@@ -80,6 +89,65 @@ function Assert-NoLaunchCrash {
   }
 }
 
+function Assert-LaunchSucceeded {
+  param([string]$LaunchLogPath)
+
+  $launchLog = Get-Content -Path $LaunchLogPath -Raw
+  if ($launchLog -notmatch "Status:\s+ok" -or $launchLog -notmatch "Activity:\s+selfgemma\.talk/\.MainActivity") {
+    throw "Smoke launch did not report a successful MainActivity start. Log: $LaunchLogPath"
+  }
+}
+
+function Assert-ActivityForeground {
+  param([string]$ActivityPath)
+
+  $activityDump = Get-Content -Path $ActivityPath -Raw
+  if ($activityDump -notmatch "selfgemma\.talk/\.MainActivity|ResumedActivity.*selfgemma\.talk") {
+    throw "Smoke launch did not find selfgemma.talk MainActivity in activity state. Log: $ActivityPath"
+  }
+}
+
+function Assert-UiHierarchyCaptured {
+  param([string]$UiDumpPath)
+
+  if (-not (Test-Path $UiDumpPath)) {
+    throw "Smoke UI hierarchy dump was not pulled from the device."
+  }
+
+  $uiDump = Get-Content -Path $UiDumpPath -Raw
+  if ($uiDump -notmatch 'package="selfgemma\.talk"') {
+    throw "Smoke UI hierarchy does not contain the app package. Dump: $UiDumpPath"
+  }
+
+  if ($uiDump -notmatch 'text="(消息|Messages)"' -or $uiDump -notmatch 'text="(设置|Settings)"') {
+    throw "Smoke UI hierarchy does not show the expected main navigation labels. Dump: $UiDumpPath"
+  }
+}
+
+function Wait-ForMainUiHierarchy {
+  param(
+    [string[]]$AdbArgs,
+    [string]$UiDumpPath
+  )
+
+  $lastError = $null
+  for ($attempt = 1; $attempt -le 10; $attempt++) {
+    & adb @AdbArgs shell uiautomator dump /sdcard/gemmatavern-smoke-window.xml | Out-Null
+    & adb @AdbArgs pull /sdcard/gemmatavern-smoke-window.xml $UiDumpPath | Out-Null
+
+    try {
+      Assert-UiHierarchyCaptured -UiDumpPath $UiDumpPath
+      return
+    }
+    catch {
+      $lastError = $_
+      Start-Sleep -Seconds 2
+    }
+  }
+
+  throw $lastError
+}
+
 function Invoke-DeviceSmoke {
   $adbArgs = Get-AdbArgs
   $installLog = Join-Path $runRoot "device-install.log"
@@ -92,7 +160,7 @@ function Invoke-DeviceSmoke {
 
   Invoke-LoggedCommand `
     -Executable "adb" `
-    -Arguments ($adbArgs + @("install", "-r", $debugApkPath)) `
+    -Arguments ($adbArgs + @("install", "-r", $apkPath)) `
     -WorkingDirectory $androidRoot `
     -LogPath $installLog
 
@@ -105,14 +173,16 @@ function Invoke-DeviceSmoke {
     -WorkingDirectory $androidRoot `
     -LogPath $launchLog
 
+  Assert-LaunchSucceeded -LaunchLogPath $launchLog
+
   Start-Sleep -Seconds 3
 
   & adb @adbArgs shell dumpsys activity activities 2>&1 |
     Tee-Object -FilePath $activityPath |
     Out-Null
+  Assert-ActivityForeground -ActivityPath $activityPath
 
-  & adb @adbArgs shell uiautomator dump /sdcard/gemmatavern-smoke-window.xml | Out-Null
-  & adb @adbArgs pull /sdcard/gemmatavern-smoke-window.xml $uiDumpPath | Out-Null
+  Wait-ForMainUiHierarchy -AdbArgs $adbArgs -UiDumpPath $uiDumpPath
 
   & adb @adbArgs logcat -d -v time AndroidRuntime:E ActivityTaskManager:W ActivityManager:W selfgemma.talk:E '*:S' 2>&1 |
     Tee-Object -FilePath $logcatPath |
@@ -123,7 +193,7 @@ function Invoke-DeviceSmoke {
 
 $compileLog = Join-Path $runRoot "compile-debug-kotlin.log"
 $unitLog = Join-Path $runRoot "targeted-unit-tests.log"
-$assembleLog = Join-Path $runRoot "assemble-debug.log"
+$assembleLog = Join-Path $runRoot "assemble-$($BuildType.ToLowerInvariant()).log"
 $summaryPath = Join-Path $runRoot "summary.txt"
 
 Invoke-LoggedCommand `
@@ -153,7 +223,7 @@ Invoke-LoggedCommand `
 
 Invoke-LoggedCommand `
   -Executable ".\gradlew.bat" `
-  -Arguments @(":app:assembleDebug", "--console=plain") `
+  -Arguments @($assembleTask, "--console=plain") `
   -WorkingDirectory $androidRoot `
   -LogPath $assembleLog
 
@@ -169,6 +239,7 @@ else {
 
 @(
   "GemmaTavern smoke test completed.",
+  "Build type: $BuildType",
   "Run root: $runRoot",
   "Compile log: $compileLog",
   "Unit log: $unitLog",

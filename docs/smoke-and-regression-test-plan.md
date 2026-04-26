@@ -2,6 +2,8 @@
 
 本文定义每次变更后的最低验证门槛，以及按风险扩展的回归测试矩阵。目标不是把所有测试都塞进一次提交前检查，而是先用短链路冒烟暴露编译、启动、核心会话和持久化边界的严重问题，再把时间投入到对应功能域的回归。
 
+测试设计必须先写预期行为，再执行验证。禁止先跑一轮命令、根据偶然通过的结果倒推出“这就是测试方案”。一次测试只有在它能明确区分“符合预期”“产品缺陷”“环境阻断”三种结论时，才算对后续人工验证有价值。
+
 ## 核心功能边界
 
 GemmaTavern 是一个单 Android 客户端应用，前端、领域编排、本地推理和持久化都在端侧完成。测试应围绕用户实际闭环，而不是只围绕类或目录。
@@ -31,12 +33,25 @@ powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.p
 powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.ps1 -SkipDevice
 ```
 
+真机上已安装 release 签名包时，不要为了测试卸载用户数据；改用 release APK 覆盖安装：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.ps1 -BuildType Release
+```
+
 冒烟门禁包含四段：
 
 1. `:app:compileDebugKotlin`：最快暴露 Compose、资源、多语言字符串、Hilt/Kotlin 编译问题。
 2. 定向 `:app:testDebugUnitTest`：覆盖路由、聊天 ViewModel、会话列表、角色扮演 turn、记忆上下文、记忆抽取、发布 JSON 映射、模型管理。
 3. `:app:assembleDebug`：确认可安装 APK 生成。
 4. 可用设备上的 `adb install -r`、`am start -W`、logcat 崩溃扫描、UI hierarchy dump：确认覆盖安装后能冷启动到真实界面。
+
+运行时冒烟的预期结果必须在执行前明确：
+
+- 安装预期：`adb install -r` 成功；若失败为 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`，结论是“签名/安装面阻断运行时验证”，不是“应用运行正常”。
+- 启动预期：`am start -W -n selfgemma.talk/.MainActivity` 返回成功，且 `dumpsys activity` 显示 `selfgemma.talk/.MainActivity` 处于前台或最近活动栈。
+- 崩溃预期：启动后的 logcat 不含 `AndroidRuntime`、`FATAL EXCEPTION`、`Process: selfgemma.talk` 崩溃记录。
+- 界面预期：`uiautomator dump` 能在有限等待内拉取到可用窗口层级，且层级内出现应用包名与主导航文本，例如 `消息`/`Messages`、`设置`/`Settings`；若 `am start` 成功但界面长期停留在空白 Compose 容器，也必须判定为运行时失败或阻断，而不是“启动通过”。
 
 冒烟失败处理规则：
 
@@ -67,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.p
 | Targeted Regression | 冒烟通过后，按变更类型选择 | 上方矩阵中的定向测试 |
 | Full Host Regression | 合并前、发布前、跨域改动后 | `.\gradlew.bat :app:testDebugUnitTest` |
 | Release Regression | 版本发布、minify/持久化/权限改动后 | `.\gradlew.bat :app:lintRelease; .\gradlew.bat :app:assembleRelease` |
-| Device Regression | UI、数据库、导出、权限、发布包改动后 | `adb install -r`、`am start -W`、logcat、目标页面手动验证 |
+| Device Regression | UI、数据库、导出、权限、发布包改动后 | `run-smoke-tests.ps1 -BuildType Debug/Release`、logcat、UI hierarchy、目标页面手动验证 |
 | Benchmark/Acceptance | 记忆质量、启动、性能、长会话改动后 | `run-roleplay-memory-acceptance.ps1` 或 `run-frontend-perf.ps1` |
 
 ## 日志与证据留存

@@ -17,6 +17,13 @@ testing:
 powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.ps1
 ```
 
+If the real device already has a release-signed build installed, run the smoke
+gate against the release APK instead of uninstalling app data:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.ps1 -BuildType Release
+```
+
 If no Android device is ready, run the host-only gate and record that device
 coverage is still pending:
 
