@@ -87,6 +87,7 @@ class ModelManagerViewModelTest {
             ConfigKeys.TOPP.label to 0.8f,
             ConfigKeys.TEMPERATURE.label to 0.7f,
             ConfigKeys.ACCELERATOR.label to "gpu",
+            ConfigKeys.ENABLE_THINKING.label to true,
           ),
       )
 
@@ -98,5 +99,6 @@ class ModelManagerViewModelTest {
     assertEquals(0.8f, updated.llmConfig.defaultTopp)
     assertEquals(0.7f, updated.llmConfig.defaultTemperature)
     assertEquals(true, updated.llmConfig.supportThinking)
+    assertEquals(true, updated.llmConfig.defaultEnableThinking)
   }
 }
