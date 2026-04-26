@@ -90,6 +90,13 @@ For Android device verification, prefer an in-place install that preserves app d
 2. `adb install -r .\app\build\outputs\apk\release\app-release.apk`
 3. `adb shell am start -W -n selfgemma.talk/.MainActivity`
 
+If `./gradlew.bat :app:installDebug` fails with
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` on a device that already has the
+release-signed package, do not clear the installed app just to smoke-test a
+debug build. Build the release APK and run the `adb install -r` release path
+above so the verification matches the installed certificate and preserves app
+data.
+
 After launch, inspect startup crashes before publishing the APK:
 
 1. `adb logcat -c`
