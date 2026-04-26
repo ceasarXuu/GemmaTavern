@@ -15,8 +15,9 @@ import selfgemma.talk.CutoutsSerializer
 import selfgemma.talk.SettingsSerializer
 import selfgemma.talk.SkillsSerializer
 import selfgemma.talk.UserDataSerializer
+import selfgemma.talk.domain.cloudllm.CloudModelConfig
+import selfgemma.talk.domain.cloudllm.CloudProviderId
 import selfgemma.talk.domain.roleplay.usecase.RoleplayToolIds
-import selfgemma.talk.domain.roleplay.model.DEFAULT_ST_USER_AVATAR_ID
 import selfgemma.talk.domain.roleplay.model.StPersonaDescriptor
 import selfgemma.talk.domain.roleplay.model.StUserProfile
 import selfgemma.talk.proto.BenchmarkResults
@@ -42,14 +43,15 @@ class DefaultDataStoreRepositoryTest {
           skillsDataStore = createDataStore(File(tempDir, "skills.pb"), SkillsSerializer, scope),
         )
 
+      val defaultAvatarId = StUserProfile().resolvedUserAvatarId()
       val expectedProfile =
         StUserProfile(
-          userAvatarId = DEFAULT_ST_USER_AVATAR_ID,
-          defaultPersonaId = DEFAULT_ST_USER_AVATAR_ID,
-          personas = mapOf(DEFAULT_ST_USER_AVATAR_ID to "纲手User"),
+          userAvatarId = defaultAvatarId,
+          defaultPersonaId = defaultAvatarId,
+          personas = mapOf(defaultAvatarId to "纲手User"),
           personaDescriptions =
             mapOf(
-              DEFAULT_ST_USER_AVATAR_ID to
+              defaultAvatarId to
                 StPersonaDescriptor(
                   description = "色情女郎",
                   avatarUri = "content://persona/avatar-1",
@@ -62,14 +64,14 @@ class DefaultDataStoreRepositoryTest {
       val reloadedProfile = repository.getStUserProfile()
       val persistedSettings = settingsFile.inputStream().use(Settings::parseFrom)
       val persistedProfile = persistedSettings.stUserProfile
-      val persistedDescriptor = persistedProfile.getPersonaDescriptionsOrThrow(DEFAULT_ST_USER_AVATAR_ID)
+      val persistedDescriptor = persistedProfile.getPersonaDescriptionsOrThrow(defaultAvatarId)
 
-      assertEquals(DEFAULT_ST_USER_AVATAR_ID, reloadedProfile.userAvatarId)
-      assertEquals(DEFAULT_ST_USER_AVATAR_ID, reloadedProfile.defaultPersonaId)
-      assertEquals("纲手User", reloadedProfile.personas[DEFAULT_ST_USER_AVATAR_ID])
+      assertEquals(defaultAvatarId, reloadedProfile.userAvatarId)
+      assertEquals(defaultAvatarId, reloadedProfile.defaultPersonaId)
+      assertEquals("纲手User", reloadedProfile.personas[defaultAvatarId])
       assertEquals("content://persona/avatar-1", reloadedProfile.activeAvatarUri)
-      assertEquals(DEFAULT_ST_USER_AVATAR_ID, persistedProfile.defaultPersonaId)
-      assertEquals("纲手User", persistedProfile.getPersonasOrThrow(DEFAULT_ST_USER_AVATAR_ID))
+      assertEquals(defaultAvatarId, persistedProfile.defaultPersonaId)
+      assertEquals("纲手User", persistedProfile.getPersonasOrThrow(defaultAvatarId))
       assertEquals("content://persona/avatar-1", persistedDescriptor.avatarUri)
       assertEquals("色情女郎", persistedDescriptor.description)
     } finally {
@@ -103,6 +105,46 @@ class DefaultDataStoreRepositoryTest {
       assertEquals(true, repository.isRoleplayCalendarToolsEnabled())
       assertEquals(true, persistedSettings.roleplayLocationToolsEnabled)
       assertEquals(true, persistedSettings.roleplayCalendarToolsEnabled)
+    } finally {
+      scope.cancel()
+      tempDir.deleteRecursively()
+    }
+  }
+
+  @Test
+  fun cloudModelConfig_roundTripsThroughProtoDataStore() {
+    val tempDir = Files.createTempDirectory("datastore-repo-cloud-model").toFile()
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    try {
+      val settingsFile = File(tempDir, "settings.pb")
+      val repository =
+        DefaultDataStoreRepository(
+          dataStore = createDataStore(settingsFile, SettingsSerializer, scope),
+          userDataDataStore = createDataStore(File(tempDir, "user-data.pb"), UserDataSerializer, scope),
+          cutoutDataStore = createDataStore(File(tempDir, "cutouts.pb"), CutoutsSerializer, scope),
+          benchmarkResultsDataStore =
+            createDataStore(File(tempDir, "benchmark-results.pb"), BenchmarkResultsSerializer, scope),
+          skillsDataStore = createDataStore(File(tempDir, "skills.pb"), SkillsSerializer, scope),
+        )
+
+      repository.setCloudModelConfig(
+        CloudModelConfig(
+          enabled = true,
+          providerId = CloudProviderId.CLAUDE,
+          modelName = " claude-sonnet-4-6 ",
+          allowRawMediaUpload = true,
+        )
+      )
+
+      val config = repository.getCloudModelConfig()
+      val persistedSettings = settingsFile.inputStream().use(Settings::parseFrom)
+
+      assertEquals(true, config.enabled)
+      assertEquals(CloudProviderId.CLAUDE, config.providerId)
+      assertEquals("claude-sonnet-4-6", config.modelName)
+      assertEquals(true, config.allowRawMediaUpload)
+      assertEquals("claude", persistedSettings.cloudLlmProviderId)
+      assertEquals("claude-sonnet-4-6", persistedSettings.cloudLlmModelName)
     } finally {
       scope.cancel()
       tempDir.deleteRecursively()

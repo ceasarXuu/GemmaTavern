@@ -33,6 +33,8 @@ import selfgemma.talk.proto.Theme
 import selfgemma.talk.proto.UserData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import selfgemma.talk.domain.cloudllm.CloudModelConfig
+import selfgemma.talk.domain.cloudllm.CloudProviderId
 import selfgemma.talk.domain.roleplay.model.StPersonaConnection
 import selfgemma.talk.domain.roleplay.model.StPersonaDescriptionPosition
 import selfgemma.talk.domain.roleplay.model.StPersonaDescriptor
@@ -99,6 +101,10 @@ interface DataStoreRepository {
   fun setStreamingOutputEnabled(enabled: Boolean)
 
   fun isStreamingOutputEnabled(): Boolean
+
+  fun setCloudModelConfig(config: CloudModelConfig)
+
+  fun getCloudModelConfig(): CloudModelConfig
 
   fun setRoleplayToolDebugOutputEnabled(enabled: Boolean)
 
@@ -405,6 +411,33 @@ class DefaultDataStoreRepository(
     return runBlocking {
       val settings = dataStore.data.first()
       !settings.disableStreamingOutput
+    }
+  }
+
+  override fun setCloudModelConfig(config: CloudModelConfig) {
+    runBlocking {
+      dataStore.updateData { settings ->
+        settings
+          .toBuilder()
+          .setCloudLlmEnabled(config.enabled)
+          .setCloudLlmProviderId(config.providerId.storageId)
+          .setCloudLlmModelName(config.modelName.trim())
+          .setCloudLlmAllowRawMediaUpload(config.allowRawMediaUpload)
+          .build()
+      }
+    }
+  }
+
+  override fun getCloudModelConfig(): CloudModelConfig {
+    return runBlocking {
+      val settings = dataStore.data.first()
+      CloudModelConfig(
+        enabled = settings.cloudLlmEnabled,
+        providerId =
+          CloudProviderId.fromStorageId(settings.cloudLlmProviderId) ?: CloudProviderId.DEEPSEEK,
+        modelName = settings.cloudLlmModelName.trim(),
+        allowRawMediaUpload = settings.cloudLlmAllowRawMediaUpload,
+      )
     }
   }
 

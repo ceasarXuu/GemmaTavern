@@ -32,6 +32,8 @@ import selfgemma.talk.data.DataStoreRepository
 import selfgemma.talk.data.DefaultDataStoreRepository
 import selfgemma.talk.data.DefaultDownloadRepository
 import selfgemma.talk.data.DownloadRepository
+import selfgemma.talk.data.cloudllm.AndroidCloudCredentialStore
+import selfgemma.talk.data.cloudllm.CloudCredentialStore
 import selfgemma.talk.proto.BenchmarkResults
 import selfgemma.talk.proto.CutoutCollection
 import selfgemma.talk.proto.Settings
@@ -172,6 +174,14 @@ internal object AppModule {
       benchmarkResultsStore,
       skillsDataStore,
     )
+  }
+
+  @Provides
+  @Singleton
+  fun provideCloudCredentialStore(
+    @ApplicationContext context: Context,
+  ): CloudCredentialStore {
+    return AndroidCloudCredentialStore(context)
   }
 
   // Provides DownloadRepository

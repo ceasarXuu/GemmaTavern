@@ -116,6 +116,10 @@ message Settings {
   bool roleplay_location_tools_enabled = 18;
   bool roleplay_calendar_tools_enabled = 19;
   repeated string roleplay_disabled_tool_id = 20;
+  bool cloud_llm_enabled = 21;
+  string cloud_llm_provider_id = 22;
+  string cloud_llm_model_name = 23;
+  bool cloud_llm_allow_raw_media_upload = 24;
 }
 
 message UserData {

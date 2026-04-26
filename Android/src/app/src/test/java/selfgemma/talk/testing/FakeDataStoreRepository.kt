@@ -1,6 +1,7 @@
 package selfgemma.talk.testing
 
 import selfgemma.talk.data.DataStoreRepository
+import selfgemma.talk.domain.cloudllm.CloudModelConfig
 import selfgemma.talk.domain.roleplay.model.StUserProfile
 import selfgemma.talk.proto.AccessTokenData
 import selfgemma.talk.proto.BenchmarkResult
@@ -25,6 +26,7 @@ class FakeDataStoreRepository(
   private var messageSoundsEnabled = true
   private var liveTokenSpeedEnabled = true
   private var streamingOutputEnabled = true
+  private var cloudModelConfig = CloudModelConfig()
   private var roleplayToolDebugOutputEnabled = false
   private var roleplayLocationToolsEnabled = false
   private var roleplayCalendarToolsEnabled = false
@@ -137,6 +139,12 @@ class FakeDataStoreRepository(
   }
 
   override fun isStreamingOutputEnabled(): Boolean = streamingOutputEnabled
+
+  override fun setCloudModelConfig(config: CloudModelConfig) {
+    cloudModelConfig = config
+  }
+
+  override fun getCloudModelConfig(): CloudModelConfig = cloudModelConfig
 
   override fun setRoleplayToolDebugOutputEnabled(enabled: Boolean) {
     roleplayToolDebugOutputEnabled = enabled
