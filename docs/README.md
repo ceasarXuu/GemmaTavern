@@ -26,6 +26,7 @@ Do not keep here:
 - `roleplay-supported-tools.md`
 - `roleplay-chat-debug-export-architecture.md`
 - `roleplay-context-budget-architecture.md`
+- `cloud-assisted-llm-v0.2.0-implementation-plan.md`
 - `st-roleplay-compat-architecture.md`
 - `roleplay-memory-acceptance-standard.md`
 - `roleplay-benchmark-automation.md`
