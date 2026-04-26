@@ -34,6 +34,8 @@ import selfgemma.talk.data.DefaultDownloadRepository
 import selfgemma.talk.data.DownloadRepository
 import selfgemma.talk.data.cloudllm.AndroidCloudCredentialStore
 import selfgemma.talk.data.cloudllm.CloudCredentialStore
+import selfgemma.talk.data.cloudllm.CloudHttpClient
+import selfgemma.talk.data.cloudllm.UrlConnectionCloudHttpClient
 import selfgemma.talk.proto.BenchmarkResults
 import selfgemma.talk.proto.CutoutCollection
 import selfgemma.talk.proto.Settings
@@ -182,6 +184,12 @@ internal object AppModule {
     @ApplicationContext context: Context,
   ): CloudCredentialStore {
     return AndroidCloudCredentialStore(context)
+  }
+
+  @Provides
+  @Singleton
+  fun provideCloudHttpClient(): CloudHttpClient {
+    return UrlConnectionCloudHttpClient()
   }
 
   // Provides DownloadRepository

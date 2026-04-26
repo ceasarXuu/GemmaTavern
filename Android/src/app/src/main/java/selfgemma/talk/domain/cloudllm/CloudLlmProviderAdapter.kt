@@ -5,6 +5,8 @@ interface CloudLlmProviderAdapter {
 
   fun defaultCapability(config: CloudModelConfig): CloudModelCapability
 
+  fun mapError(statusCode: Int, body: String?): CloudProviderError
+
   suspend fun testConnection(config: CloudModelConfig, apiKey: String): CloudConnectionTestResult
 
   suspend fun streamGenerate(
