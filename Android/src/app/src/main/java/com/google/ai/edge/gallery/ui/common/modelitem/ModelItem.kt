@@ -31,9 +31,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.UnfoldLess
 import androidx.compose.material.icons.rounded.UnfoldMore
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -84,6 +86,7 @@ fun ModelItem(
   showBenchmarkButton: Boolean = false,
   downloadStatusOverride: ModelDownloadStatus? = null,
   onExpanded: (Boolean) -> Unit = {},
+  onImportedModelConfigClicked: (Model) -> Unit = {},
 ) {
   val modelManagerUiState: ModelManagerUiState? =
     if (downloadStatusOverride == null) modelManagerViewModel.uiState.collectAsState().value else null
@@ -133,12 +136,24 @@ fun ModelItem(
         )
         // Button to delete model and expand/collapse button at the right.
         Row(verticalAlignment = Alignment.Top, modifier = Modifier.align(Alignment.TopEnd)) {
+          if (model.imported) {
+            IconButton(
+              onClick = { onImportedModelConfigClicked(model) },
+              modifier = Modifier.offset(y = (-12).dp),
+            ) {
+              Icon(
+                imageVector = Icons.Rounded.Tune,
+                contentDescription = stringResource(R.string.cd_model_settings_icon),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
           if (model.localFileRelativeDirPathOverride.isEmpty()) {
             DeleteModelButton(
               model = model,
               modelManagerViewModel = modelManagerViewModel,
               downloadStatus = downloadStatus,
-              modifier = Modifier.offset(y = (-12).dp, x = if (model.imported) 12.dp else 0.dp),
+              modifier = Modifier.offset(y = (-12).dp, x = if (model.imported) 4.dp else 0.dp),
               showDeleteButton = showDeleteButton
             )
           }

@@ -301,6 +301,9 @@
   <string name="model_library_tab_local_imports">本地导入模型</string>
   <string name="model_library_imported_empty_title">还没有本地导入模型</string>
   <string name="model_library_imported_empty_content">点击右下角导入按钮，添加本地 .task 或 .litertlm 模型文件。</string>
+  <string name="model_library_edit_imported_model_config_title">编辑模型参数</string>
+  <string name="model_library_imported_model_config_saved">模型参数已保存</string>
+  <string name="model_library_imported_model_config_save_failed">无法保存模型参数</string>
   <string name="model_list_imported_models_title">已导入的模型</string>
   <string name="model_list_recommended_models_title">推荐模型</string>
   <string name="model_list_experimental_label">实验性</string>

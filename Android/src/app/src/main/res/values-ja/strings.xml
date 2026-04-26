@@ -259,6 +259,9 @@
   <string name="model_library_tab_local_imports">ローカル導入モデル</string>
   <string name="model_library_imported_empty_title">ローカル導入モデルはまだありません</string>
   <string name="model_library_imported_empty_content">右下のインポートボタンから、ローカルの .task または .litertlm モデルファイルを追加してください。</string>
+  <string name="model_library_edit_imported_model_config_title">モデルパラメータを編集</string>
+  <string name="model_library_imported_model_config_saved">モデルパラメータを保存しました</string>
+  <string name="model_library_imported_model_config_save_failed">モデルパラメータを保存できませんでした</string>
   <string name="model_list_imported_models_title">インポート済みモデル</string>
   <string name="model_list_recommended_models_title">推奨モデル</string>
   <string name="model_list_experimental_label">実験的</string>

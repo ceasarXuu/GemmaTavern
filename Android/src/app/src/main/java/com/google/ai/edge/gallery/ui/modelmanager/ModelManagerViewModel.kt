@@ -35,6 +35,10 @@ import selfgemma.talk.data.CategoryInfo
 import selfgemma.talk.data.Config
 import selfgemma.talk.data.ConfigKeys
 import selfgemma.talk.data.DataStoreRepository
+import selfgemma.talk.data.DEFAULT_MAX_TOKEN
+import selfgemma.talk.data.DEFAULT_TEMPERATURE
+import selfgemma.talk.data.DEFAULT_TOPK
+import selfgemma.talk.data.DEFAULT_TOPP
 import selfgemma.talk.data.DownloadRepository
 import selfgemma.talk.data.EMPTY_MODEL
 import selfgemma.talk.data.IMPORTS_DIR
@@ -77,6 +81,7 @@ private const val TAG = "AGModelManagerViewModel"
 private const val TEXT_INPUT_HISTORY_MAX_SIZE = 50
 private const val MODEL_ALLOWLIST_FILENAME = "selfgemma_talk_model_allowlist.json"
 private const val MODEL_ALLOWLIST_TEST_FILENAME = "selfgemma_talk_model_allowlist_test.json"
+private const val IMPORTED_MODEL_MAX_CONTEXT_LENGTH = 4096
 private const val ALLOWLIST_BASE_URL =
   "https://raw.githubusercontent.com/ceasarXuu/GemmaTavern/refs/heads/main/model_allowlists"
 
@@ -126,6 +131,114 @@ internal fun runInitializationAfterOptionalCleanup(
     startCleanup(startInitialization)
   } else {
     startInitialization()
+  }
+}
+
+internal fun updatedImportedModelWithConfigValues(
+  importedModel: ImportedModel,
+  values: Map<String, Any>,
+): ImportedModel {
+  val llmConfig = importedModel.llmConfig
+  val selectedAccelerator = values.stringValue(ConfigKeys.ACCELERATOR.label)
+  val compatibleAccelerators =
+    reorderCompatibleAccelerators(
+      compatibleAccelerators = llmConfig.compatibleAcceleratorsList,
+      selectedAccelerator = selectedAccelerator,
+    )
+
+  return importedModel
+    .toBuilder()
+    .setLlmConfig(
+      llmConfig
+        .toBuilder()
+        .clearCompatibleAccelerators()
+        .addAllCompatibleAccelerators(compatibleAccelerators)
+        .setDefaultMaxTokens(
+          values.intValue(
+            key = ConfigKeys.MAX_TOKENS.label,
+            defaultValue = llmConfig.defaultMaxTokens.takeIf { it > 0 } ?: DEFAULT_MAX_TOKEN,
+          )
+        )
+        .setDefaultTopk(
+          values.intValue(
+            key = ConfigKeys.TOPK.label,
+            defaultValue = llmConfig.defaultTopk.takeIf { it > 0 } ?: DEFAULT_TOPK,
+          )
+        )
+        .setDefaultTopp(
+          values.floatValue(
+            key = ConfigKeys.TOPP.label,
+            defaultValue = llmConfig.defaultTopp.takeIf { it > 0f } ?: DEFAULT_TOPP,
+          )
+        )
+        .setDefaultTemperature(
+          values.floatValue(
+            key = ConfigKeys.TEMPERATURE.label,
+            defaultValue =
+              llmConfig.defaultTemperature.takeIf { it > 0f } ?: DEFAULT_TEMPERATURE,
+          )
+        )
+        .setDefaultEnableThinking(
+          values.booleanValue(
+            key = ConfigKeys.ENABLE_THINKING.label,
+            defaultValue = llmConfig.defaultEnableThinking,
+          )
+        )
+        .build()
+    )
+    .build()
+}
+
+private fun reorderCompatibleAccelerators(
+  compatibleAccelerators: List<String>,
+  selectedAccelerator: String?,
+): List<String> {
+  if (selectedAccelerator.isNullOrBlank()) {
+    return compatibleAccelerators
+  }
+  val normalizedSelection = selectedAccelerator.trim()
+  val existing = compatibleAccelerators.map { it.trim() }.filter { it.isNotEmpty() }
+  if (existing.isEmpty()) {
+    return listOf(normalizedSelection)
+  }
+  return buildList {
+    add(normalizedSelection)
+    addAll(existing.filterNot { it == normalizedSelection })
+  }
+}
+
+private fun Map<String, Any>.intValue(key: String, defaultValue: Int): Int {
+  return when (val value = get(key)) {
+    is Int -> value
+    is Float -> value.toInt()
+    is Double -> value.toInt()
+    is String -> value.toIntOrNull() ?: defaultValue
+    else -> defaultValue
+  }
+}
+
+private fun Map<String, Any>.floatValue(key: String, defaultValue: Float): Float {
+  return when (val value = get(key)) {
+    is Int -> value.toFloat()
+    is Float -> value
+    is Double -> value.toFloat()
+    is String -> value.toFloatOrNull() ?: defaultValue
+    else -> defaultValue
+  }
+}
+
+private fun Map<String, Any>.stringValue(key: String): String? {
+  return get(key)?.toString()?.takeIf { it.isNotBlank() }
+}
+
+private fun Map<String, Any>.booleanValue(key: String, defaultValue: Boolean): Boolean {
+  return when (val value = get(key)) {
+    is Boolean -> value
+    is Int -> value != 0
+    is Float -> value != 0f
+    is Double -> value != 0.0
+    is String -> value.equals("true", ignoreCase = true)
+    else -> defaultValue
   }
 }
 
@@ -791,6 +904,88 @@ constructor(
     dataStoreRepository.saveImportedModels(importedModels = importedModels)
   }
 
+  fun updateImportedLlmModelConfig(model: Model, values: Map<String, Any>): Boolean {
+    if (!model.imported) {
+      Log.w(TAG, "Ignoring config update for non-imported model '${model.name}'")
+      return false
+    }
+
+    val importedModels = dataStoreRepository.readImportedModels().toMutableList()
+    val importedModelIndex = importedModels.indexOfFirst { model.name == it.fileName }
+    if (importedModelIndex < 0) {
+      Log.w(TAG, "Cannot update imported model config because '${model.name}' is not in data store")
+      return false
+    }
+
+    val updatedInfo =
+      updatedImportedModelWithConfigValues(
+        importedModel = importedModels[importedModelIndex],
+        values = values,
+      )
+    importedModels[importedModelIndex] = updatedInfo
+    dataStoreRepository.saveImportedModels(importedModels = importedModels)
+
+    val rebuiltModel = createModelFromImportedModelInfo(info = updatedInfo)
+    val llmChatTask = getTaskById(BuiltInTaskId.LLM_CHAT)
+    var touched = false
+    val updatedModelDownloadStatus = uiState.value.modelDownloadStatus.toMutableMap()
+    val updatedModelInitializationStatus = uiState.value.modelInitializationStatus.toMutableMap()
+    val cleanupRequestedModels = mutableListOf<Model>()
+
+    for (task in uiState.value.tasks) {
+      for (taskModel in task.models) {
+        if (taskModel.name != model.name || !taskModel.imported) {
+          continue
+        }
+        taskModel.prevConfigValues = taskModel.configValues
+        taskModel.configs = rebuiltModel.configs
+        taskModel.configValues = rebuiltModel.configValues
+        taskModel.totalBytes = rebuiltModel.totalBytes
+        task.updateTrigger.value = System.currentTimeMillis()
+        touched = true
+
+        if (taskModel.instance != null || taskModel.initializing) {
+          if (cleanupRequestedModels.any { it === taskModel }) {
+            continue
+          }
+          cleanupRequestedModels.add(taskModel)
+          if (llmChatTask != null) {
+            cleanupModel(context = context, task = llmChatTask, model = taskModel)
+          } else {
+            taskModel.cleanUpAfterInit = true
+          }
+        }
+      }
+    }
+
+    updatedModelDownloadStatus[model.name] =
+      ModelDownloadStatus(
+        status = ModelDownloadStatusType.SUCCEEDED,
+        receivedBytes = updatedInfo.fileSize,
+        totalBytes = updatedInfo.fileSize,
+      )
+    updatedModelInitializationStatus[model.name] =
+      ModelInitializationStatus(status = ModelInitializationStatusType.NOT_INITIALIZED)
+
+    _uiState.update {
+      uiState.value.copy(
+        tasks = uiState.value.tasks.toList(),
+        modelDownloadStatus = updatedModelDownloadStatus,
+        modelInitializationStatus = updatedModelInitializationStatus,
+        modelImportingUpdateTrigger = System.currentTimeMillis(),
+        configValuesUpdateTrigger = System.currentTimeMillis(),
+      )
+    }
+
+    Log.d(
+      TAG,
+      "updated imported model config model=${model.name} touched=$touched " +
+        "maxTokens=${updatedInfo.llmConfig.defaultMaxTokens} topK=${updatedInfo.llmConfig.defaultTopk} " +
+        "topP=${updatedInfo.llmConfig.defaultTopp} temperature=${updatedInfo.llmConfig.defaultTemperature}",
+    )
+    return true
+  }
+
   fun getTokenStatusAndData(): TokenStatusAndData {
     // Try to load token data from DataStore.
     var tokenStatus = TokenStatus.NOT_STORED
@@ -1228,6 +1423,8 @@ constructor(
           receivedBytes = importedModel.fileSize,
           totalBytes = importedModel.fileSize,
         )
+      modelInstances[model.name] =
+        ModelInitializationStatus(status = ModelInitializationStatusType.NOT_INITIALIZED)
     }
 
     val textInputHistory = dataStoreRepository.readTextInputHistory()
@@ -1264,11 +1461,13 @@ constructor(
     val configs: MutableList<Config> =
       createLlmChatConfigs(
           defaultMaxToken = llmMaxToken,
+          defaultMaxContextLength = IMPORTED_MODEL_MAX_CONTEXT_LENGTH,
           defaultTopK = info.llmConfig.defaultTopk,
           defaultTopP = info.llmConfig.defaultTopp,
           defaultTemperature = info.llmConfig.defaultTemperature,
           accelerators = accelerators,
           supportThinking = llmSupportThinking,
+          defaultEnableThinking = info.llmConfig.defaultEnableThinking,
         )
         .toMutableList()
     val model =

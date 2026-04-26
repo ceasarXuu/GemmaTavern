@@ -231,6 +231,7 @@ fun createLlmChatConfigs(
   defaultTemperature: Float = DEFAULT_TEMPERATURE,
   accelerators: List<Accelerator> = DEFAULT_ACCELERATORS,
   supportThinking: Boolean = false,
+  defaultEnableThinking: Boolean = false,
 ): List<Config> {
   var maxTokensConfig: Config =
     LabelConfig(key = ConfigKeys.MAX_TOKENS, defaultValue = "$defaultMaxToken")
@@ -238,7 +239,7 @@ fun createLlmChatConfigs(
     maxTokensConfig =
       NumberSliderConfig(
         key = ConfigKeys.MAX_TOKENS,
-        sliderMin = 2000f,
+        sliderMin = 100f,
         sliderMax = defaultMaxContextLength.toFloat(),
         defaultValue = defaultMaxToken.toFloat(),
         valueType = ValueType.INT,
@@ -277,7 +278,12 @@ fun createLlmChatConfigs(
       .toMutableList()
 
   if (supportThinking) {
-    configs.add(BooleanSwitchConfig(key = ConfigKeys.ENABLE_THINKING, defaultValue = false))
+    configs.add(
+      BooleanSwitchConfig(
+        key = ConfigKeys.ENABLE_THINKING,
+        defaultValue = defaultEnableThinking,
+      )
+    )
   }
   return configs
 }

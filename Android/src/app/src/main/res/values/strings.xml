@@ -342,6 +342,9 @@
   <string name="model_library_tab_local_imports">Local imports</string>
   <string name="model_library_imported_empty_title">No local models imported yet</string>
   <string name="model_library_imported_empty_content">Tap the import button in the lower right to add a local .task or .litertlm model file.</string>
+  <string name="model_library_edit_imported_model_config_title">Edit model parameters</string>
+  <string name="model_library_imported_model_config_saved">Model parameters saved</string>
+  <string name="model_library_imported_model_config_save_failed">Could not save model parameters</string>
   <string name="model_list_imported_models_title">Imported models</string>
   <string name="model_list_recommended_models_title">Recommended models</string>
   <string name="model_list_experimental_label">EXPERIMENTAL</string>

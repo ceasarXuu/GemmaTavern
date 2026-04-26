@@ -259,6 +259,9 @@
   <string name="model_library_tab_local_imports">로컬 가져온 모델</string>
   <string name="model_library_imported_empty_title">아직 가져온 로컬 모델이 없습니다</string>
   <string name="model_library_imported_empty_content">오른쪽 아래의 가져오기 버튼을 눌러 로컬 .task 또는 .litertlm 모델 파일을 추가하세요.</string>
+  <string name="model_library_edit_imported_model_config_title">모델 매개변수 편집</string>
+  <string name="model_library_imported_model_config_saved">모델 매개변수를 저장했습니다</string>
+  <string name="model_library_imported_model_config_save_failed">모델 매개변수를 저장할 수 없습니다</string>
   <string name="model_list_imported_models_title">가져온 모델</string>
   <string name="model_list_recommended_models_title">추천 모델</string>
   <string name="model_list_experimental_label">실험적</string>

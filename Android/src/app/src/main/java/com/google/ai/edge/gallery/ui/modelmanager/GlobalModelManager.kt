@@ -98,6 +98,7 @@ import selfgemma.talk.data.Model
 import selfgemma.talk.data.RuntimeType
 import selfgemma.talk.data.Task
 import selfgemma.talk.proto.ImportedModel
+import selfgemma.talk.ui.common.ConfigDialog
 import selfgemma.talk.ui.common.TaskIcon
 import selfgemma.talk.ui.common.modelitem.ModelItem
 import kotlin.text.endsWith
@@ -130,6 +131,7 @@ fun GlobalModelManager(
   var showUnsupportedWebModelDialog by remember { mutableStateOf(false) }
   val selectedLocalModelFileUri = remember { mutableStateOf<Uri?>(null) }
   val selectedImportedModelInfo = remember { mutableStateOf<ImportedModel?>(null) }
+  var importedModelForConfig by remember { mutableStateOf<Model?>(null) }
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   var showImportDialog by remember { mutableStateOf(false) }
   var showImportingDialog by remember { mutableStateOf(false) }
@@ -379,6 +381,7 @@ fun GlobalModelManager(
                     showBenchmarkButton =
                       BuildConfig.ENABLE_BENCHMARK_UI && model.runtimeType == RuntimeType.LITERT_LM,
                     downloadStatusOverride = uiState.modelDownloadStatus[model.name],
+                    onImportedModelConfigClicked = { importedModelForConfig = it },
                   )
                 }
               }
@@ -530,6 +533,29 @@ fun GlobalModelManager(
         )
       }
     }
+  }
+
+  importedModelForConfig?.let { model ->
+    ConfigDialog(
+      title = stringResource(R.string.model_library_edit_imported_model_config_title),
+      subtitle = model.displayName.ifEmpty { model.name },
+      configs = model.configs,
+      initialValues = model.configValues,
+      onDismissed = { importedModelForConfig = null },
+      onOk = { values, _, _ ->
+        val saved = viewModel.updateImportedLlmModelConfig(model = model, values = values)
+        importedModelForConfig = null
+        scope.launch {
+          snackbarHostState.showSnackbar(
+            if (saved) {
+              context.getString(R.string.model_library_imported_model_config_saved)
+            } else {
+              context.getString(R.string.model_library_imported_model_config_save_failed)
+            }
+          )
+        }
+      },
+    )
   }
 
   // Alert dialog for unsupported file type.
