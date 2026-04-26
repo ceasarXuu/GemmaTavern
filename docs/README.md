@@ -29,6 +29,7 @@ Do not keep here:
 - `st-roleplay-compat-architecture.md`
 - `roleplay-memory-acceptance-standard.md`
 - `roleplay-benchmark-automation.md`
+- `smoke-and-regression-test-plan.md`
 
 ## Source of truth
 

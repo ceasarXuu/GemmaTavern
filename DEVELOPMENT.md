@@ -10,6 +10,23 @@ Typical commands from the repository root:
 2. `./gradlew.bat :app:assembleDebug`
 3. `./gradlew.bat :app:testDebugUnitTest`
 
+After each functional change, run the project smoke gate before deeper manual
+testing:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.ps1
+```
+
+If no Android device is ready, run the host-only gate and record that device
+coverage is still pending:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Android\src\scripts\run-smoke-tests.ps1 -SkipDevice
+```
+
+The detailed smoke and regression matrix lives in
+`docs/smoke-and-regression-test-plan.md`.
+
 If Gradle starts failing with Kotlin daemon or incremental cache errors such as
 `Storage ... is already registered`, do not keep retrying the same parallel or
 incremental path. Stop the daemon and rerun serially:
