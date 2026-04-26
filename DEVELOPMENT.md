@@ -51,6 +51,11 @@ directory. Concurrent unit-test and assemble runs collided on KAPT snapshot and
 incremental cache files in this workspace and produced false-negative build
 failures.
 
+If the smoke script completes compile and unit tests but the final
+`assembleDebug --no-daemon` segment exits with `stop command received`, treat it
+as a Gradle daemon handoff failure. Run `./gradlew.bat --stop`, then rerun
+`:app:assembleDebug` directly and keep the smoke log path in the task notes.
+
 For release validation, also run:
 
 1. `./gradlew.bat :app:lintRelease`
