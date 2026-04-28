@@ -3,6 +3,7 @@ package selfgemma.talk.domain.roleplay.usecase
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -163,6 +164,8 @@ constructor(
         )
       eventLogger.routeCompleted(request.sessionId, config.providerId, finalText.length)
       CloudRoleplayInferenceOutcome.Completed(completed)
+    } catch (exception: CancellationException) {
+      throw exception
     } catch (exception: Exception) {
       fallbackAfterProviderError(
         request = request,

@@ -69,7 +69,11 @@ class ClaudeAdapter @Inject constructor(private val httpClient: CloudHttpClient)
     request: CloudGenerationRequest,
     onEvent: suspend (CloudGenerationEvent) -> Unit,
   ): CloudGenerationResult {
-    val response = httpClient.execute(buildHttpRequest(request))
+    val httpRequest = buildHttpRequest(request)
+    if (request.stream) {
+      return streamSseResponse(httpRequest, onEvent)
+    }
+    val response = httpClient.execute(httpRequest)
     if (response.statusCode !in 200..299) {
       val error = mapError(response.statusCode, response.body)
       onEvent(CloudGenerationEvent.Failed(error))
@@ -78,6 +82,30 @@ class ClaudeAdapter @Inject constructor(private val httpClient: CloudHttpClient)
     val result =
       if (response.body.contains("data:")) {
         parseStreamResponse(response.body, onEvent)
+      } else {
+        parseJsonResponse(response.body, onEvent)
+      }
+    onEvent(CloudGenerationEvent.Completed)
+    return result
+  }
+
+  private suspend fun streamSseResponse(
+    request: CloudHttpRequest,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): CloudGenerationResult {
+    val text = StringBuilder()
+    val response =
+      httpClient.stream(request) { line ->
+        parseStreamLine(line, onEvent)?.let { delta -> text.append(delta) }
+      }
+    if (response.statusCode !in 200..299) {
+      val error = mapError(response.statusCode, response.body)
+      onEvent(CloudGenerationEvent.Failed(error))
+      return CloudGenerationResult(error = error)
+    }
+    val result =
+      if (text.isNotBlank() || response.body.contains("data:")) {
+        CloudGenerationResult(text = text.toString())
       } else {
         parseJsonResponse(response.body, onEvent)
       }
@@ -156,18 +184,34 @@ class ClaudeAdapter @Inject constructor(private val httpClient: CloudHttpClient)
   ): CloudGenerationResult {
     val text = StringBuilder()
     extractSseDataLines(body).forEach { data ->
-      val obj = data.parseJsonObjectOrNull() ?: return@forEach
-      val delta =
-        obj
-          .takeIf { it.stringOrNull("type") == "content_block_delta" }
-          ?.objOrNull("delta")
-          ?.stringOrNull("text")
-      if (!delta.isNullOrBlank()) {
-        text.append(delta)
-        onEvent(CloudGenerationEvent.TextDelta(delta))
-      }
+      parseClaudeStreamData(data, onEvent)?.let { delta -> text.append(delta) }
     }
     return CloudGenerationResult(text = text.toString())
+  }
+
+  private suspend fun parseStreamLine(
+    line: String,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): String? {
+    val data = extractSseDataLine(line) ?: return null
+    return parseClaudeStreamData(data, onEvent)
+  }
+
+  private suspend fun parseClaudeStreamData(
+    data: String,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): String? {
+    val obj = data.parseJsonObjectOrNull() ?: return null
+    val delta =
+      obj
+        .takeIf { it.stringOrNull("type") == "content_block_delta" }
+        ?.objOrNull("delta")
+        ?.stringOrNull("text")
+    if (delta.isNullOrBlank()) {
+      return null
+    }
+    onEvent(CloudGenerationEvent.TextDelta(delta))
+    return delta
   }
 
   private fun CloudMessage.toClaudeJson(): JsonObject {

@@ -66,7 +66,11 @@ abstract class OpenAiCompatibleCloudAdapter(
     request: CloudGenerationRequest,
     onEvent: suspend (CloudGenerationEvent) -> Unit,
   ): CloudGenerationResult {
-    val response = httpClient.execute(buildHttpRequest(request))
+    val httpRequest = buildHttpRequest(request)
+    if (request.stream) {
+      return streamSseResponse(httpRequest, onEvent)
+    }
+    val response = httpClient.execute(httpRequest)
     if (response.statusCode !in 200..299) {
       val error = mapError(response.statusCode, response.body)
       onEvent(CloudGenerationEvent.Failed(error))
@@ -75,6 +79,30 @@ abstract class OpenAiCompatibleCloudAdapter(
     val result =
       if (response.body.contains("data:")) {
         parseStreamResponse(response.body, onEvent)
+      } else {
+        parseJsonResponse(response.body, onEvent)
+      }
+    onEvent(CloudGenerationEvent.Completed)
+    return result
+  }
+
+  private suspend fun streamSseResponse(
+    request: CloudHttpRequest,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): CloudGenerationResult {
+    val text = StringBuilder()
+    val response =
+      httpClient.stream(request) { line ->
+        parseStreamLine(line, onEvent)?.let { delta -> text.append(delta) }
+      }
+    if (response.statusCode !in 200..299) {
+      val error = mapError(response.statusCode, response.body)
+      onEvent(CloudGenerationEvent.Failed(error))
+      return CloudGenerationResult(error = error)
+    }
+    val result =
+      if (text.isNotBlank() || response.body.contains("data:")) {
+        CloudGenerationResult(text = text.toString())
       } else {
         parseJsonResponse(response.body, onEvent)
       }
@@ -131,20 +159,36 @@ abstract class OpenAiCompatibleCloudAdapter(
   ): CloudGenerationResult {
     val text = StringBuilder()
     extractSseDataLines(body).forEach { data ->
-      val delta =
-        data
-          .parseJsonObjectOrNull()
-          ?.arrayOrNull("choices")
-          ?.firstOrNull()
-          ?.asJsonObject
-          ?.objOrNull("delta")
-          ?.stringOrNull("content")
-      if (!delta.isNullOrEmpty()) {
-        text.append(delta)
-        onEvent(CloudGenerationEvent.TextDelta(delta))
-      }
+      parseOpenAiStreamData(data, onEvent)?.let { delta -> text.append(delta) }
     }
     return CloudGenerationResult(text = text.toString())
+  }
+
+  private suspend fun parseStreamLine(
+    line: String,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): String? {
+    val data = extractSseDataLine(line) ?: return null
+    return parseOpenAiStreamData(data, onEvent)
+  }
+
+  private suspend fun parseOpenAiStreamData(
+    data: String,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): String? {
+    val delta =
+      data
+        .parseJsonObjectOrNull()
+        ?.arrayOrNull("choices")
+        ?.firstOrNull()
+        ?.asJsonObject
+        ?.objOrNull("delta")
+        ?.stringOrNull("content")
+    if (delta.isNullOrEmpty()) {
+      return null
+    }
+    onEvent(CloudGenerationEvent.TextDelta(delta))
+    return delta
   }
 
   private fun CloudMessage.toOpenAiJson(): JsonObject {

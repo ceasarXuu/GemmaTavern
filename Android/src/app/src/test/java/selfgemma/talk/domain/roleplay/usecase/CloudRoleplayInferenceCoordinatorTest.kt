@@ -5,6 +5,7 @@ import com.google.ai.edge.litertlm.ToolParam
 import com.google.ai.edge.litertlm.ToolSet
 import com.google.ai.edge.litertlm.tool
 import java.util.ArrayDeque
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -29,13 +30,18 @@ import selfgemma.talk.domain.cloudllm.CloudProviderHealthTracker
 import selfgemma.talk.domain.cloudllm.CloudProviderId
 import selfgemma.talk.domain.cloudllm.CloudToolCall
 import selfgemma.talk.domain.roleplay.model.Message
+import selfgemma.talk.domain.roleplay.model.MessageKind
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
+import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachment
+import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
+import selfgemma.talk.domain.roleplay.model.RoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionEventType
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.StUserProfile
+import selfgemma.talk.domain.roleplay.model.encodeRoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.testing.FakeDataStoreRepository
 
@@ -125,6 +131,74 @@ class CloudRoleplayInferenceCoordinatorTest {
       assertTrue(fixture.conversationRepository.events.any { it.eventType == SessionEventType.CLOUD_LOCAL_TOOL_BRIDGE_USED })
     }
 
+  @Test
+  fun tryGenerate_audioContextBridgeAllowsCloudWithoutRawAudioInput() =
+    runBlocking {
+      val fixture = cloudFixture()
+      fixture.adapter.results += CloudGenerationResult(text = "I heard the password.")
+      val now = System.currentTimeMillis()
+      val audioMessage =
+        Message(
+          id = "audio-1",
+          sessionId = "session-1",
+          seq = 1,
+          side = MessageSide.USER,
+          kind = MessageKind.AUDIO,
+          status = MessageStatus.COMPLETED,
+          content = "Voice note",
+          metadataJson =
+            encodeRoleplayMessageMediaPayload(
+              RoleplayMessageMediaPayload(
+                attachments =
+                  listOf(
+                    RoleplayMessageAttachment(
+                      type = RoleplayMessageAttachmentType.AUDIO,
+                      filePath = "/tmp/audio.pcm",
+                      mimeType = "audio/raw",
+                      contextText = "The user whispers the north gate password.",
+                      sampleRate = 16000,
+                    )
+                  )
+              )
+            ),
+          createdAt = now,
+          updatedAt = now,
+        )
+
+      val outcome =
+        fixture.coordinator.tryGenerate(
+          fixture.request(
+            userMessages = listOf(audioMessage),
+            currentTurnMedia = CurrentTurnMedia(audioClips = listOf(byteArrayOf(1)), currentAudioCount = 1),
+          )
+        )
+
+      val completed = outcome as CloudRoleplayInferenceOutcome.Completed
+      assertEquals("I heard the password.", completed.message.content)
+      assertEquals(1, fixture.adapter.requests.size)
+      assertTrue(fixture.adapter.requests.single().messages.textContent().contains("Local media bridge"))
+      assertTrue(fixture.adapter.requests.single().messages.textContent().contains("north gate password"))
+      assertTrue(fixture.conversationRepository.events.any { it.eventType == SessionEventType.CLOUD_MEDIA_BRIDGE_USED })
+    }
+
+  @Test
+  fun tryGenerate_rethrowsCancellationWithoutProviderFallback() =
+    runBlocking {
+      val fixture = cloudFixture()
+      fixture.adapter.exception = CancellationException("turn cancelled")
+
+      var cancelled = false
+      try {
+        fixture.coordinator.tryGenerate(fixture.request())
+      } catch (exception: CancellationException) {
+        cancelled = true
+      }
+
+      assertTrue(cancelled)
+      assertTrue(fixture.conversationRepository.events.none { it.eventType == SessionEventType.CLOUD_PROVIDER_ERROR })
+      assertTrue(fixture.conversationRepository.events.none { it.eventType == SessionEventType.CLOUD_ROUTE_FALLBACK })
+    }
+
   private fun cloudFixture(
     config: CloudModelConfig =
       CloudModelConfig(
@@ -160,7 +234,11 @@ class CloudRoleplayInferenceCoordinatorTest {
     val adapter: FakeCloudAdapter,
     val conversationRepository: CloudConversationRepository,
   ) {
-    fun request(tools: List<com.google.ai.edge.litertlm.ToolProvider> = emptyList()): CloudRoleplayInferenceRequest {
+    fun request(
+      tools: List<com.google.ai.edge.litertlm.ToolProvider> = emptyList(),
+      userMessages: List<Message>? = null,
+      currentTurnMedia: CurrentTurnMedia = CurrentTurnMedia(),
+    ): CloudRoleplayInferenceRequest {
       val now = System.currentTimeMillis()
       val userMessage =
         Message(
@@ -189,8 +267,8 @@ class CloudRoleplayInferenceCoordinatorTest {
           ),
         promptAssembly = PromptAssemblyResult(prompt = "Stay in character."),
         input = userMessage.content,
-        userMessages = listOf(userMessage),
-        currentTurnMedia = CurrentTurnMedia(),
+        userMessages = userMessages ?: listOf(userMessage),
+        currentTurnMedia = currentTurnMedia,
         turnToolContext =
           RoleplayPreparedToolContext(
             tools = tools,
@@ -213,6 +291,7 @@ class CloudRoleplayInferenceCoordinatorTest {
     override val providerId: CloudProviderId = CloudProviderId.DEEPSEEK
     val requests = mutableListOf<CloudGenerationRequest>()
     val results = ArrayDeque<CloudGenerationResult>()
+    var exception: Exception? = null
 
     override fun defaultCapability(config: CloudModelConfig): CloudModelCapability {
       return CloudModelCapability(supportsToolCalling = true)
@@ -230,6 +309,7 @@ class CloudRoleplayInferenceCoordinatorTest {
       request: CloudGenerationRequest,
       onEvent: suspend (CloudGenerationEvent) -> Unit,
     ): CloudGenerationResult {
+      exception?.let { throw it }
       requests += request
       val result = results.removeFirst()
       if (result.text.isNotBlank()) {

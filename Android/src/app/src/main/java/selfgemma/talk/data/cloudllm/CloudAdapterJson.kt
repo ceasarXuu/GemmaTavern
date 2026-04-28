@@ -34,11 +34,13 @@ internal fun JsonObject.arrayOrNull(name: String): JsonArray? {
 internal fun extractSseDataLines(body: String): List<String> {
   return body
     .lineSequence()
-    .map(String::trim)
-    .filter { line -> line.startsWith("data:") }
-    .map { line -> line.removePrefix("data:").trim() }
-    .filter { data -> data.isNotBlank() && data != "[DONE]" }
+    .mapNotNull(::extractSseDataLine)
     .toList()
+}
+
+internal fun extractSseDataLine(line: String): String? {
+  val data = line.trim().takeIf { it.startsWith("data:") }?.removePrefix("data:")?.trim()
+  return data?.takeIf { it.isNotBlank() && it != "[DONE]" }
 }
 
 internal fun CloudMessageRole.openAiRole(): String {

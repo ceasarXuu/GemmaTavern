@@ -41,6 +41,8 @@ class CloudProviderAdaptersTest {
     assertEquals("Bearer test-key", captured.headers["Authorization"])
     assertEquals("GemmaTavern", captured.headers["X-Title"])
     assertEquals("test-model", body.stringOrNull("model"))
+    assertEquals(1, httpClient.streamCalls)
+    assertEquals(0, httpClient.executeCalls)
     assertEquals("Hello", result.text)
     assertEquals(listOf("Hel", "lo"), events.filterIsInstance<CloudGenerationEvent.TextDelta>().map { it.text })
   }
@@ -159,9 +161,26 @@ class CloudProviderAdaptersTest {
 
 private class FakeCloudHttpClient(private val response: CloudHttpResponse) : CloudHttpClient {
   var lastRequest: CloudHttpRequest? = null
+  var executeCalls: Int = 0
+  var streamCalls: Int = 0
 
   override suspend fun execute(request: CloudHttpRequest): CloudHttpResponse {
     lastRequest = request
+    executeCalls += 1
+    return response
+  }
+
+  override suspend fun stream(
+    request: CloudHttpRequest,
+    onLine: suspend (String) -> Unit,
+  ): CloudHttpResponse {
+    lastRequest = request
+    streamCalls += 1
+    if (response.statusCode in 200..299) {
+      for (line in response.body.lineSequence()) {
+        onLine(line)
+      }
+    }
     return response
   }
 }

@@ -122,6 +122,12 @@ private const val IMAGE_CONTEXT_SYSTEM_PROMPT =
 private const val IMAGE_CONTEXT_USER_PROMPT =
   "Return one short plain-text sentence with the key visible details, including any readable text or numbers. " +
     "Do not use markdown, bullets, or speculation."
+private const val AUDIO_CONTEXT_SYSTEM_PROMPT =
+  "You are extracting persistent audio memory for a continuing roleplay chat. " +
+    "Transcribe or summarize only the audible content needed for the next reply."
+private const val AUDIO_CONTEXT_USER_PROMPT =
+  "Return one short plain-text sentence with the key spoken content, sound cues, and speaker intent. " +
+    "Do not use markdown, bullets, or speculation."
 private val ASSISTANT_META_PATTERNS =
   listOf(
     Regex("\\bas an ai\\b", RegexOption.IGNORE_CASE),
@@ -260,23 +266,18 @@ constructor(
     var userMessages = pendingMessage.userMessages
     val assistantSeed = pendingMessage.assistantSeed
     var effectiveInput = pendingMessage.combinedUserInput
-    val modelReadiness = awaitModelReady(model = model, isStopRequested = isStopRequested)
-    debugLog(
-      "model readiness resolved after ${safeElapsedRealtime() - startTime}ms sessionId=$sessionId ready=${modelReadiness.ready} interrupted=${modelReadiness.interrupted}",
-    )
-    if (!modelReadiness.ready) {
-      val pendingMessage =
-        assistantSeed.copy(
-          status = if (modelReadiness.interrupted) MessageStatus.INTERRUPTED else MessageStatus.FAILED,
-          errorMessage = modelReadiness.errorMessage,
-          updatedAt = System.currentTimeMillis(),
-        )
-      conversationRepository.updateMessage(pendingMessage)
-      return SendRoleplayMessageResult(
-        assistantMessage = pendingMessage,
-        interrupted = modelReadiness.interrupted,
-        errorMessage = pendingMessage.errorMessage,
+    var localModelReadiness: ModelReadinessResult? = null
+    suspend fun awaitLocalModelReady(reason: String): ModelReadinessResult {
+      val cachedReadiness = localModelReadiness
+      if (cachedReadiness != null) {
+        return cachedReadiness
+      }
+      val resolvedReadiness = awaitModelReady(model = model, isStopRequested = isStopRequested)
+      localModelReadiness = resolvedReadiness
+      debugLog(
+        "local model readiness resolved after ${safeElapsedRealtime() - startTime}ms sessionId=$sessionId reason=$reason ready=${resolvedReadiness.ready} interrupted=${resolvedReadiness.interrupted}",
       )
+      return resolvedReadiness
     }
 
     val storedRole = roleRepository.getRole(session.roleId)
@@ -296,13 +297,19 @@ constructor(
     }
     role = ensureCompiledRoleRuntimeProfile(role)
 
-    userMessages =
-      ensureCurrentImageAttachmentContextTexts(
-        userMessages = userMessages,
-        model = model,
-        sessionId = sessionId,
-        isStopRequested = isStopRequested,
-      )
+    if (requiresLocalMediaContext(userMessages)) {
+      val mediaReadiness = awaitLocalModelReady(reason = "media_context")
+      if (!mediaReadiness.ready) {
+        return failForModelReadiness(assistantSeed = assistantSeed, modelReadiness = mediaReadiness)
+      }
+      userMessages =
+        ensureCurrentMediaAttachmentContextTexts(
+          userMessages = userMessages,
+          model = model,
+          sessionId = sessionId,
+          isStopRequested = isStopRequested,
+        )
+    }
 
     val recentMessages =
       conversationRepository.listCanonicalMessages(sessionId).filter { message ->
@@ -434,6 +441,10 @@ constructor(
         else -> null
       }
     if (finalMessage == null) {
+      val fallbackReadiness = awaitLocalModelReady(reason = "local_generation")
+      if (!fallbackReadiness.ready) {
+        return failForModelReadiness(assistantSeed = assistantSeed, modelReadiness = fallbackReadiness)
+      }
       var overflowRetries = 0
       while (true) {
         applyUpdatedChatMetadata(session = session, promptAssembly = promptAssembly)
@@ -619,6 +630,24 @@ constructor(
       errorMessage = finalMessage.errorMessage,
       toolInvocations = runtimeToolInvocations,
       externalFacts = runtimeExternalFacts,
+    )
+  }
+
+  private suspend fun failForModelReadiness(
+    assistantSeed: Message,
+    modelReadiness: ModelReadinessResult,
+  ): SendRoleplayMessageResult {
+    val failedMessage =
+      assistantSeed.copy(
+        status = if (modelReadiness.interrupted) MessageStatus.INTERRUPTED else MessageStatus.FAILED,
+        errorMessage = modelReadiness.errorMessage,
+        updatedAt = System.currentTimeMillis(),
+      )
+    conversationRepository.updateMessage(failedMessage)
+    return SendRoleplayMessageResult(
+      assistantMessage = failedMessage,
+      interrupted = modelReadiness.interrupted,
+      errorMessage = failedMessage.errorMessage,
     )
   }
 
@@ -1372,7 +1401,24 @@ constructor(
     return mergedMedia
   }
 
-  private suspend fun ensureCurrentImageAttachmentContextTexts(
+  private fun requiresLocalMediaContext(userMessages: List<Message>): Boolean {
+    return userMessages.any { message ->
+      if (message.kind != MessageKind.IMAGE && message.kind != MessageKind.AUDIO) {
+        return@any false
+      }
+      message
+        .roleplayMessageMediaPayload()
+        ?.attachments
+        .orEmpty()
+        .any { attachment ->
+          (attachment.type == RoleplayMessageAttachmentType.IMAGE ||
+            attachment.type == RoleplayMessageAttachmentType.AUDIO) &&
+            attachment.contextText.isNullOrBlank()
+        }
+    }
+  }
+
+  private suspend fun ensureCurrentMediaAttachmentContextTexts(
     userMessages: List<Message>,
     model: Model,
     sessionId: String,
@@ -1381,13 +1427,15 @@ constructor(
     var updatedAny = false
     val updatedMessages =
       userMessages.map { message ->
-        if (message.kind != MessageKind.IMAGE || isStopRequested()) {
+        if ((message.kind != MessageKind.IMAGE && message.kind != MessageKind.AUDIO) || isStopRequested()) {
           return@map message
         }
         val payload = message.roleplayMessageMediaPayload() ?: return@map message
         if (
           payload.attachments.none { attachment ->
-            attachment.type == RoleplayMessageAttachmentType.IMAGE && attachment.contextText.isNullOrBlank()
+            (attachment.type == RoleplayMessageAttachmentType.IMAGE ||
+              attachment.type == RoleplayMessageAttachmentType.AUDIO) &&
+              attachment.contextText.isNullOrBlank()
           }
         ) {
           return@map message
@@ -1396,33 +1444,28 @@ constructor(
         val updatedAttachments =
           payload.attachments.mapIndexed { index, attachment ->
             if (
-              attachment.type != RoleplayMessageAttachmentType.IMAGE ||
-                attachment.contextText?.trim()?.isNotEmpty() == true
+              attachment.contextText?.trim()?.isNotEmpty() == true ||
+                (attachment.type != RoleplayMessageAttachmentType.IMAGE &&
+                  attachment.type != RoleplayMessageAttachmentType.AUDIO)
             ) {
               attachment
-            } else {
-              val bitmap = BitmapFactory.decodeFile(attachment.filePath)
-              if (bitmap == null) {
-                warnLog(
-                  "failed to decode roleplay image attachment for context text sessionId=$sessionId messageId=${message.id} path=${attachment.filePath}",
+            } else when (attachment.type) {
+              RoleplayMessageAttachmentType.IMAGE ->
+                attachment.withImageContextText(
+                  model = model,
+                  sessionId = sessionId,
+                  messageId = message.id,
+                  attachmentIndex = index,
+                  isStopRequested = isStopRequested,
                 )
-                attachment
-              } else {
-                val generatedContextText =
-                  describeImageAttachmentContext(
-                    model = model,
-                    bitmap = bitmap,
-                    sessionId = sessionId,
-                    messageId = message.id,
-                    attachmentIndex = index,
-                    isStopRequested = isStopRequested,
-                  )
-                if (generatedContextText.isNullOrBlank()) {
-                  attachment
-                } else {
-                  attachment.copy(contextText = generatedContextText)
-                }
-              }
+              RoleplayMessageAttachmentType.AUDIO ->
+                attachment.withAudioContextText(
+                  model = model,
+                  sessionId = sessionId,
+                  messageId = message.id,
+                  attachmentIndex = index,
+                  isStopRequested = isStopRequested,
+                )
             }
           }
 
@@ -1450,9 +1493,59 @@ constructor(
         conversationRepository.updateMessage(updatedMessage)
       }
     debugLog(
-      "persisted image context text sessionId=$sessionId updatedMessages=${updatedMessages.count { updated -> userMessages.any { original -> original.id == updated.id && original != updated } }}",
+      "persisted media context text sessionId=$sessionId updatedMessages=${updatedMessages.count { updated -> userMessages.any { original -> original.id == updated.id && original != updated } }}",
     )
     return updatedMessages
+  }
+
+  private suspend fun RoleplayMessageAttachment.withImageContextText(
+    model: Model,
+    sessionId: String,
+    messageId: String,
+    attachmentIndex: Int,
+    isStopRequested: () -> Boolean,
+  ): RoleplayMessageAttachment {
+    val bitmap = BitmapFactory.decodeFile(filePath)
+    if (bitmap == null) {
+      warnLog(
+        "failed to decode roleplay image attachment for context text sessionId=$sessionId messageId=$messageId path=$filePath",
+      )
+      return this
+    }
+    val generatedContextText =
+      describeImageAttachmentContext(
+        model = model,
+        bitmap = bitmap,
+        sessionId = sessionId,
+        messageId = messageId,
+        attachmentIndex = attachmentIndex,
+        isStopRequested = isStopRequested,
+      )
+    return if (generatedContextText.isNullOrBlank()) this else copy(contextText = generatedContextText)
+  }
+
+  private suspend fun RoleplayMessageAttachment.withAudioContextText(
+    model: Model,
+    sessionId: String,
+    messageId: String,
+    attachmentIndex: Int,
+    isStopRequested: () -> Boolean,
+  ): RoleplayMessageAttachment {
+    val audioClip =
+      loadAudioClip(
+        attachment = this,
+        logContext = "for context text sessionId=$sessionId messageId=$messageId",
+      ) ?: return this
+    val generatedContextText =
+      describeAudioAttachmentContext(
+        model = model,
+        audioClip = audioClip,
+        sessionId = sessionId,
+        messageId = messageId,
+        attachmentIndex = attachmentIndex,
+        isStopRequested = isStopRequested,
+      )
+    return if (generatedContextText.isNullOrBlank()) this else copy(contextText = generatedContextText)
   }
 
   private suspend fun describeImageAttachmentContext(
@@ -1531,6 +1624,82 @@ constructor(
     }
   }
 
+  private suspend fun describeAudioAttachmentContext(
+    model: Model,
+    audioClip: ByteArray,
+    sessionId: String,
+    messageId: String,
+    attachmentIndex: Int,
+    isStopRequested: () -> Boolean,
+  ): String? {
+    if (isStopRequested()) {
+      return null
+    }
+
+    return try {
+      runtimeHelperFor(model).resetConversation(
+        model = model,
+        supportImage = false,
+        supportAudio = true,
+        systemInstruction = Contents.of(AUDIO_CONTEXT_SYSTEM_PROMPT),
+      )
+      suspendCancellableCoroutine { continuation ->
+        val partialContent = StringBuilder()
+        val completed = AtomicBoolean(false)
+
+        fun finish(value: String?) {
+          if (!completed.compareAndSet(false, true)) {
+            return
+          }
+          if (continuation.isActive) {
+            continuation.resume(value)
+          }
+        }
+
+        try {
+          runtimeHelperFor(model).runInference(
+            model = model,
+            input = AUDIO_CONTEXT_USER_PROMPT,
+            resultListener = { partialResult, done, _ ->
+              if (!partialResult.startsWith("<ctrl") && partialResult.isNotEmpty()) {
+                partialContent.append(partialResult)
+              }
+              if (done) {
+                finish(sanitizeAttachmentContextText(partialContent.toString()))
+              }
+            },
+            cleanUpListener = {},
+            onError = { message ->
+              warnLog(
+                "audio context generation failed sessionId=$sessionId messageId=$messageId attachmentIndex=$attachmentIndex message=$message",
+              )
+              finish(null)
+            },
+            audioClips = listOf(audioClip),
+          )
+        } catch (exception: Exception) {
+          warnLog(
+            "audio context generation threw sessionId=$sessionId messageId=$messageId attachmentIndex=$attachmentIndex",
+            exception,
+          )
+          finish(null)
+        }
+
+        continuation.invokeOnCancellation {
+          if (!completed.get()) {
+            runtimeHelperFor(model).stopResponse(model)
+          }
+        }
+      }
+    } catch (exception: Exception) {
+      warnLog(
+        "failed to reset conversation for audio context generation sessionId=$sessionId messageId=$messageId attachmentIndex=$attachmentIndex",
+        exception,
+      )
+      null
+    }
+  }
+
   private fun sanitizeAttachmentContextText(value: String): String? {
     val sanitized =
       value
@@ -1602,20 +1771,27 @@ constructor(
           }
         }
         RoleplayMessageAttachmentType.AUDIO -> {
-          val sampleRate = attachment.sampleRate
-          val file = File(attachment.filePath)
-          if (sampleRate == null || !file.exists()) {
-            warnLog(
-              "failed to load roleplay audio attachment sampleRate=$sampleRate path=${attachment.filePath}",
-            )
-          } else {
-            audioClips += pcm16MonoToWav(file.readBytes(), sampleRate)
-          }
+          loadAudioClip(attachment = attachment, logContext = "for multimodal context")?.let(audioClips::add)
         }
       }
     }
 
     return CurrentTurnMedia(images = images, audioClips = audioClips)
+  }
+
+  private fun loadAudioClip(
+    attachment: RoleplayMessageAttachment,
+    logContext: String,
+  ): ByteArray? {
+    val sampleRate = attachment.sampleRate
+    val file = File(attachment.filePath)
+    if (sampleRate == null || !file.exists()) {
+      warnLog(
+        "failed to load roleplay audio attachment $logContext sampleRate=$sampleRate path=${attachment.filePath}",
+      )
+      return null
+    }
+    return pcm16MonoToWav(file.readBytes(), sampleRate)
   }
 
   private suspend fun awaitModelReady(

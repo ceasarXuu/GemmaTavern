@@ -6,7 +6,9 @@ import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.ToolProvider
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -16,6 +18,23 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import selfgemma.talk.data.Model
+import selfgemma.talk.data.cloudllm.CloudCredentialStore
+import selfgemma.talk.data.cloudllm.CloudModelConfigRepository
+import selfgemma.talk.domain.cloudllm.CloudConnectionTestResult
+import selfgemma.talk.domain.cloudllm.CloudContentPart
+import selfgemma.talk.domain.cloudllm.CloudGenerationEvent
+import selfgemma.talk.domain.cloudllm.CloudGenerationRequest
+import selfgemma.talk.domain.cloudllm.CloudGenerationResult
+import selfgemma.talk.domain.cloudllm.CloudLlmProviderAdapter
+import selfgemma.talk.domain.cloudllm.CloudMessage
+import selfgemma.talk.domain.cloudllm.CloudModelCapability
+import selfgemma.talk.domain.cloudllm.CloudModelConfig
+import selfgemma.talk.domain.cloudllm.CloudNetworkStatusProvider
+import selfgemma.talk.domain.cloudllm.CloudProviderAdapterResolver
+import selfgemma.talk.domain.cloudllm.CloudProviderError
+import selfgemma.talk.domain.cloudllm.CloudProviderErrorType
+import selfgemma.talk.domain.cloudllm.CloudProviderHealthTracker
+import selfgemma.talk.domain.cloudllm.CloudProviderId
 import selfgemma.talk.domain.roleplay.model.MemoryAtom
 import selfgemma.talk.domain.roleplay.model.MemoryBranchScope
 import selfgemma.talk.domain.roleplay.model.MemoryCategory
@@ -26,6 +45,7 @@ import selfgemma.talk.domain.roleplay.model.MemoryNamespace
 import selfgemma.talk.domain.roleplay.model.MemoryPlane
 import selfgemma.talk.domain.roleplay.model.MemoryStability
 import selfgemma.talk.domain.roleplay.model.Message
+import selfgemma.talk.domain.roleplay.model.MessageKind
 import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.OpenThread
@@ -33,12 +53,16 @@ import selfgemma.talk.domain.roleplay.model.OpenThreadOwner
 import selfgemma.talk.domain.roleplay.model.OpenThreadStatus
 import selfgemma.talk.domain.roleplay.model.OpenThreadType
 import selfgemma.talk.domain.roleplay.model.RoleCard
+import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachment
+import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
+import selfgemma.talk.domain.roleplay.model.RoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionEventType
 import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.StUserProfile
+import selfgemma.talk.domain.roleplay.model.encodeRoleplayMessageMediaPayload
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
 import selfgemma.talk.domain.roleplay.repository.MemoryAtomRepository
@@ -71,6 +95,108 @@ class SendRoleplayMessageUseCaseTest {
       assertNotNull(savedRole.runtimeProfile)
       assertNotNull(savedRole.runtimeProfile!!.characterKernel)
       assertTrue(savedRole.runtimeProfile!!.compiledCorePrompt.isNotBlank())
+    }
+
+  @Test
+  fun invoke_usesCloudBeforeWaitingForLocalModelReadiness() =
+    runBlocking {
+      val cloudAdapter = SendMessageCloudAdapter(CloudGenerationResult(text = "Cloud moves first."))
+      val fixture =
+        createSendRoleplayFixture(
+          runtimeHelper = FailingRuntimeHelper(),
+          cloudAdapter = cloudAdapter,
+          modelInstance = null,
+        )
+
+      val result =
+        withTimeout(1_000) {
+          fixture.useCase(
+            sessionId = fixture.session.id,
+            model = fixture.model,
+            userInput = "Respond from cloud.",
+            enableStreamingOutput = false,
+            isStopRequested = { false },
+          )
+        }
+
+      assertNotNull(result.assistantMessage)
+      assertEquals(MessageStatus.COMPLETED, result.assistantMessage!!.status)
+      assertEquals("Cloud moves first.", result.assistantMessage!!.content)
+      assertEquals(1, cloudAdapter.requests.size)
+    }
+
+  @Test
+  fun invoke_generatesAudioContextBeforeCloudRequest() =
+    runBlocking {
+      val cloudAdapter = SendMessageCloudAdapter(CloudGenerationResult(text = "Cloud heard it."))
+      val fixture =
+        createSendRoleplayFixture(
+          runtimeHelper = StableRuntimeHelper(),
+          cloudAdapter = cloudAdapter,
+        )
+      val now = System.currentTimeMillis()
+      val audioFile = File.createTempFile("gemmatavern-audio-context", ".pcm")
+      audioFile.writeBytes(ByteArray(320) { index -> (index % 16).toByte() })
+      val userMessage =
+        Message(
+          id = "audio-user-1",
+          sessionId = fixture.session.id,
+          seq = 9,
+          side = MessageSide.USER,
+          kind = MessageKind.AUDIO,
+          status = MessageStatus.COMPLETED,
+          content = "Voice note",
+          metadataJson =
+            encodeRoleplayMessageMediaPayload(
+              RoleplayMessageMediaPayload(
+                attachments =
+                  listOf(
+                    RoleplayMessageAttachment(
+                      type = RoleplayMessageAttachmentType.AUDIO,
+                      filePath = audioFile.absolutePath,
+                      mimeType = "audio/raw",
+                      sampleRate = 16000,
+                      durationMs = 10L,
+                    )
+                  )
+              )
+            ),
+          createdAt = now,
+          updatedAt = now,
+        )
+      val assistantMessage =
+        Message(
+          id = "assistant-audio-2",
+          sessionId = fixture.session.id,
+          seq = 10,
+          side = MessageSide.ASSISTANT,
+          status = MessageStatus.STREAMING,
+          accepted = false,
+          isCanonical = false,
+          createdAt = now,
+          updatedAt = now,
+        )
+
+      val result =
+        fixture.useCase(
+          sessionId = fixture.session.id,
+          model = fixture.model,
+          userInput = "",
+          stagedTurn =
+            StagedRoleplayTurn(
+              userMessages = listOf(userMessage),
+              assistantMessage = assistantMessage,
+              combinedUserInput = "Use the voice note.",
+            ),
+          enableStreamingOutput = false,
+          isStopRequested = { false },
+        )
+
+      assertNotNull(result.assistantMessage)
+      assertEquals(MessageStatus.COMPLETED, result.assistantMessage!!.status)
+      assertEquals("Cloud heard it.", result.assistantMessage!!.content)
+      assertEquals(1, cloudAdapter.requests.size)
+      assertTrue(cloudAdapter.requests.single().messages.textContent().contains("Hold the line."))
     }
 
   @Test
@@ -312,6 +438,53 @@ private class StableRuntimeHelper : LlmModelHelper {
   override fun stopResponse(model: Model) = Unit
 }
 
+private class FailingRuntimeHelper : LlmModelHelper {
+  override fun initialize(
+    context: Context,
+    model: Model,
+    supportImage: Boolean,
+    supportAudio: Boolean,
+    onDone: (String) -> Unit,
+    systemInstruction: Contents?,
+    tools: List<ToolProvider>,
+    enableConversationConstrainedDecoding: Boolean,
+    coroutineScope: CoroutineScope?,
+  ) {
+    error("Local runtime should not initialize before cloud succeeds.")
+  }
+
+  override fun resetConversation(
+    model: Model,
+    supportImage: Boolean,
+    supportAudio: Boolean,
+    systemInstruction: Contents?,
+    tools: List<ToolProvider>,
+    enableConversationConstrainedDecoding: Boolean,
+  ) {
+    error("Local runtime should not reset before cloud succeeds.")
+  }
+
+  override fun cleanUp(model: Model, onDone: () -> Unit) {
+    error("Local runtime should not clean up before cloud succeeds.")
+  }
+
+  override fun runInference(
+    model: Model,
+    input: String,
+    resultListener: (partialResult: String, done: Boolean, partialThinkingResult: String?) -> Unit,
+    cleanUpListener: () -> Unit,
+    onError: (message: String) -> Unit,
+    images: List<Bitmap>,
+    audioClips: List<ByteArray>,
+    coroutineScope: CoroutineScope?,
+    extraContext: Map<String, String>?,
+  ) {
+    error("Local runtime should not run inference before cloud succeeds.")
+  }
+
+  override fun stopResponse(model: Model) = Unit
+}
+
 private class CapturingSequentialRuntimeHelper(
   private val responses: List<String>,
 ) : LlmModelHelper {
@@ -433,6 +606,9 @@ private data class SendRoleplayMessageTestFixture(
 
 private fun createSendRoleplayFixture(
   runtimeHelper: LlmModelHelper,
+  cloudInferenceCoordinator: CloudRoleplayInferenceCoordinator? = null,
+  cloudAdapter: CloudLlmProviderAdapter? = null,
+  modelInstance: Any? = Any(),
 ): SendRoleplayMessageTestFixture {
   val now = System.currentTimeMillis()
   val session = sendTestSession(turnCount = 8, now = now)
@@ -530,7 +706,10 @@ private fun createSendRoleplayFixture(
       ),
       summarizeSessionUseCase = summarizeSessionUseCase,
       extractMemoriesUseCase = extractMemoriesUseCase,
-      cloudInferenceCoordinator = disabledCloudInferenceCoordinator(conversationRepository),
+      cloudInferenceCoordinator =
+        cloudInferenceCoordinator
+          ?: cloudAdapter?.let { sendMessageCloudCoordinator(it, conversationRepository) }
+          ?: disabledCloudInferenceCoordinator(conversationRepository),
     )
   useCase.runtimeHelperResolver = { runtimeHelper }
   val model =
@@ -539,7 +718,7 @@ private fun createSendRoleplayFixture(
       downloadFileName = "test-model.bin",
       llmMaxToken = 4096,
     ).apply {
-      instance = Any()
+      instance = modelInstance
     }
   return SendRoleplayMessageTestFixture(
     useCase = useCase,
@@ -548,6 +727,86 @@ private fun createSendRoleplayFixture(
     session = session,
     model = model,
   )
+}
+
+private fun sendMessageCloudCoordinator(
+  adapter: CloudLlmProviderAdapter,
+  conversationRepository: ConversationRepository,
+): CloudRoleplayInferenceCoordinator {
+  val dataStoreRepository = FakeDataStoreRepository()
+  val credentialStore = SendMessageCloudCredentialStore()
+  val configRepository = CloudModelConfigRepository(dataStoreRepository, credentialStore)
+  val providerId = adapter.providerId
+  runBlocking {
+    configRepository.saveConfig(
+      CloudModelConfig(
+        enabled = true,
+        providerId = providerId,
+        modelName = "cloud-test-model",
+      )
+    )
+    configRepository.saveApiKey(providerId, "test-key")
+  }
+  return CloudRoleplayInferenceCoordinator(
+    configRepository = configRepository,
+    adapterResolver =
+      object : CloudProviderAdapterResolver {
+        override fun adapterFor(providerId: CloudProviderId): CloudLlmProviderAdapter? = adapter
+      },
+    networkStatusProvider =
+      object : CloudNetworkStatusProvider {
+        override fun isNetworkAvailable(): Boolean = true
+      },
+    providerHealthTracker = CloudProviderHealthTracker(),
+    conversationRepository = conversationRepository,
+    eventLogger = CloudRoleplayEventLogger(conversationRepository),
+  )
+}
+
+private class SendMessageCloudAdapter(
+  private val result: CloudGenerationResult,
+) : CloudLlmProviderAdapter {
+  override val providerId: CloudProviderId = CloudProviderId.DEEPSEEK
+  val requests = mutableListOf<CloudGenerationRequest>()
+
+  override fun defaultCapability(config: CloudModelConfig): CloudModelCapability {
+    return CloudModelCapability(supportsToolCalling = true)
+  }
+
+  override fun mapError(statusCode: Int, body: String?): CloudProviderError {
+    return CloudProviderError(CloudProviderErrorType.UNKNOWN, providerId, statusCode)
+  }
+
+  override suspend fun testConnection(config: CloudModelConfig, apiKey: String): CloudConnectionTestResult {
+    return CloudConnectionTestResult(providerId, success = true, modelName = config.modelName)
+  }
+
+  override suspend fun streamGenerate(
+    request: CloudGenerationRequest,
+    onEvent: suspend (CloudGenerationEvent) -> Unit,
+  ): CloudGenerationResult {
+    requests += request
+    if (result.text.isNotBlank()) {
+      onEvent(CloudGenerationEvent.TextDelta(result.text))
+    }
+    result.error?.let { error -> onEvent(CloudGenerationEvent.Failed(error)) }
+    onEvent(CloudGenerationEvent.Completed)
+    return result
+  }
+}
+
+private class SendMessageCloudCredentialStore : CloudCredentialStore {
+  private val secrets = mutableMapOf<String, String>()
+
+  override fun saveSecret(secretName: String, value: String) {
+    secrets[secretName] = value
+  }
+
+  override fun readSecret(secretName: String): String? = secrets[secretName]
+
+  override fun deleteSecret(secretName: String) {
+    secrets.remove(secretName)
+  }
 }
 
 private class SendMessageCompactionCacheRepository : CompactionCacheRepository {
@@ -918,5 +1177,11 @@ private fun sendTestMemoryAtom(
     createdAt = now,
     updatedAt = now,
   )
+
+private fun List<CloudMessage>.textContent(): String {
+  return flatMap(CloudMessage::parts)
+    .filterIsInstance<CloudContentPart.Text>()
+    .joinToString(separator = "\n", transform = CloudContentPart.Text::text)
+}
 
 private fun String.parseJsonObject(): JsonObject = JsonParser.parseString(this).asJsonObject
