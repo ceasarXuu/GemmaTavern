@@ -78,14 +78,6 @@ import net.openid.appauth.AuthorizationService
 import net.openid.appauth.ResponseTypeValues
 
 private const val TAG = "AGModelManagerViewModel"
-private const val TEXT_INPUT_HISTORY_MAX_SIZE = 50
-private const val MODEL_ALLOWLIST_FILENAME = "selfgemma_talk_model_allowlist.json"
-private const val MODEL_ALLOWLIST_TEST_FILENAME = "selfgemma_talk_model_allowlist_test.json"
-private const val IMPORTED_MODEL_MAX_CONTEXT_LENGTH = 4096
-private const val ALLOWLIST_BASE_URL =
-  "https://raw.githubusercontent.com/ceasarXuu/GemmaTavern/refs/heads/main/model_allowlists"
-
-private const val TEST_MODEL_ALLOW_LIST = ""
 
 data class ModelInitializationStatus(
   val status: ModelInitializationStatusType,
@@ -121,126 +113,6 @@ enum class TokenRequestResultType {
 data class TokenStatusAndData(val status: TokenStatus, val data: AccessTokenData?)
 
 data class TokenRequestResult(val status: TokenRequestResultType, val errorMessage: String? = null)
-
-internal fun runInitializationAfterOptionalCleanup(
-  hasExistingInstance: Boolean,
-  startCleanup: (onDone: () -> Unit) -> Unit,
-  startInitialization: () -> Unit,
-) {
-  if (hasExistingInstance) {
-    startCleanup(startInitialization)
-  } else {
-    startInitialization()
-  }
-}
-
-internal fun updatedImportedModelWithConfigValues(
-  importedModel: ImportedModel,
-  values: Map<String, Any>,
-): ImportedModel {
-  val llmConfig = importedModel.llmConfig
-  val selectedAccelerator = values.stringValue(ConfigKeys.ACCELERATOR.label)
-  val compatibleAccelerators =
-    reorderCompatibleAccelerators(
-      compatibleAccelerators = llmConfig.compatibleAcceleratorsList,
-      selectedAccelerator = selectedAccelerator,
-    )
-
-  return importedModel
-    .toBuilder()
-    .setLlmConfig(
-      llmConfig
-        .toBuilder()
-        .clearCompatibleAccelerators()
-        .addAllCompatibleAccelerators(compatibleAccelerators)
-        .setDefaultMaxTokens(
-          values.intValue(
-            key = ConfigKeys.MAX_TOKENS.label,
-            defaultValue = llmConfig.defaultMaxTokens.takeIf { it > 0 } ?: DEFAULT_MAX_TOKEN,
-          )
-        )
-        .setDefaultTopk(
-          values.intValue(
-            key = ConfigKeys.TOPK.label,
-            defaultValue = llmConfig.defaultTopk.takeIf { it > 0 } ?: DEFAULT_TOPK,
-          )
-        )
-        .setDefaultTopp(
-          values.floatValue(
-            key = ConfigKeys.TOPP.label,
-            defaultValue = llmConfig.defaultTopp.takeIf { it > 0f } ?: DEFAULT_TOPP,
-          )
-        )
-        .setDefaultTemperature(
-          values.floatValue(
-            key = ConfigKeys.TEMPERATURE.label,
-            defaultValue =
-              llmConfig.defaultTemperature.takeIf { it > 0f } ?: DEFAULT_TEMPERATURE,
-          )
-        )
-        .setDefaultEnableThinking(
-          values.booleanValue(
-            key = ConfigKeys.ENABLE_THINKING.label,
-            defaultValue = llmConfig.defaultEnableThinking,
-          )
-        )
-        .build()
-    )
-    .build()
-}
-
-private fun reorderCompatibleAccelerators(
-  compatibleAccelerators: List<String>,
-  selectedAccelerator: String?,
-): List<String> {
-  if (selectedAccelerator.isNullOrBlank()) {
-    return compatibleAccelerators
-  }
-  val normalizedSelection = selectedAccelerator.trim()
-  val existing = compatibleAccelerators.map { it.trim() }.filter { it.isNotEmpty() }
-  if (existing.isEmpty()) {
-    return listOf(normalizedSelection)
-  }
-  return buildList {
-    add(normalizedSelection)
-    addAll(existing.filterNot { it == normalizedSelection })
-  }
-}
-
-private fun Map<String, Any>.intValue(key: String, defaultValue: Int): Int {
-  return when (val value = get(key)) {
-    is Int -> value
-    is Float -> value.toInt()
-    is Double -> value.toInt()
-    is String -> value.toIntOrNull() ?: defaultValue
-    else -> defaultValue
-  }
-}
-
-private fun Map<String, Any>.floatValue(key: String, defaultValue: Float): Float {
-  return when (val value = get(key)) {
-    is Int -> value.toFloat()
-    is Float -> value
-    is Double -> value.toFloat()
-    is String -> value.toFloatOrNull() ?: defaultValue
-    else -> defaultValue
-  }
-}
-
-private fun Map<String, Any>.stringValue(key: String): String? {
-  return get(key)?.toString()?.takeIf { it.isNotBlank() }
-}
-
-private fun Map<String, Any>.booleanValue(key: String, defaultValue: Boolean): Boolean {
-  return when (val value = get(key)) {
-    is Boolean -> value
-    is Int -> value != 0
-    is Float -> value != 0f
-    is Double -> value != 0.0
-    is String -> value.equals("true", ignoreCase = true)
-    else -> defaultValue
-  }
-}
 
 data class ModelManagerUiState(
   /** A list of tasks available in the application. */
@@ -281,26 +153,6 @@ data class ModelManagerUiState(
       ModelInitializationStatusType.INITIALIZING
   }
 }
-
-private val RESET_CONVERSATION_TURN_COUNT_CONFIG =
-  NumberSliderConfig(
-    key = ConfigKeys.RESET_CONVERSATION_TURN_COUNT,
-    sliderMin = 1f,
-    sliderMax = 30f,
-    defaultValue = 3f,
-    valueType = ValueType.INT,
-  )
-
-private val PREDEFINED_LLM_TASK_ORDER =
-  listOf(
-    BuiltInTaskId.LLM_ASK_IMAGE,
-    BuiltInTaskId.LLM_ASK_AUDIO,
-    BuiltInTaskId.LLM_CHAT,
-    BuiltInTaskId.LLM_AGENT_CHAT,
-    BuiltInTaskId.LLM_PROMPT_LAB,
-    BuiltInTaskId.LLM_TINY_GARDEN,
-    BuiltInTaskId.LLM_MOBILE_ACTIONS,
-  )
 
 /**
  * ViewModel responsible for managing models, their download status, and initialization.
