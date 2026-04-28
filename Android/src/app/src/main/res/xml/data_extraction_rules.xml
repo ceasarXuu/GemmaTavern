@@ -13,21 +13,39 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+   Backup / cloud-restore policy.
+   See https://developer.android.com/about/versions/12/backup-restore
+
+   This app stores end-user PII locally:
+   - chat history & roleplay state in Room (selfgemma_talk.db)
+   - personas / cutouts / settings / skills in DataStore proto files
+     (selfgemma_talk_*.pb under files/datastore)
+   - cloud-LLM API keys in EncryptedSharedPreferences
+     (selfgemma_talk_cloud_credentials)
+   - HuggingFace OAuth state in AppAuth shared prefs
+   - downloaded model weights and persona/role media under files/ and
+     externalFiles/
+
+   None of the above should leave the device via Google Cloud Backup. The
+   policy below explicitly excludes every storage domain by listing root
+   excludes; nothing is whitelisted for cloud-backup. Device-to-device
+   transfer (during phone migration) is also denied because the encrypted
+   credentials and Room database are not portable across installs without
+   coordinated migration logic.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>

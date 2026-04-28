@@ -13,15 +13,15 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older that API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+   Legacy auto-backup rules (consulted on Android 11 and below). The app's
+   minSdk is 31 so this file is currently a no-op, but it is kept consistent
+   with data_extraction_rules.xml so that lowering minSdk in the future does
+   not silently regress the privacy posture.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
 </full-backup-content>
