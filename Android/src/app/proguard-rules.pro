@@ -28,3 +28,12 @@
 -keep class selfgemma.talk.domain.roleplay.model.RoleInteropState { *; }
 -keep class selfgemma.talk.domain.roleplay.model.RoleMediaProfile { *; }
 -keep class selfgemma.talk.domain.roleplay.model.RoleMediaAsset { *; }
+
+# Strip verbose/debug logs from release builds. Warnings/errors stay so crash
+# diagnostics still work, but Log.d/Log.v calls (which dominate UI/use-case
+# tracing) are removed by R8 to avoid leaking PII or hot-path overhead.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+}
+

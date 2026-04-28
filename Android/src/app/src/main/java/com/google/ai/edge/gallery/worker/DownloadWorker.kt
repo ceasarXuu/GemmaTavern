@@ -133,7 +133,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
             val connection = url.openConnection() as HttpURLConnection
             if (accessToken != null) {
-              Log.d(TAG, "Using access token: ${accessToken.subSequence(0, 10)}...")
+              // Intentionally do not log token contents (not even a prefix) to avoid PII leakage.
               connection.setRequestProperty("Authorization", "Bearer $accessToken")
             }
 
