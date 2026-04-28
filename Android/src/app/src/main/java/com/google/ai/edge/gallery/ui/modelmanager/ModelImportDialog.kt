@@ -99,6 +99,36 @@ private val SUPPORTED_ACCELERATORS: List<Accelerator> =
     listOf(Accelerator.CPU, Accelerator.GPU, Accelerator.NPU)
   }
 
+/**
+ * Reads a typed value out of the import dialog's [values] map for [key].
+ *
+ * If the key is missing (which would indicate IMPORT_CONFIGS_LLM and the runtime values map have
+ * drifted out of sync — e.g. after a schema change), this falls back to the config's declared
+ * default instead of crashing with NPE. A warning is logged so the regression is still visible.
+ */
+private inline fun <reified T> readImportValue(
+  values: Map<String, Any>,
+  key: ConfigKey,
+  valueType: ValueType,
+): T {
+  val raw = values[key.label]
+  val source =
+    if (raw != null) {
+      raw
+    } else {
+      val fallback =
+        IMPORT_CONFIGS_LLM.firstOrNull { it.key == key }?.defaultValue
+          ?: error("Missing import config value for key=${key.label} and no default registered")
+      Log.w(TAG, "Import dialog values map missing key=${key.label}; falling back to default")
+      fallback
+    }
+  val converted = convertValueToTargetType(value = source, valueType = valueType)
+  return converted as? T
+    ?: error(
+      "Import config value for key=${key.label} could not be coerced to ${T::class.simpleName}"
+    )
+}
+
 private val IMPORT_CONFIGS_LLM: List<Config> =
   listOf(
     LabelConfig(key = ConfigKeys.NAME),
@@ -218,66 +248,66 @@ fun ModelImportDialog(
           Button(
             onClick = {
               val supportedAccelerators =
-                (convertValueToTargetType(
-                    value = values.get(ConfigKeys.COMPATIBLE_ACCELERATORS.label)!!,
+                readImportValue<String>(
+                    values = values,
+                    key = ConfigKeys.COMPATIBLE_ACCELERATORS,
                     valueType = ValueType.STRING,
                   )
-                    as String)
                   .split(",")
               val defaultMaxTokens =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.DEFAULT_MAX_TOKENS.label)!!,
+                readImportValue<Int>(
+                  values = values,
+                  key = ConfigKeys.DEFAULT_MAX_TOKENS,
                   valueType = ValueType.INT,
                 )
-                  as Int
               val defaultTopk =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.DEFAULT_TOPK.label)!!,
+                readImportValue<Int>(
+                  values = values,
+                  key = ConfigKeys.DEFAULT_TOPK,
                   valueType = ValueType.INT,
                 )
-                  as Int
               val defaultTopp =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.DEFAULT_TOPP.label)!!,
+                readImportValue<Float>(
+                  values = values,
+                  key = ConfigKeys.DEFAULT_TOPP,
                   valueType = ValueType.FLOAT,
                 )
-                  as Float
               val defaultTemperature =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.DEFAULT_TEMPERATURE.label)!!,
+                readImportValue<Float>(
+                  values = values,
+                  key = ConfigKeys.DEFAULT_TEMPERATURE,
                   valueType = ValueType.FLOAT,
                 )
-                  as Float
               val supportImage =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.SUPPORT_IMAGE.label)!!,
+                readImportValue<Boolean>(
+                  values = values,
+                  key = ConfigKeys.SUPPORT_IMAGE,
                   valueType = ValueType.BOOLEAN,
                 )
-                  as Boolean
               val supportAudio =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.SUPPORT_AUDIO.label)!!,
+                readImportValue<Boolean>(
+                  values = values,
+                  key = ConfigKeys.SUPPORT_AUDIO,
                   valueType = ValueType.BOOLEAN,
                 )
-                  as Boolean
               val supportTinyGarden =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.SUPPORT_TINY_GARDEN.label)!!,
+                readImportValue<Boolean>(
+                  values = values,
+                  key = ConfigKeys.SUPPORT_TINY_GARDEN,
                   valueType = ValueType.BOOLEAN,
                 )
-                  as Boolean
               val supportMobileActions =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.SUPPORT_MOBILE_ACTIONS.label)!!,
+                readImportValue<Boolean>(
+                  values = values,
+                  key = ConfigKeys.SUPPORT_MOBILE_ACTIONS,
                   valueType = ValueType.BOOLEAN,
                 )
-                  as Boolean
               val supportThinking =
-                convertValueToTargetType(
-                  value = values.get(ConfigKeys.SUPPORT_THINKING.label)!!,
+                readImportValue<Boolean>(
+                  values = values,
+                  key = ConfigKeys.SUPPORT_THINKING,
                   valueType = ValueType.BOOLEAN,
                 )
-                  as Boolean
               val importedModel: ImportedModel =
                 ImportedModel.newBuilder()
                   .setFileName(fileName)
