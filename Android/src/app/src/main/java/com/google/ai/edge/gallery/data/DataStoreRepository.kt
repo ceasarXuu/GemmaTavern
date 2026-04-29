@@ -24,9 +24,6 @@ import selfgemma.talk.proto.Cutout
 import selfgemma.talk.proto.CutoutCollection
 import selfgemma.talk.proto.ImportedModel
 import selfgemma.talk.proto.Settings
-import selfgemma.talk.proto.StPersonaConnectionSettings
-import selfgemma.talk.proto.StPersonaDescriptorSettings
-import selfgemma.talk.proto.StUserProfileSettings
 import selfgemma.talk.proto.Skill
 import selfgemma.talk.proto.Skills
 import selfgemma.talk.proto.Theme
@@ -35,138 +32,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import selfgemma.talk.domain.cloudllm.CloudModelConfig
 import selfgemma.talk.domain.cloudllm.CloudProviderId
-import selfgemma.talk.domain.roleplay.model.StPersonaConnection
-import selfgemma.talk.domain.roleplay.model.StPersonaDescriptionPosition
-import selfgemma.talk.domain.roleplay.model.StPersonaDescriptor
 import selfgemma.talk.domain.roleplay.model.StUserProfile
 
 // TODO(b/423700720): Change to async (suspend) functions
-interface DataStoreRepository {
-  fun saveTextInputHistory(history: List<String>)
-
-  fun readTextInputHistory(): List<String>
-
-  fun saveTheme(theme: Theme)
-
-  fun readTheme(): Theme
-
-  fun saveSecret(key: String, value: String)
-
-  fun readSecret(key: String): String?
-
-  fun deleteSecret(key: String)
-
-  fun saveAccessTokenData(accessToken: String, refreshToken: String, expiresAt: Long)
-
-  fun clearAccessTokenData()
-
-  fun readAccessTokenData(): AccessTokenData?
-
-  fun saveImportedModels(importedModels: List<ImportedModel>)
-
-  fun readImportedModels(): List<ImportedModel>
-
-  fun isTosAccepted(): Boolean
-
-  fun acceptTos()
-
-  fun isGemmaTermsOfUseAccepted(): Boolean
-
-  fun acceptGemmaTermsOfUse()
-
-  fun getHasRunTinyGarden(): Boolean
-
-  fun setHasRunTinyGarden(hasRun: Boolean)
-
-  fun addCutout(cutout: Cutout)
-
-  fun getAllCutouts(): List<Cutout>
-
-  fun setCutout(newCutout: Cutout)
-
-  fun setCutouts(cutouts: List<Cutout>)
-
-  fun setHasSeenBenchmarkComparisonHelp(seen: Boolean)
-
-  fun getHasSeenBenchmarkComparisonHelp(): Boolean
-
-  fun setMessageSoundsEnabled(enabled: Boolean)
-
-  fun areMessageSoundsEnabled(): Boolean
-
-  fun setLiveTokenSpeedEnabled(enabled: Boolean)
-
-  fun isLiveTokenSpeedEnabled(): Boolean
-
-  fun setStreamingOutputEnabled(enabled: Boolean)
-
-  fun isStreamingOutputEnabled(): Boolean
-
-  fun setCloudModelConfig(config: CloudModelConfig)
-
-  fun getCloudModelConfig(): CloudModelConfig
-
-  fun setRoleplayToolDebugOutputEnabled(enabled: Boolean)
-
-  fun isRoleplayToolDebugOutputEnabled(): Boolean
-
-  fun setRoleplayLocationToolsEnabled(enabled: Boolean)
-
-  fun isRoleplayLocationToolsEnabled(): Boolean
-
-  fun setRoleplayCalendarToolsEnabled(enabled: Boolean)
-
-  fun isRoleplayCalendarToolsEnabled(): Boolean
-
-  fun setRoleplayToolEnabled(toolId: String, enabled: Boolean)
-
-  fun isRoleplayToolEnabled(toolId: String): Boolean
-
-  fun setAllRoleplayToolsEnabled(toolIds: Collection<String>, enabled: Boolean)
-
-  fun getDisabledRoleplayToolIds(): Set<String>
-
-  fun setRoleEditorAssistantModelId(modelId: String?)
-
-  fun getRoleEditorAssistantModelId(): String?
-
-  fun setLastUsedLlmModelId(modelId: String?)
-
-  fun getLastUsedLlmModelId(): String?
-
-  fun setStUserProfile(profile: StUserProfile)
-
-  fun getStUserProfile(): StUserProfile
-
-  fun addBenchmarkResult(result: BenchmarkResult)
-
-  fun getAllBenchmarkResults(): List<BenchmarkResult>
-
-  fun deleteBenchmarkResult(index: Int)
-
-  fun addSkill(skill: Skill)
-
-  fun setSkills(skills: List<Skill>)
-
-  fun setSkillSelected(skill: Skill, selected: Boolean)
-
-  fun setAllSkillsSelected(selected: Boolean)
-
-  fun getAllSkills(): List<Skill>
-
-  fun deleteSkill(name: String)
-
-  suspend fun deleteSkills(names: Set<String>)
-
-  /** Records that a promo with the specified ID has been viewed. */
-  fun addViewedPromoId(promoId: String)
-
-  /** Removes a viewed promo record. */
-  fun removeViewedPromoId(promoId: String)
-
-  /** Returns whether a promo with the specified ID has been viewed. */
-  fun hasViewedPromo(promoId: String): Boolean
-}
 
 /** Repository for managing data using Proto DataStore. */
 class DefaultDataStoreRepository(
@@ -483,60 +351,17 @@ class DefaultDataStoreRepository(
     }
   }
 
-  override fun setRoleplayToolEnabled(toolId: String, enabled: Boolean) {
-    if (toolId.isBlank()) {
-      return
-    }
-    runBlocking {
-      dataStore.updateData { settings ->
-        val disabledToolIds = settings.roleplayDisabledToolIdList.toMutableSet()
-        if (enabled) {
-          disabledToolIds.remove(toolId)
-        } else {
-          disabledToolIds.add(toolId)
-        }
-        settings
-          .toBuilder()
-          .clearRoleplayDisabledToolId()
-          .addAllRoleplayDisabledToolId(disabledToolIds.sorted())
-          .build()
-      }
-    }
-  }
+  override fun setRoleplayToolEnabled(toolId: String, enabled: Boolean) =
+    dataStore.setRoleplayToolEnabledBlocking(toolId, enabled)
 
-  override fun isRoleplayToolEnabled(toolId: String): Boolean {
-    if (toolId.isBlank()) {
-      return false
-    }
-    return runBlocking {
-      !dataStore.data.first().roleplayDisabledToolIdList.contains(toolId)
-    }
-  }
+  override fun isRoleplayToolEnabled(toolId: String): Boolean =
+    dataStore.isRoleplayToolEnabledBlocking(toolId)
 
-  override fun setAllRoleplayToolsEnabled(toolIds: Collection<String>, enabled: Boolean) {
-    val normalizedToolIds = toolIds.filter { it.isNotBlank() }.toSet()
-    runBlocking {
-      dataStore.updateData { settings ->
-        val disabledToolIds = settings.roleplayDisabledToolIdList.toMutableSet()
-        if (enabled) {
-          disabledToolIds.removeAll(normalizedToolIds)
-        } else {
-          disabledToolIds.addAll(normalizedToolIds)
-        }
-        settings
-          .toBuilder()
-          .clearRoleplayDisabledToolId()
-          .addAllRoleplayDisabledToolId(disabledToolIds.sorted())
-          .build()
-      }
-    }
-  }
+  override fun setAllRoleplayToolsEnabled(toolIds: Collection<String>, enabled: Boolean) =
+    dataStore.setAllRoleplayToolsEnabledBlocking(toolIds, enabled)
 
-  override fun getDisabledRoleplayToolIds(): Set<String> {
-    return runBlocking {
-      dataStore.data.first().roleplayDisabledToolIdList.toSet()
-    }
-  }
+  override fun getDisabledRoleplayToolIds(): Set<String> =
+    dataStore.getDisabledRoleplayToolIdsBlocking()
 
   override fun setRoleEditorAssistantModelId(modelId: String?) {
     runBlocking {
@@ -619,78 +444,21 @@ class DefaultDataStoreRepository(
     }
   }
 
-  override fun addSkill(skill: Skill) {
-    runBlocking {
-      skillsDataStore.updateData { skills ->
-        val newSkills = buildList {
-          add(skill)
-          addAll(skills.skillList)
-        }
-        skills.toBuilder().clearSkill().addAllSkill(newSkills).build()
-      }
-    }
-  }
+  override fun addSkill(skill: Skill) = skillsDataStore.addSkillBlocking(skill)
 
-  override fun setSkills(skills: List<Skill>) {
-    runBlocking {
-      skillsDataStore.updateData { curSkills ->
-        curSkills.toBuilder().clearSkill().addAllSkill(skills).build()
-      }
-    }
-  }
+  override fun setSkills(skills: List<Skill>) = skillsDataStore.setSkillsBlocking(skills)
 
-  override fun setSkillSelected(skill: Skill, selected: Boolean) {
-    runBlocking {
-      skillsDataStore.updateData { skills ->
-        val newSkills = mutableListOf<Skill>()
-        for (curSkill in skills.skillList) {
-          if (curSkill.name == skill.name) {
-            newSkills.add(curSkill.toBuilder().setSelected(selected).build())
-          } else {
-            newSkills.add(curSkill)
-          }
-        }
-        Skills.newBuilder().addAllSkill(newSkills).build()
-      }
-    }
-  }
+  override fun setSkillSelected(skill: Skill, selected: Boolean) =
+    skillsDataStore.setSkillSelectedBlocking(skill, selected)
 
-  override fun setAllSkillsSelected(selected: Boolean) {
-    runBlocking {
-      skillsDataStore.updateData { skills ->
-        val newSkills = mutableListOf<Skill>()
-        for (curSkill in skills.skillList) {
-          newSkills.add(curSkill.toBuilder().setSelected(selected).build())
-        }
-        Skills.newBuilder().addAllSkill(newSkills).build()
-      }
-    }
-  }
+  override fun setAllSkillsSelected(selected: Boolean) =
+    skillsDataStore.setAllSkillsSelectedBlocking(selected)
 
-  override fun getAllSkills(): List<Skill> {
-    return runBlocking { skillsDataStore.data.first().skillList }
-  }
+  override fun getAllSkills(): List<Skill> = skillsDataStore.getAllSkillsBlocking()
 
-  override fun deleteSkill(name: String) {
-    runBlocking {
-      skillsDataStore.updateData { skills ->
-        val newSkills = mutableListOf<Skill>()
-        for (skill in skills.skillList) {
-          if (skill.name != name) {
-            newSkills.add(skill)
-          }
-        }
-        Skills.newBuilder().addAllSkill(newSkills).build()
-      }
-    }
-  }
+  override fun deleteSkill(name: String) = skillsDataStore.deleteSkillBlocking(name)
 
-  override suspend fun deleteSkills(names: Set<String>) {
-    skillsDataStore.updateData { skills ->
-      val newSkills = skills.skillList.filter { it.name !in names }
-      skills.toBuilder().clearSkill().addAllSkill(newSkills).build()
-    }
-  }
+  override suspend fun deleteSkills(names: Set<String>) = skillsDataStore.deleteSkillsAsync(names)
 
   override fun addViewedPromoId(promoId: String) {
     runBlocking {
@@ -721,72 +489,4 @@ class DefaultDataStoreRepository(
   }
 }
 
-private fun StUserProfile.toProto(): StUserProfileSettings {
-  val profile = this
-  val personaDescriptionSettings = mutableMapOf<String, StPersonaDescriptorSettings>()
-  profile.personaDescriptions.forEach { (key, descriptorValue) ->
-    val descriptor: StPersonaDescriptor = descriptorValue
-    personaDescriptionSettings[key] = descriptor.toProto()
-  }
-  return StUserProfileSettings.newBuilder()
-    .setUserAvatarId(profile.resolvedUserAvatarId())
-    .apply {
-      profile.defaultPersonaId?.takeIf { it.isNotBlank() }?.let(::setDefaultPersonaId)
-      putAllPersonas(profile.personas)
-      putAllPersonaDescriptions(personaDescriptionSettings)
-    }
-    .build()
-}
 
-private fun StPersonaDescriptor.toProto(): StPersonaDescriptorSettings {
-  val descriptor = this
-  return StPersonaDescriptorSettings.newBuilder()
-    .setDescription(descriptor.description)
-    .setTitle(descriptor.title)
-    .setPosition(descriptor.position.rawValue)
-    .setDepth(descriptor.depth)
-    .setRole(descriptor.role)
-    .setLorebook(descriptor.lorebook)
-    .apply {
-      addAllConnections(descriptor.connections.map { connection ->
-        StPersonaConnectionSettings.newBuilder()
-          .setType(connection.type)
-          .setId(connection.id)
-          .build()
-      })
-      descriptor.avatarUri?.takeIf { it.isNotBlank() }?.let(::setAvatarUri)
-      descriptor.avatarEditorSourceUri?.takeIf { it.isNotBlank() }?.let(::setAvatarEditorSourceUri)
-      setAvatarCropZoom(descriptor.avatarCropZoom)
-      setAvatarCropOffsetX(descriptor.avatarCropOffsetX)
-      setAvatarCropOffsetY(descriptor.avatarCropOffsetY)
-    }
-    .build()
-}
-
-private fun StUserProfileSettings.toDomain(): StUserProfile {
-  return StUserProfile(
-    userAvatarId = userAvatarId,
-    defaultPersonaId = defaultPersonaId.takeIf { it.isNotBlank() },
-    personas = personasMap.toMap(),
-    personaDescriptions =
-      personaDescriptionsMap.mapValues { (_, descriptor) ->
-        StPersonaDescriptor(
-          description = descriptor.description,
-          title = descriptor.title,
-          position = StPersonaDescriptionPosition.fromRawValue(descriptor.position),
-          depth = descriptor.depth,
-          role = descriptor.role,
-          lorebook = descriptor.lorebook,
-          connections =
-            descriptor.connectionsList.map { connection ->
-              StPersonaConnection(type = connection.type, id = connection.id)
-            },
-          avatarUri = descriptor.avatarUri.takeIf { it.isNotBlank() },
-          avatarEditorSourceUri = descriptor.avatarEditorSourceUri.takeIf { it.isNotBlank() },
-          avatarCropZoom = descriptor.avatarCropZoom.takeIf { it > 0f } ?: 1f,
-          avatarCropOffsetX = descriptor.avatarCropOffsetX,
-          avatarCropOffsetY = descriptor.avatarCropOffsetY,
-        )
-      },
-  ).ensureDefaults()
-}

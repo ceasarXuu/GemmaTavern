@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,40 +114,6 @@ import selfgemma.talk.ui.theme.customColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-private enum class AddSkillOptionType {
-  FeaturedList,
-  RemoteUrl,
-  LocalImport,
-  ManualInput,
-}
-
-private data class AddSkillOption(
-  val type: AddSkillOptionType,
-  @StringRes val titleResId: Int,
-  @StringRes val descriptionResId: Int,
-  val icon: ImageVector,
-)
-
-private val ADD_SKILL_OPTIONS =
-  listOf(
-    AddSkillOption(
-      type = AddSkillOptionType.RemoteUrl,
-      titleResId = R.string.add_skill_option_url_title,
-      descriptionResId = R.string.add_skill_option_url_description,
-      icon = Icons.Rounded.Link,
-    ),
-    AddSkillOption(
-      type = AddSkillOptionType.LocalImport,
-      titleResId = R.string.add_skill_option_local_title,
-      descriptionResId = R.string.add_skill_option_local_description,
-      icon = Icons.Outlined.DriveFolderUpload,
-    ),
-  )
-
-val BUTTON_CONTENT_PADDING = PaddingValues(start = 12.dp, top = 2.dp, end = 12.dp, bottom = 2.dp)
-
-private const val TAG = "AGSkillManagerBottomSheet"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -274,77 +240,28 @@ fun SkillManagerBottomSheet(
             }
         ) {
           // Title or Multi-Select Context Bar.
-          if (inMultiSelectMode) {
-            Row(
-              modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              IconButton(
-                onClick = {
-                  inMultiSelectMode = false
-                  selectedCustomSkillNames.clear()
-                }
-              ) {
-                Icon(
-                  Icons.Rounded.Close,
-                  contentDescription = stringResource(R.string.cd_close_icon),
+          SkillManagerTitleBar(
+            inMultiSelectMode = inMultiSelectMode,
+            selectedCount = selectedCustomSkillNames.size,
+            onExitMultiSelect = {
+              inMultiSelectMode = false
+              selectedCustomSkillNames.clear()
+            },
+            onRequestDeleteSelected = {
+              if (selectedCustomSkillNames.isNotEmpty()) {
+                showDeleteSkillDialog = true
+              }
+            },
+            onClose = {
+              scope.launch {
+                sheetState.hide()
+                onDismiss(
+                  savedSelectedSkillsNamesAndDescriptions !=
+                    skillManagerViewModel.getSelectedSkillsNamesAndDescriptions()
                 )
               }
-              Text(
-                pluralStringResource(
-                  R.plurals.selected_custom_skills_count,
-                  selectedCustomSkillNames.size,
-                  selectedCustomSkillNames.size,
-                ),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f).padding(start = 8.dp),
-              )
-              IconButton(
-                modifier = Modifier.padding(end = 3.dp),
-                onClick = {
-                  if (selectedCustomSkillNames.isNotEmpty()) {
-                    showDeleteSkillDialog = true
-                  }
-                },
-              ) {
-                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete))
-              }
-            }
-          } else {
-            Row(
-              modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              Column(modifier = Modifier.weight(1f)) {
-                Text(
-                  stringResource(R.string.manage_skills),
-                  style = MaterialTheme.typography.titleLarge,
-                )
-                Text(
-                  stringResource(R.string.manage_skills_description),
-                  style = MaterialTheme.typography.bodyMedium,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-              }
-              IconButton(
-                modifier = Modifier.padding(end = 3.dp),
-                onClick = {
-                  scope.launch {
-                    sheetState.hide()
-                    onDismiss(
-                      savedSelectedSkillsNamesAndDescriptions !=
-                        skillManagerViewModel.getSelectedSkillsNamesAndDescriptions()
-                    )
-                  }
-                },
-              ) {
-                Icon(
-                  Icons.Rounded.Close,
-                  contentDescription = stringResource(R.string.cd_close_icon),
-                )
-              }
-            }
-          }
+            },
+          )
 
           Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -433,575 +350,121 @@ fun SkillManagerBottomSheet(
           // Content.
           //
           // Disable over-scroll "stretch" effect.
-          CompositionLocalProvider(LocalOverscrollFactory provides null) {
-            val builtInSkills =
-              remember(filteredSkills) { filteredSkills.filter { it.skill.builtIn } }
-            val customSkills =
-              remember(filteredSkills) { filteredSkills.filter { !it.skill.builtIn } }
-
-            Box(modifier = Modifier.weight(1f)) {
-              LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-              ) {
-                if (builtInSkills.isNotEmpty()) {
-                  item(key = "built_in_header") {
-                    Row(
-                      modifier =
-                        Modifier.fillMaxWidth()
-                          .clip(shape = RoundedCornerShape(20.dp))
-                          .clickable { isBuiltInExpanded = !isBuiltInExpanded }
-                          .padding(vertical = 12.dp, horizontal = 16.dp),
-                      verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                      Text(
-                        stringResource(R.string.built_in_skills_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                      )
-                      Icon(
-                        imageVector =
-                          if (isBuiltInExpanded) {
-                            Icons.Rounded.ExpandLess
-                          } else {
-                            Icons.Rounded.ExpandMore
-                          },
-                        contentDescription =
-                          if (isBuiltInExpanded) {
-                            stringResource(R.string.cd_collapse_icon)
-                          } else {
-                            stringResource(R.string.cd_expand_icon)
-                          },
-                      )
-                    }
-                  }
-                  if (isBuiltInExpanded) {
-                    items(builtInSkills, key = { it.skill.name }) { skillState ->
-                      SkillItemRow(
-                        skillState = skillState,
-                        inMultiSelectMode = inMultiSelectMode,
-                        isSelectedForDeletion = false,
-                        onSelectionCheckedChange = {},
-                        onLongClick = {},
-                        onSkillEnabledChange = { newCheckedState ->
-                          skillManagerViewModel.setSkillSelected(skillState, newCheckedState)
-                        },
-                        onViewClick = {
-                          skillToEditIndex = uiState.skills.indexOf(skillState)
-                          showAddOrEditSkillBottomSheet = true
-                        },
-                        onSecretClick = {
-                          skillToEditIndex = uiState.skills.indexOf(skillState)
-                          showSecretEditorDialog = true
-                        },
-                        onDeleteClick = {
-                          skillToDeleteName = skillState.skill.name
-                          showDeleteSkillDialog = true
-                        },
-                        uriHandler = uriHandler,
-                      )
-                    }
-                  }
-                }
-
-                if (customSkills.isNotEmpty()) {
-                  item(key = "custom_header") {
-                    Row(
-                      modifier =
-                        Modifier.fillMaxWidth()
-                          .clip(shape = RoundedCornerShape(20.dp))
-                          .clickable { isCustomExpanded = !isCustomExpanded }
-                          .padding(vertical = 12.dp, horizontal = 16.dp),
-                      verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                      Text(
-                        stringResource(R.string.custom_skills_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                      )
-                      Icon(
-                        imageVector =
-                          if (isCustomExpanded) {
-                            Icons.Rounded.ExpandLess
-                          } else {
-                            Icons.Rounded.ExpandMore
-                          },
-                        contentDescription =
-                          if (isCustomExpanded) {
-                            stringResource(R.string.cd_collapse_icon)
-                          } else {
-                            stringResource(R.string.cd_expand_icon)
-                          },
-                      )
-                    }
-                  }
-                  if (isCustomExpanded) {
-                    items(customSkills, key = { it.skill.name }) { skillState ->
-                      SkillItemRow(
-                        skillState = skillState,
-                        inMultiSelectMode = inMultiSelectMode,
-                        isSelectedForDeletion =
-                          selectedCustomSkillNames.contains(skillState.skill.name),
-                        onSelectionCheckedChange = { checked ->
-                          if (checked) {
-                            selectedCustomSkillNames.add(skillState.skill.name)
-                          } else {
-                            selectedCustomSkillNames.remove(skillState.skill.name)
-                            if (selectedCustomSkillNames.isEmpty()) inMultiSelectMode = false
-                          }
-                        },
-                        onLongClick = {
-                          if (!inMultiSelectMode) {
-                            inMultiSelectMode = true
-                            selectedCustomSkillNames.add(skillState.skill.name)
-                          }
-                        },
-                        onSkillEnabledChange = { newCheckedState ->
-                          skillManagerViewModel.setSkillSelected(skillState, newCheckedState)
-                        },
-                        onViewClick = {
-                          skillToEditIndex = uiState.skills.indexOf(skillState)
-                          showAddOrEditSkillBottomSheet = true
-                        },
-                        onSecretClick = {
-                          skillToEditIndex = uiState.skills.indexOf(skillState)
-                          showSecretEditorDialog = true
-                        },
-                        onDeleteClick = {
-                          skillToDeleteName = skillState.skill.name
-                          showDeleteSkillDialog = true
-                        },
-                        uriHandler = uriHandler,
-                      )
-                    }
-                  }
-                }
+          SkillsContent(
+            modifier = Modifier.weight(1f),
+            filteredSkills = filteredSkills,
+            listState = listState,
+            isBuiltInExpanded = isBuiltInExpanded,
+            onBuiltInToggle = { isBuiltInExpanded = !isBuiltInExpanded },
+            isCustomExpanded = isCustomExpanded,
+            onCustomToggle = { isCustomExpanded = !isCustomExpanded },
+            inMultiSelectMode = inMultiSelectMode,
+            isSelectedForDeletion = { name -> selectedCustomSkillNames.contains(name) },
+            onMultiSelectToggle = { name, checked ->
+              if (checked) {
+                selectedCustomSkillNames.add(name)
+              } else {
+                selectedCustomSkillNames.remove(name)
+                if (selectedCustomSkillNames.isEmpty()) inMultiSelectMode = false
               }
-
-              FloatingBanner(
-                visible = showSkillLimitBanner,
-                text =
-                  stringResource(
-                    R.string.skill_limit_warning,
-                    pluralStringResource(
-                      R.plurals.skills_count,
-                      MAX_RECOMMENDED_SKILL_COUNT,
-                      MAX_RECOMMENDED_SKILL_COUNT,
-                    ),
-                  ),
-                modifier = Modifier.align(Alignment.TopCenter),
-              )
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (showDeleteSkillDialog) {
-    AlertDialog(
-      onDismissRequest = { showDeleteSkillDialog = false },
-      title = {
-        Text(
-          if (inMultiSelectMode) stringResource(R.string.delete_selected_skills_title)
-          else stringResource(R.string.delete_skill_dialog_title)
-        )
-      },
-      text = {
-        Text(
-          if (inMultiSelectMode)
-            pluralStringResource(
-              R.plurals.delete_selected_skills_content,
-              selectedCustomSkillNames.size,
-              selectedCustomSkillNames.size,
-            )
-          else stringResource(R.string.delete_skill_dialog_content)
-        )
-      },
-      confirmButton = {
-        Button(
-          onClick = {
-            if (inMultiSelectMode) {
-              skillManagerViewModel.deleteSkills(selectedCustomSkillNames.toSet())
-              inMultiSelectMode = false
-              selectedCustomSkillNames.clear()
-            } else {
-              skillManagerViewModel.deleteSkill(name = skillToDeleteName)
-            }
-            showDeleteSkillDialog = false
-          },
-          colors =
-            ButtonDefaults.buttonColors(
-              containerColor = MaterialTheme.customColors.errorTextColor,
-              contentColor = Color.White,
-            ),
-        ) {
-          Text(stringResource(R.string.delete))
-        }
-      },
-      dismissButton = {
-        OutlinedButton(onClick = { showDeleteSkillDialog = false }) {
-          Text(stringResource(R.string.cancel))
-        }
-      },
-    )
-  }
-
-  if (showAddSkillFromUrlDialog) {
-    AddSkillFromUrlDialog(
-      skillManagerViewModel = skillManagerViewModel,
-      onDismissRequest = { showAddSkillFromUrlDialog = false },
-      onSuccess = { scrollToBottomOfList(scope, listState) },
-    )
-  }
-
-  if (showAddSkillFromFeaturedListBottomSheet) {
-    AddSkillFromFeatureListBottomSheet(
-      skillManagerViewModel = skillManagerViewModel,
-      onDismiss = { showAddSkillFromFeaturedListBottomSheet = false },
-      onSkillAdded = { scrollToBottomOfList(scope, listState) },
-    )
-  }
-
-  if (showAddSkillFromLocalImportDialog) {
-    AddSkillFromLocalImportDialog(
-      skillManagerViewModel = skillManagerViewModel,
-      onDismissRequest = { showAddSkillFromLocalImportDialog = false },
-      onSuccess = { scrollToBottomOfList(scope, listState) },
-    )
-  }
-
-  if (showAddOrEditSkillBottomSheet) {
-    AddOrEditSkillBottomSheet(
-      skillManagerViewModel = skillManagerViewModel,
-      skillIndex = if (skillToEditIndex != -1) skillToEditIndex else uiState.skills.size,
-      onDismiss = {
-        showAddOrEditSkillBottomSheet = false
-        skillToEditIndex = -1
-      },
-      onSuccess = {
-        scrollToBottomOfList(scope, listState)
-        skillToEditIndex = -1
-      },
-    )
-  }
-
-  if (showAddSkillOptionsSheet) {
-    AddSkillOptionsBottomSheet(
-      onDismiss = { showAddSkillOptionsSheet = false },
-      onOptionSelected = { option ->
-        skillManagerViewModel.setValidationError(null)
-        addSkillOptionTypeToConfirm = option.type
-        when (option.type) {
-          AddSkillOptionType.FeaturedList -> {
-            showAddSkillFromFeaturedListBottomSheet = true
-          }
-          AddSkillOptionType.RemoteUrl -> {
-            showAddSkillFromUrlDialog = true
-          }
-          AddSkillOptionType.LocalImport -> {
-            showDisclaimerDialog = true
-          }
-          else -> {}
-        }
-        showAddSkillOptionsSheet = false
-      },
-    )
-  }
-
-  if (showJsSkillTesterBottomSheet) {
-    skillToTest?.let { skill ->
-      SkillTesterBottomSheet(
-        agentTools = agentTools,
-        skill = skill,
-        onDismiss = { showJsSkillTesterBottomSheet = false },
-      )
-    }
-  }
-
-  if (showSecretEditorDialog) {
-    val skillState = uiState.skills.getOrNull(skillToEditIndex)
-    skillState?.let {
-      var curSecret by remember {
-        mutableStateOf(
-          skillManagerViewModel.dataStoreRepository.readSecret(
-            getSkillSecretKey(skillName = it.skill.name)
-          ) ?: ""
-        )
-      }
-      SecretEditorDialog(
-        title = stringResource(R.string.edit_secret),
-        fieldLabel = skillState.skill.requireSecretDescription,
-        value = curSecret,
-        onValueChange = { curSecret = it },
-        onDone = {
-          skillManagerViewModel.dataStoreRepository.saveSecret(
-            key = getSkillSecretKey(skillName = it.skill.name),
-            value = curSecret,
-          )
-          showSecretEditorDialog = false
-        },
-        onDismiss = { showSecretEditorDialog = false },
-      )
-    }
-  }
-
-  if (showDisclaimerDialog) {
-    AddSkillDisclaimerDialog(
-      onDismiss = {
-        showDisclaimerDialog = false
-        addSkillOptionTypeToConfirm = null
-      },
-      onConfirm = {
-        addSkillOptionTypeToConfirm?.let { type ->
-          if (type == AddSkillOptionType.LocalImport) {
-            showAddSkillFromLocalImportDialog = true
-          }
-        }
-        showDisclaimerDialog = false
-        addSkillOptionTypeToConfirm = null
-      },
-    )
-  }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun SkillItemRow(
-  skillState: SkillState,
-  inMultiSelectMode: Boolean,
-  isSelectedForDeletion: Boolean,
-  onSelectionCheckedChange: (Boolean) -> Unit,
-  onLongClick: () -> Unit,
-  onSkillEnabledChange: (Boolean) -> Unit,
-  onViewClick: () -> Unit,
-  onSecretClick: () -> Unit,
-  onDeleteClick: () -> Unit,
-  uriHandler: androidx.compose.ui.platform.UriHandler,
-) {
-  val skill = skillState.skill
-  val isCustom = !skill.builtIn
-
-  Row(
-    modifier =
-      Modifier.fillMaxWidth()
-        .then(if (inMultiSelectMode && skill.builtIn) Modifier.alpha(0.5f) else Modifier)
-        .clip(shape = RoundedCornerShape(20.dp))
-        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-        .then(
-          if (isCustom) {
-            Modifier.combinedClickable(
-              onClick = {
-                if (inMultiSelectMode) {
-                  onSelectionCheckedChange(!isSelectedForDeletion)
-                }
-              },
-              onLongClick = onLongClick,
-            )
-          } else Modifier
-        )
-        .padding(horizontal = 16.dp, vertical = 12.dp),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    if (inMultiSelectMode && isCustom) {
-      Checkbox(
-        checked = isSelectedForDeletion,
-        onCheckedChange = onSelectionCheckedChange,
-        modifier = Modifier.padding(end = 12.dp),
-      )
-    }
-
-    Column(modifier = Modifier.weight(1f)) {
-      Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Name and description.
-        Column(
-          modifier = Modifier.weight(1f).padding(top = 2.dp),
-          verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            val hasHomepage = !skill.homepage.isBlank()
-            val textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-
-            if (hasHomepage) {
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-              ) {
-                Text(
-                  skill.name,
-                  style =
-                    textStyle.copy(
-                      color = MaterialTheme.colorScheme.primary,
-                      textDecoration = TextDecoration.Underline,
-                    ),
-                  color = MaterialTheme.customColors.linkColor,
-                  modifier = Modifier.clickable { uriHandler.openUri(skill.homepage) },
-                )
-                Icon(
-                  Icons.AutoMirrored.Outlined.OpenInNew,
-                  contentDescription = null,
-                  modifier = Modifier.size(16.dp),
-                  tint = MaterialTheme.customColors.linkColor,
-                )
+            },
+            onMultiSelectStart = { name ->
+              if (!inMultiSelectMode) {
+                inMultiSelectMode = true
+                selectedCustomSkillNames.add(name)
               }
-            } else {
-              Text(skill.name, style = textStyle)
-            }
-          }
-          Text(
-            (skill.description ?: "").replace("\n", " "),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            },
+            onSkillEnabledChange = { skillState, checked ->
+              skillManagerViewModel.setSkillSelected(skillState, checked)
+            },
+            onViewClick = { skillState ->
+              skillToEditIndex = uiState.skills.indexOf(skillState)
+              showAddOrEditSkillBottomSheet = true
+            },
+            onSecretClick = { skillState ->
+              skillToEditIndex = uiState.skills.indexOf(skillState)
+              showSecretEditorDialog = true
+            },
+            onDeleteClick = { name ->
+              skillToDeleteName = name
+              showDeleteSkillDialog = true
+            },
+            uriHandler = uriHandler,
+            showSkillLimitBanner = showSkillLimitBanner,
           )
         }
-
-        // Select switch.
-        Switch(
-          checked = skill.selected,
-          onCheckedChange = onSkillEnabledChange,
-          modifier = Modifier.offset(y = (-4).dp),
-          enabled = !inMultiSelectMode,
-        )
       }
+    }
+  }
 
-      // Buttons row.
-      AnimatedVisibility(visible = !inMultiSelectMode) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.Start,
-          modifier = Modifier.padding(top = 8.dp),
-        ) {
-          // Edit.
-          FilledTonalButton(
-            onClick = onViewClick,
-            modifier = Modifier.height(32.dp).padding(end = 8.dp),
-            contentPadding = BUTTON_CONTENT_PADDING,
-          ) {
-            Icon(
-              Icons.Outlined.RemoveRedEye,
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.size(18.dp),
-            )
-            Text(
-              stringResource(R.string.view),
-              style = MaterialTheme.typography.labelMedium,
-              modifier = Modifier.padding(start = 4.dp),
-            )
-          }
 
-          if (skill.requireSecret) {
-            // Edit secret.
-            FilledTonalButton(
-              onClick = onSecretClick,
-              modifier = Modifier.height(32.dp).padding(end = 8.dp),
-              contentPadding = BUTTON_CONTENT_PADDING,
-            ) {
-              Icon(
-                Icons.Outlined.VpnKey,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-              )
-              Text(
-                stringResource(R.string.secret),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(start = 4.dp),
-              )
-            }
-          }
-
-          // Buttons only for non-builtin skills.
-          if (!skill.builtIn) {
-            // Delete.
-            OutlinedButton(
-              onClick = onDeleteClick,
-              modifier = Modifier.height(32.dp),
-              contentPadding = BUTTON_CONTENT_PADDING,
-            ) {
-              Icon(
-                Icons.Outlined.Delete,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-              )
-              Text(
-                stringResource(R.string.delete),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(start = 4.dp),
-              )
-            }
-          }
+  SkillManagerDialogs(
+    agentTools = agentTools,
+    skillManagerViewModel = skillManagerViewModel,
+    uiState = uiState,
+    listState = listState,
+    showDeleteSkillDialog = showDeleteSkillDialog,
+    inMultiSelectMode = inMultiSelectMode,
+    selectedCustomSkillNames = selectedCustomSkillNames,
+    skillToDeleteName = skillToDeleteName,
+    onDeleteDialogDismiss = { showDeleteSkillDialog = false },
+    onDeleteConfirmed = {
+      if (inMultiSelectMode) {
+        skillManagerViewModel.deleteSkills(selectedCustomSkillNames.toSet())
+        inMultiSelectMode = false
+        selectedCustomSkillNames.clear()
+      } else {
+        skillManagerViewModel.deleteSkill(name = skillToDeleteName)
+      }
+      showDeleteSkillDialog = false
+    },
+    showAddSkillFromUrlDialog = showAddSkillFromUrlDialog,
+    onAddSkillFromUrlDismiss = { showAddSkillFromUrlDialog = false },
+    showAddSkillFromFeaturedListBottomSheet = showAddSkillFromFeaturedListBottomSheet,
+    onAddSkillFromFeaturedListDismiss = { showAddSkillFromFeaturedListBottomSheet = false },
+    showAddSkillFromLocalImportDialog = showAddSkillFromLocalImportDialog,
+    onAddSkillFromLocalImportDismiss = { showAddSkillFromLocalImportDialog = false },
+    showAddOrEditSkillBottomSheet = showAddOrEditSkillBottomSheet,
+    skillToEditIndex = skillToEditIndex,
+    onAddOrEditDismiss = {
+      showAddOrEditSkillBottomSheet = false
+      skillToEditIndex = -1
+    },
+    onAddOrEditSuccess = {
+      scrollToBottomOfList(scope, listState)
+      skillToEditIndex = -1
+    },
+    showAddSkillOptionsSheet = showAddSkillOptionsSheet,
+    onAddSkillOptionsDismiss = { showAddSkillOptionsSheet = false },
+    onAddSkillOptionSelected = { option ->
+      skillManagerViewModel.setValidationError(null)
+      addSkillOptionTypeToConfirm = option.type
+      when (option.type) {
+        AddSkillOptionType.FeaturedList -> { showAddSkillFromFeaturedListBottomSheet = true }
+        AddSkillOptionType.RemoteUrl -> { showAddSkillFromUrlDialog = true }
+        AddSkillOptionType.LocalImport -> { showDisclaimerDialog = true }
+        else -> {}
+      }
+      showAddSkillOptionsSheet = false
+    },
+    showJsSkillTesterBottomSheet = showJsSkillTesterBottomSheet,
+    skillToTest = skillToTest,
+    onJsSkillTesterDismiss = { showJsSkillTesterBottomSheet = false },
+    showSecretEditorDialog = showSecretEditorDialog,
+    onSecretEditorDismiss = { showSecretEditorDialog = false },
+    showDisclaimerDialog = showDisclaimerDialog,
+    onDisclaimerDismiss = {
+      showDisclaimerDialog = false
+      addSkillOptionTypeToConfirm = null
+    },
+    onDisclaimerConfirm = {
+      addSkillOptionTypeToConfirm?.let { type ->
+        if (type == AddSkillOptionType.LocalImport) {
+          showAddSkillFromLocalImportDialog = true
         }
       }
-    }
-  }
-}
-
-private fun scrollToBottomOfList(scope: CoroutineScope, listState: LazyListState) {
-  scope.launch {
-    // Scroll to the bottom of the LazyColumn.
-    delay(300)
-    if (listState.layoutInfo.totalItemsCount > 0) {
-      listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
-    }
-  }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddSkillOptionsBottomSheet(
-  onDismiss: () -> Unit,
-  onOptionSelected: (AddSkillOption) -> Unit,
-) {
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-  ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-    Column(modifier = Modifier.padding(bottom = 16.dp)) {
-      Text(
-        stringResource(R.string.add_skill),
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(bottom = 16.dp).padding(horizontal = 16.dp),
-      )
-      Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ADD_SKILL_OPTIONS.forEach { option ->
-          Row(
-            modifier =
-              Modifier.fillMaxWidth()
-                .clickable {
-                  onOptionSelected(option)
-                  firebaseAnalytics?.logEvent(
-                    AnalyticsEvent.BUTTON_CLICKED.id,
-                    Bundle().apply {
-                      putString("event_type", "agent_skills_add_skill")
-                      putString("button_id", option.type.toString())
-                    },
-                  )
-                  onDismiss()
-                }
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-          ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-              // Row for Icon and Title
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(bottom = 4.dp),
-              ) {
-                Icon(option.icon, contentDescription = null, modifier = Modifier.size(24.dp))
-                Text(stringResource(option.titleResId), style = MaterialTheme.typography.bodyLarge)
-              }
-              // Description Text
-              Text(
-                stringResource(option.descriptionResId),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 40.dp),
-              )
-            }
-          }
-        }
-      }
-    }
-  }
+      showDisclaimerDialog = false
+      addSkillOptionTypeToConfirm = null
+    },
+  )
 }

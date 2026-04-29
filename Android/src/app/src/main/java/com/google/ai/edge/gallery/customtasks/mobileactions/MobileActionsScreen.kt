@@ -17,12 +17,10 @@ package selfgemma.talk.customtasks.mobileactions
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -135,83 +133,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 private const val TAG = "AGMAScreen"
-
-data class PromptTemplate(@StringRes val labelResId: Int, val prompt: String)
-
-private val PROMPT_TEMPLATES =
-  listOf(
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_flash_on,
-      prompt = "Turn on flashlight",
-    ),
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_flash_off,
-      prompt = "Turn off flashlight",
-    ),
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_create_contact,
-      prompt =
-        "Create contact John Smith with email address js@example.com and phone number 123 456 7890.",
-    ),
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_send_email,
-      prompt =
-        "Send an email to js@example.com with subject \"Meeting\" and body \"Hi John, let's meet at 3pm tomorrow.\"",
-    ),
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_create_calendar_event,
-      prompt = "Create a calendar event at 2:30pm tomorrow for \"team meeting\"",
-    ),
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_show_location_on_map,
-      prompt = "Show Googleplex on map",
-    ),
-    PromptTemplate(
-      labelResId = R.string.prompt_template_label_open_wifi_settings,
-      prompt = "Open WIFI settings",
-    ),
-  )
-
-private data class SampleActionItem(@StringRes val labelResId: Int, val icon: ImageVector)
-
-private val SAMPLE_ACTION_ITEMS =
-  listOf(
-    SampleActionItem(
-      labelResId = R.string.prompt_template_label_flash_on_off,
-      icon = Icons.Outlined.FlashlightOn,
-    ),
-    SampleActionItem(
-      labelResId = R.string.prompt_template_label_create_contact,
-      icon = Icons.Outlined.PersonAdd,
-    ),
-    SampleActionItem(
-      labelResId = R.string.prompt_template_label_send_email,
-      icon = Icons.Outlined.Email,
-    ),
-    SampleActionItem(
-      labelResId = R.string.prompt_template_label_create_calendar_event,
-      icon = Icons.Outlined.CalendarMonth,
-    ),
-    SampleActionItem(
-      labelResId = R.string.prompt_template_label_show_location_on_map,
-      icon = Icons.Outlined.Map,
-    ),
-    SampleActionItem(
-      labelResId = R.string.prompt_template_label_open_wifi_settings,
-      icon = Icons.Outlined.Wifi,
-    ),
-  )
-
-private data class Tab(@StringRes val labelResId: Int, val icon: ImageVector)
-
-private val TABS =
-  listOf(
-    Tab(
-      labelResId = R.string.mobile_actions_tab_model_response,
-      icon = Icons.AutoMirrored.Rounded.Article,
-    ),
-    Tab(labelResId = R.string.mobile_actions_tab_function_called, icon = Icons.Rounded.Functions),
-  )
 
 /**
  * A Composable function that displays the MobileActions screen.
@@ -431,47 +352,10 @@ fun MainUi(
       ) {
         // Message shown when no prompt has been processed yet.
         if (uiState.showWelcomeMessage) {
-          Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-            Column(
-              horizontalAlignment = Alignment.CenterHorizontally,
-              modifier = Modifier.fillMaxWidth(),
-            ) {
-              Text(
-                stringResource(R.string.mobile_actions_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = getTaskIconColor(task = task),
-              )
-              Text(
-                stringResource(R.string.mobile_actions_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = getTaskIconColor(task = task),
-              )
-              Column {
-                Text(
-                  stringResource(R.string.mobile_actions_supported_actions),
-                  style = MaterialTheme.typography.labelLarge,
-                  modifier =
-                    Modifier.padding(top = 64.dp, bottom = 8.dp).graphicsLayer { alpha = 0.7f },
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                for (item in SAMPLE_ACTION_ITEMS) {
-                  Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                      item.icon,
-                      contentDescription = null,
-                      modifier = Modifier.size(24.dp).padding(end = 8.dp),
-                      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                      stringResource(item.labelResId),
-                      style = MaterialTheme.typography.labelLarge,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                  }
-                }
-              }
-            }
-          }
+          MobileActionsWelcomeBlock(
+            task = task,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+          )
         }
         // Current user prompt and model response.
         else {
@@ -500,123 +384,16 @@ fun MainUi(
           }
           // Response.
           else {
-            // Tab bar.
-            Row(modifier = Modifier.fillMaxWidth()) {
-              PrimaryTabRow(
-                selectedTabIndex = selectedTabIndex,
-                containerColor = Color.Transparent,
-                indicator = {
-                  TabRowDefaults.PrimaryIndicator(
-                    modifier =
-                      Modifier.tabIndicatorOffset(selectedTabIndex, matchContentSize = true),
-                    color = taskColor,
-                    width = Dp.Unspecified,
-                  )
-                },
-              ) {
-                for ((index, tab) in TABS.withIndex()) {
-                  val enabled = index == 0 || (index == 1 && !uiState.noFunctionRecognized)
-                  Tab(
-                    selected = selectedTabIndex == index,
-                    enabled = enabled,
-                    onClick = { selectedTabIndex = index },
-                    modifier = Modifier.graphicsLayer { alpha = if (enabled) 1f else 0.3f },
-                    text = {
-                      Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                      ) {
-                        val titleColor =
-                          if (selectedTabIndex == index) taskColor
-                          else MaterialTheme.colorScheme.onSurfaceVariant
-                        Icon(
-                          tab.icon,
-                          contentDescription = null,
-                          modifier = Modifier.size(16.dp).alpha(0.7f),
-                          tint = titleColor,
-                        )
-                        BasicText(
-                          text = stringResource(tab.labelResId),
-                          maxLines = 1,
-                          color = { titleColor },
-                          style =
-                            MaterialTheme.typography.bodyMedium.copy(
-                              fontWeight = FontWeight.Medium
-                            ),
-                          autoSize =
-                            TextAutoSize.StepBased(
-                              minFontSize = 9.sp,
-                              maxFontSize = 14.sp,
-                              stepSize = 1.sp,
-                            ),
-                        )
-                      }
-                    },
-                  )
-                }
-              }
-            }
-
-            // Content.
-            Column(
-              modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-            ) {
-              AnimatedContent(
-                selectedTabIndex,
-                transitionSpec = {
-                  if (targetState > initialState) {
-                    slideInHorizontally { 40 } + fadeIn() togetherWith
-                      slideOutHorizontally { -40 } + fadeOut(animationSpec = tween(50))
-                  } else {
-                    slideInHorizontally { -40 } + fadeIn() togetherWith
-                      slideOutHorizontally { 40 } + fadeOut(animationSpec = tween(50))
-                  }
-                },
-                modifier = Modifier.weight(1f),
-              ) {
-                // Model response.
-                if (selectedTabIndex == 0) {
-                  Column(modifier = Modifier.fillMaxWidth()) {
-                    val cdResponse = stringResource(R.string.cd_model_response_text)
-                    MarkdownText(
-                      text = uiState.modelResponse,
-                      modifier =
-                        Modifier.semantics(mergeDescendants = true) {
-                            contentDescription = cdResponse
-                            // Only announce when message is complete.
-                            if (doneGeneratingResponse) {
-                              liveRegion = LiveRegionMode.Polite
-                            }
-                          }
-                          .padding(16.dp),
-                    )
-
-                    if (uiState.noFunctionRecognized) {
-                      MessageBodyWarning(
-                        ChatMessageWarning(
-                          content = stringResource(R.string.warning_no_function_call)
-                        )
-                      )
-                    }
-                  }
-                }
-                // Function called.
-                else if (selectedTabIndex == 1) {
-                  Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                  ) {
-                    for ((index, details) in uiState.functionCallDetails.withIndex()) {
-                      MarkdownText(text = details, modifier = Modifier.padding(16.dp))
-
-                      if (index != uiState.functionCallDetails.size - 1) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            MobileActionsResponseTabs(
+              selectedTabIndex = selectedTabIndex,
+              onTabSelected = { selectedTabIndex = it },
+              taskColor = taskColor,
+              noFunctionRecognized = uiState.noFunctionRecognized,
+              modelResponse = uiState.modelResponse,
+              functionCallDetails = uiState.functionCallDetails,
+              doneGeneratingResponse = doneGeneratingResponse,
+              modifier = Modifier.weight(1f),
+            )
           }
         }
 
@@ -625,33 +402,10 @@ fun MainUi(
           verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
           // A list of prompt templates.
-          Row(
-            modifier =
-              Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).graphicsLayer {
-                alpha = if (uiState.processing) 0.5f else 1f
-              },
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-          ) {
-            Spacer(modifier = Modifier.width(12.dp))
-            for (item in PROMPT_TEMPLATES) {
-              Text(
-                stringResource(item.labelResId),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.labelLarge,
-                modifier =
-                  Modifier.clip(RoundedCornerShape(12.dp))
-                    .clickable(enabled = !uiState.processing) { send(item.prompt) }
-                    .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
-                    .border(
-                      width = 1.dp,
-                      color = MaterialTheme.colorScheme.outlineVariant,
-                      shape = RoundedCornerShape(12.dp),
-                    )
-                    .padding(all = 12.dp),
-              )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-          }
+          MobileActionsPromptTemplateChips(
+            processing = uiState.processing,
+            onPromptClick = { send(it) },
+          )
 
           // Text and voice Input.
           Row(
@@ -698,59 +452,28 @@ fun MainUi(
   }
 
   if (showErrorDialog) {
-    AlertDialog(
-      title = { Text(stringResource(R.string.error)) },
-      text = { Text(errorDialogContent, style = MaterialTheme.typography.bodyMedium) },
-      onDismissRequest = {
+    MobileActionsResetEngineDialog(
+      errorDialogContent = errorDialogContent,
+      taskColor = taskColor,
+      onDismiss = {
         showErrorDialog = false
         errorDialogContent = ""
       },
-      dismissButton = {
-        TextButton(
-          onClick = {
-            showErrorDialog = false
-            errorDialogContent = ""
-          }
-        ) {
-          Text(stringResource(R.string.cancel))
-        }
-      },
-      confirmButton = {
-        Button(
-          onClick = {
-            showErrorDialog = false
-            errorDialogContent = ""
+      onConfirm = {
+        showErrorDialog = false
+        errorDialogContent = ""
 
-            viewModel.resetEngine(
-              context = context,
-              model = model,
-              tools = tools,
-              modelManagerViewModel = modelManagerViewModel,
-              onError = {
-                errorDialogContent = it
-                showErrorDialog = true
-              },
-            )
+        viewModel.resetEngine(
+          context = context,
+          model = model,
+          tools = tools,
+          modelManagerViewModel = modelManagerViewModel,
+          onError = {
+            errorDialogContent = it
+            showErrorDialog = true
           },
-          colors = ButtonDefaults.buttonColors(containerColor = taskColor),
-        ) {
-          Text(stringResource(R.string.reset), color = Color.White)
-        }
+        )
       },
     )
   }
-}
-
-private fun genFormattedFunctionCall(action: Action, resources: Resources): String {
-  val strFunctionName = action.functionCallDetails.functionName
-  val functionNameLabel = resources.getString(R.string.function_name)
-  var content = "**$functionNameLabel**:\n- $strFunctionName"
-  if (action.functionCallDetails.parameters.isNotEmpty()) {
-    val parametersLabel =
-      resources.getQuantityString(R.plurals.parameter, action.functionCallDetails.parameters.size)
-    val strParameters =
-      action.functionCallDetails.parameters.joinToString("\n") { "- ${it.first}: \"${it.second}\"" }
-    content += "\n\n**$parametersLabel**:\n$strParameters"
-  }
-  return content
 }
