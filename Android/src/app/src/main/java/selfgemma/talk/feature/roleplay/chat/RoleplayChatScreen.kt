@@ -472,50 +472,15 @@ fun RoleplayChatScreen(
           subtitle = tokenSpeedSubtitle,
           leftAction = AppBarAction(actionType = AppBarActionType.NAVIGATE_UP, actionFn = handleNavigateUp),
           rightActionContent = {
-            TopBarOverflowMenuButton(
+            RoleplayChatOverflowMenu(
               expanded = showMenu,
               onExpandedChange = updateOverflowMenuVisibility,
-            ) {
-              DropdownMenuItem(
-                text = { Text(stringResource(R.string.chat_switch_model)) },
-                onClick = {
-                  showMenu = false
-                  showModelPicker = true
-                },
-                leadingIcon = {
-                  Icon(Icons.Rounded.SwapHoriz, contentDescription = null)
-                },
-              )
-              DropdownMenuItem(
-                text = { Text(stringResource(R.string.chat_open_model_library_menu)) },
-                onClick = {
-                  showMenu = false
-                  onOpenModelLibrary()
-                },
-                leadingIcon = {
-                  Icon(Icons.Rounded.FolderOpen, contentDescription = null)
-                },
-              )
-              if (internalDiagnosticsEnabled) {
-                DropdownMenuItem(
-                  text = { Text(stringResource(R.string.chat_continuity_debug_action)) },
-                  onClick = {
-                    showMenu = false
-                    showContinuityDebug = true
-                  },
-                )
-                DropdownMenuItem(
-                  text = { Text(stringResource(R.string.chat_export_debug_bundle_action)) },
-                  onClick = {
-                    showMenu = false
-                    viewModel.exportDebugBundle()
-                  },
-                  leadingIcon = {
-                    Icon(Icons.Rounded.BugReport, contentDescription = null)
-                  },
-                )
-              }
-            }
+              internalDiagnosticsEnabled = internalDiagnosticsEnabled,
+              onShowModelPicker = { showModelPicker = true },
+              onOpenModelLibrary = onOpenModelLibrary,
+              onShowContinuityDebug = { showContinuityDebug = true },
+              onExportDebugBundle = { viewModel.exportDebugBundle() },
+            )
           },
         )
       },
@@ -642,104 +607,17 @@ fun RoleplayChatScreen(
               onValueChanged = viewModel::updateDraft,
               onSendMessage = { messages ->
                 activeModel?.let { currentModel ->
-                  val sendRequirements =
-                    resolveRoleplaySendRequirements(
-                      messages = messages,
-                      conversationMessages = uiState.messages,
-                    )
-                  val submitMessages: () -> Unit = {
-                    sendRequirements.primaryTextInput?.let(modelManagerViewModel::addTextInputHistory)
-                    viewModel.sendChatMessages(
-                      model = currentModel,
-                      messages = messages,
-                      clearDraft = true,
-                    )
-                  }
-                  val initializedInstance = currentModel.instance as? LlmModelInstance
-                  val sendExecutionPlan =
-                    resolveRoleplaySendExecutionPlan(
-                      needsImage = sendRequirements.needsImage,
-                      needsAudio = sendRequirements.needsAudio,
-                      hasReusableMultimodalSession =
-                        canReuseRoleplayModelSession(
-                          instance = initializedInstance,
-                          needsImage = sendRequirements.needsImage,
-                          needsAudio = sendRequirements.needsAudio,
-                        ),
-                      hasInitializedSession =
-                        initializedInstance != null || isActiveModelInitialized || currentModel.initializing,
-                    )
-                  Log.d(
-                    TAG,
-                    "roleplay send requested sessionId=${uiState.session?.id} model=${currentModel.name} needsImage=${sendRequirements.needsImage} needsAudio=${sendRequirements.needsAudio} hasInitializedInstance=${initializedInstance != null} isModelInitializing=$isActiveModelInitializing queueImmediately=${sendExecutionPlan.queueImmediately} warmupAction=${sendExecutionPlan.warmupAction}",
+                  handleRoleplaySend(
+                    context = context,
+                    sessionId = uiState.session?.id,
+                    messages = messages,
+                    conversationMessages = uiState.messages,
+                    currentModel = currentModel,
+                    isActiveModelInitialized = isActiveModelInitialized,
+                    isActiveModelInitializing = isActiveModelInitializing,
+                    viewModel = viewModel,
+                    modelManagerViewModel = modelManagerViewModel,
                   )
-
-                  if (sendExecutionPlan.queueImmediately) {
-                    submitMessages()
-                    when (sendExecutionPlan.warmupAction) {
-                      RoleplayWarmupAction.NONE -> {
-                        Log.d(
-                          TAG,
-                          "queue roleplay send immediately sessionId=${uiState.session?.id} model=${currentModel.name} using current session",
-                        )
-                      }
-                      RoleplayWarmupAction.MULTIMODAL -> {
-                        Log.d(
-                          TAG,
-                          "queue roleplay send immediately and reinitialize multimodal session sessionId=${uiState.session?.id} model=${currentModel.name} needsImage=${sendRequirements.needsImage} needsAudio=${sendRequirements.needsAudio}",
-                        )
-                        modelManagerViewModel.initializeLlmModel(
-                          context = context,
-                          model = currentModel,
-                          supportImage = sendRequirements.needsImage,
-                          supportAudio = sendRequirements.needsAudio,
-                          force = true,
-                        )
-                      }
-                      RoleplayWarmupAction.TEXT_ONLY -> {
-                        Log.d(
-                          TAG,
-                          "queue roleplay send immediately sessionId=${uiState.session?.id} model=${currentModel.name} while text session is already warming",
-                        )
-                      }
-                    }
-                  } else {
-                    when (sendExecutionPlan.warmupAction) {
-                      RoleplayWarmupAction.NONE -> {
-                        Log.d(
-                          TAG,
-                          "dispatch roleplay text send with existing or warming session sessionId=${uiState.session?.id} model=${currentModel.name}",
-                        )
-                        submitMessages()
-                      }
-                      RoleplayWarmupAction.TEXT_ONLY -> {
-                        Log.d(
-                          TAG,
-                          "initialize text roleplay session before send sessionId=${uiState.session?.id} model=${currentModel.name}",
-                        )
-                        modelManagerViewModel.initializeModel(
-                          context = context,
-                          task = llmChatTask,
-                          model = currentModel,
-                          onDone = submitMessages,
-                        )
-                      }
-                      RoleplayWarmupAction.MULTIMODAL -> {
-                        Log.d(
-                          TAG,
-                          "initialize multimodal roleplay session before send sessionId=${uiState.session?.id} model=${currentModel.name} needsImage=${sendRequirements.needsImage} needsAudio=${sendRequirements.needsAudio}",
-                        )
-                        modelManagerViewModel.initializeLlmModel(
-                          context = context,
-                          model = currentModel,
-                          supportImage = sendRequirements.needsImage,
-                          supportAudio = sendRequirements.needsAudio,
-                          force = true,
-                          onDone = submitMessages,
-                        )
-                      }
-                    }
-                  }
                 }
               },
               onAmplitudeChanged = {},
@@ -813,62 +691,16 @@ fun RoleplayChatScreen(
   }
 
   if (showModelPicker && downloadedModels.isNotEmpty()) {
-    AlertDialog(
-      onDismissRequest = { showModelPicker = false },
-      title = { Text(stringResource(R.string.chat_select_model_title)) },
-      text = {
-          Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            downloadedModels.forEach { model ->
-              val isSelected = model.name == activeModel?.name
-              ListItem(
-                headlineContent = {
-                  Text(
-                    text = model.displayName.ifEmpty { model.name },
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                  )
-                },
-                supportingContent = {
-                  if (isSelected) {
-                    Text(stringResource(R.string.chat_current_model))
-                  }
-                },
-                trailingContent = {
-                  RadioButton(
-                    selected = isSelected,
-                    onClick = null,
-                  )
-                },
-                colors =
-                  ListItemDefaults.colors(
-                    containerColor =
-                      if (isSelected) {
-                        MaterialTheme.colorScheme.secondaryContainer
-                      } else {
-                        MaterialTheme.colorScheme.surfaceContainerLow
-                      }
-                  ),
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .clip(MaterialTheme.shapes.medium)
-                  .selectable(
-                    selected = isSelected,
-                    role = Role.RadioButton,
-                  ) {
-                    viewModel.switchModel(model.name)
-                    showModelPicker = false
-                  }
-              )
-            }
-          }
-        },
-        confirmButton = {},
-        dismissButton = {
-          TextButton(onClick = { showModelPicker = false }) {
-            Text(stringResource(R.string.cancel))
-          }
-        },
-      )
-    }
+    ChatModelPickerDialog(
+      downloadedModels = downloadedModels,
+      activeModelName = activeModel?.name,
+      onModelSelected = { modelName ->
+        viewModel.switchModel(modelName)
+        showModelPicker = false
+      },
+      onDismiss = { showModelPicker = false },
+    )
+  }
   }
 }
 
