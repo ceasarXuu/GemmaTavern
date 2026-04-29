@@ -16,10 +16,8 @@
 
 package selfgemma.talk.ui.modelmanager
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,19 +46,14 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.automirrored.rounded.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
@@ -86,10 +79,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import selfgemma.talk.BuildConfig
@@ -311,25 +301,7 @@ fun GlobalModelManager(
           key = { page -> page },
         ) { page ->
           if (page == IMPORTED_MODELS_TAB_INDEX && importedModels.isEmpty()) {
-            Column(
-              horizontalAlignment = Alignment.CenterHorizontally,
-              verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-              modifier =
-                Modifier.fillMaxSize()
-                  .padding(horizontal = 32.dp)
-                  .padding(bottom = innerPadding.calculateBottomPadding()),
-            ) {
-              Text(
-                text = stringResource(R.string.model_library_imported_empty_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-              )
-              Text(
-                text = stringResource(R.string.model_library_imported_empty_content),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
+            EmptyImportedModelsState(bottomPaddingDp = innerPadding.calculateBottomPadding())
           } else {
             LazyColumn(
               modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
@@ -411,93 +383,42 @@ fun GlobalModelManager(
   }
 
   if (showTaskSelectorBottomSheet) {
-    ModalBottomSheet(
-      onDismissRequest = { showTaskSelectorBottomSheet = false },
+    TaskSelectorBottomSheet(
+      taskCandidates = taskCandidates,
       sheetState = sheetState,
-    ) {
-      Column(
-        modifier = Modifier.padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        Text(
-          stringResource(R.string.model_manager_select_task_title),
-          color = MaterialTheme.colorScheme.onSurface,
-          style = MaterialTheme.typography.titleLarge,
-          modifier = Modifier.padding(bottom = 8.dp).padding(start = 16.dp),
-        )
-        for (task in taskCandidates) {
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier =
-              Modifier.fillMaxWidth()
-                .clickable {
-                  val model = modelForTaskCandidate
-                  if (model != null) {
-                    onModelSelected(task, model)
-                  }
-                  scope.launch {
-                    sheetState.hide()
-                    showTaskSelectorBottomSheet = false
-                  }
-                }
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-          ) {
-            Text(
-              task.label,
-              color = MaterialTheme.colorScheme.onSurface,
-              style = MaterialTheme.typography.titleMedium,
-            )
-            TaskIcon(task = task, width = 40.dp)
-          }
+      onDismiss = { showTaskSelectorBottomSheet = false },
+      onTaskSelected = { task ->
+        val model = modelForTaskCandidate
+        if (model != null) {
+          onModelSelected(task, model)
         }
-      }
-    }
+        scope.launch {
+          sheetState.hide()
+          showTaskSelectorBottomSheet = false
+        }
+      },
+    )
   }
 
   // Import model bottom sheet.
   if (showImportModelSheet) {
-    ModalBottomSheet(onDismissRequest = { showImportModelSheet = false }, sheetState = sheetState) {
-      Text(
-        "Import model",
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
-      )
-      val cbImportFromLocalFile = stringResource(R.string.cd_import_model_from_local_file_button)
-      Box(
-        modifier =
-          Modifier.clickable {
-              scope.launch {
-                // Give it sometime to show the click effect.
-                delay(200)
-                showImportModelSheet = false
-
-                // Show file picker.
-                val intent =
-                  Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "*/*"
-                    // Single select.
-                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-                  }
-                filePickerLauncher.launch(intent)
-              }
+    ImportModelBottomSheet(
+      sheetState = sheetState,
+      onDismiss = { showImportModelSheet = false },
+      onImportFromLocalFile = {
+        scope.launch {
+          delay(200)
+          showImportModelSheet = false
+          val intent =
+            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+              addCategory(Intent.CATEGORY_OPENABLE)
+              type = "*/*"
+              putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
             }
-            .semantics {
-              role = Role.Button
-              contentDescription = cbImportFromLocalFile
-            }
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(6.dp),
-          modifier = Modifier.fillMaxWidth().padding(16.dp),
-        ) {
-          Icon(Icons.AutoMirrored.Outlined.NoteAdd, contentDescription = null)
-          Text("From local model file", modifier = Modifier.clearAndSetSemantics {})
+          filePickerLauncher.launch(intent)
         }
-      }
-    }
+      },
+    )
   }
 
   // Import dialog
@@ -560,60 +481,14 @@ fun GlobalModelManager(
 
   // Alert dialog for unsupported file type.
   if (showUnsupportedFileTypeDialog) {
-    AlertDialog(
-      icon = {
-        Icon(
-          Icons.Rounded.Error,
-          contentDescription = stringResource(R.string.cd_error),
-          tint = MaterialTheme.colorScheme.error,
-        )
-      },
-      onDismissRequest = { showUnsupportedFileTypeDialog = false },
-      title = { Text("Unsupported file type") },
-      text = { Text("Only \".task\" or \".litertlm\" file type is supported.") },
-      confirmButton = {
-        Button(onClick = { showUnsupportedFileTypeDialog = false }) {
-          Text(stringResource(R.string.ok))
-        }
-      },
-    )
+    UnsupportedFileTypeAlertDialog(onDismiss = { showUnsupportedFileTypeDialog = false })
   }
 
   // Alert dialog for unsupported web model.
   if (showUnsupportedWebModelDialog) {
-    AlertDialog(
-      icon = {
-        Icon(
-          Icons.Rounded.Error,
-          contentDescription = stringResource(R.string.cd_error),
-          tint = MaterialTheme.colorScheme.error,
-        )
-      },
-      onDismissRequest = { showUnsupportedWebModelDialog = false },
-      title = { Text("Unsupported model type") },
-      text = { Text("Looks like the model is a web-only model and is not supported by the app.") },
-      confirmButton = {
-        Button(onClick = { showUnsupportedWebModelDialog = false }) {
-          Text(stringResource(R.string.ok))
-        }
-      },
-    )
+    UnsupportedWebModelAlertDialog(onDismiss = { showUnsupportedWebModelDialog = false })
   }
 }
 
-// Helper function to get the file name from a URI
-private fun getFileName(context: Context, uri: Uri): String? {
-  if (uri.scheme == "content") {
-    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-      if (cursor.moveToFirst()) {
-        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        if (nameIndex != -1) {
-          return cursor.getString(nameIndex)
-        }
-      }
-    }
-  } else if (uri.scheme == "file") {
-    return uri.lastPathSegment
-  }
-  return null
-}
+// Helper function to get the file name from a URI moved to GlobalModelManagerComponents.kt.
+

@@ -27,6 +27,7 @@ import selfgemma.talk.ui.common.BaseAppWebViewClient
 import selfgemma.talk.ui.common.chat.ChatMessageCollapsableProgressPanel
 import selfgemma.talk.ui.common.chat.ChatMessageType
 import selfgemma.talk.ui.llmchat.LlmChatViewModel
+import selfgemma.talk.ui.llmchat.resetSession
 import selfgemma.talk.ui.modelmanager.ModelManagerViewModel
 import com.google.ai.edge.litertlm.tool
 
