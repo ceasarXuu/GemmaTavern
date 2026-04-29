@@ -1,23 +1,18 @@
-package selfgemma.talk.feature.roleplay.chat
+﻿package selfgemma.talk.feature.roleplay.chat
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.SystemClock
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.io.File
-import java.io.FileOutputStream
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,29 +26,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import selfgemma.talk.BuildConfig
 import selfgemma.talk.R
-import selfgemma.talk.data.ConfigKeys
 import selfgemma.talk.data.DataStoreRepository
 import selfgemma.talk.data.Model
 import selfgemma.talk.domain.roleplay.model.MemoryCategory
-import selfgemma.talk.domain.roleplay.model.MemoryItem
 import selfgemma.talk.domain.roleplay.model.MemoryAtom
 import selfgemma.talk.domain.roleplay.model.Message
-import selfgemma.talk.domain.roleplay.model.MessageKind
-import selfgemma.talk.domain.roleplay.model.MessageSide
 import selfgemma.talk.domain.roleplay.model.MessageStatus
 import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachment
-import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
-import selfgemma.talk.domain.roleplay.model.RoleplayMessageMediaPayload
-import selfgemma.talk.domain.roleplay.model.RoleCard
 import selfgemma.talk.domain.roleplay.model.RoleplayDebugExportOrigin
-import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
 import selfgemma.talk.domain.roleplay.model.Session
 import selfgemma.talk.domain.roleplay.model.SessionEvent
 import selfgemma.talk.domain.roleplay.model.SessionEventType
 import selfgemma.talk.domain.roleplay.model.ToolInvocation
-import selfgemma.talk.domain.roleplay.model.encodeRoleplayMessageMediaPayload
-import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.resolveUserProfile
 import selfgemma.talk.domain.roleplay.repository.CompactionCacheRepository
 import selfgemma.talk.domain.roleplay.repository.ConversationRepository
@@ -69,8 +54,6 @@ import selfgemma.talk.domain.roleplay.usecase.PrepareRoleplayRegenerationUseCase
 import selfgemma.talk.domain.roleplay.usecase.RoleplayDebugBundleExportLauncher
 import selfgemma.talk.domain.roleplay.usecase.RollbackRoleplayContinuityUseCase
 import selfgemma.talk.domain.roleplay.usecase.RunRoleplayTurnUseCase
-import selfgemma.talk.domain.roleplay.usecase.StagedRoleplayTurn
-import selfgemma.talk.runtime.runtimeHelper
 import selfgemma.talk.ui.common.chat.ChatMessage
 import selfgemma.talk.ui.common.chat.ChatMessageAudioClip
 import selfgemma.talk.ui.common.chat.ChatMessageImage
@@ -87,33 +70,34 @@ class RoleplayChatViewModel
 @Inject
 constructor(
   savedStateHandle: SavedStateHandle,
-  @ApplicationContext private val appContext: Context,
-  private val dataStoreRepository: DataStoreRepository,
-  private val conversationRepository: ConversationRepository,
-  private val roleRepository: RoleRepository,
-  private val memoryRepository: MemoryRepository,
-  private val runtimeStateRepository: RuntimeStateRepository,
-  private val openThreadRepository: OpenThreadRepository,
-  private val memoryAtomRepository: MemoryAtomRepository,
-  private val compactionCacheRepository: CompactionCacheRepository,
-  private val toolInvocationRepository: ToolInvocationRepository,
-  private val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
-  private val roleplayDebugBundleExportLauncher: RoleplayDebugBundleExportLauncher,
-  private val extractMemoriesUseCase: ExtractMemoriesUseCase,
-  private val rollbackRoleplayContinuityUseCase: RollbackRoleplayContinuityUseCase,
-  private val prepareRoleplayEditUseCase: PrepareRoleplayEditUseCase,
-  private val prepareRoleplayRegenerationUseCase: PrepareRoleplayRegenerationUseCase,
+  @ApplicationContext internal val appContext: Context,
+  internal val dataStoreRepository: DataStoreRepository,
+  internal val conversationRepository: ConversationRepository,
+  internal val roleRepository: RoleRepository,
+  internal val memoryRepository: MemoryRepository,
+  internal val runtimeStateRepository: RuntimeStateRepository,
+  internal val openThreadRepository: OpenThreadRepository,
+  internal val memoryAtomRepository: MemoryAtomRepository,
+  internal val compactionCacheRepository: CompactionCacheRepository,
+  internal val toolInvocationRepository: ToolInvocationRepository,
+  internal val runRoleplayTurnUseCase: RunRoleplayTurnUseCase,
+  internal val roleplayDebugBundleExportLauncher: RoleplayDebugBundleExportLauncher,
+  internal val extractMemoriesUseCase: ExtractMemoriesUseCase,
+  internal val rollbackRoleplayContinuityUseCase: RollbackRoleplayContinuityUseCase,
+  internal val prepareRoleplayEditUseCase: PrepareRoleplayEditUseCase,
+  internal val prepareRoleplayRegenerationUseCase: PrepareRoleplayRegenerationUseCase,
 ) : ViewModel() {
-  private val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
-  private val draft = MutableStateFlow("")
-  private val metaState = MutableStateFlow(RoleplayChatMetaState())
-  private val stopRequested = MutableStateFlow(false)
-  private var dispatchJob: Job? = null
-  private var statusMessageDismissJob: Job? = null
-  private var lastDraftEditAtElapsed = 0L
-  private var latestQueuedModel: Model? = null
-  private var activeAssistantMessageId: String? = null
-  private var activeDispatchSuperseded = false
+  internal val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
+  internal val draft = MutableStateFlow("")
+  internal val metaState = MutableStateFlow(RoleplayChatMetaState())
+  internal val stopRequested = MutableStateFlow(false)
+  internal var dispatchJob: Job? = null
+  internal var statusMessageDismissJob: Job? = null
+  internal var lastDraftEditAtElapsed = 0L
+  internal var latestQueuedModel: Model? = null
+  internal var activeAssistantMessageId: String? = null
+  internal var activeDispatchSuperseded = false
+  private fun elapsedRealtime(): Long = elapsedRealtimeProvider()
   internal var elapsedRealtimeProvider: () -> Long = { SystemClock.elapsedRealtime() }
   internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
   internal var defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -471,489 +455,5 @@ constructor(
       }
     }
   }
-
-  private fun scheduleDispatch(reason: String) {
-    val model = latestQueuedModel ?: return
-    dispatchJob?.cancel()
-    dispatchJob =
-      viewModelScope.launch {
-        while (true) {
-          val delayMs = remainingDispatchDelay()
-          if (delayMs <= 0L) {
-            break
-          }
-          logDebug(
-            "dispatch paused sessionId=$sessionId reason=$reason delayMs=$delayMs pendingCount=${metaState.value.pendingUserMessages.size}",
-          )
-          delay(delayMs)
-        }
-
-        if (metaState.value.inProgress || metaState.value.pendingUserMessages.isEmpty()) {
-          return@launch
-        }
-
-        dispatchPendingMessages(model = model)
-      }
-  }
-
-  private fun requestMergeAndStop(model: Model) {
-    if (!metaState.value.inProgress) {
-      return
-    }
-
-    stopRequested.value = true
-    activeDispatchSuperseded = true
-    metaState.update { current -> current.copy(errorMessage = null) }
-    logDebug(
-      "send merge requested sessionId=$sessionId model=${model.name} pendingCount=${metaState.value.pendingUserMessages.size} activeAssistantMessageId=$activeAssistantMessageId",
-    )
-    if (dataStoreRepository.isStreamingOutputEnabled()) {
-      viewModelScope.launch(ioDispatcher) {
-        retractActiveAssistantBubble()
-      }
-    }
-    model.runtimeHelper.stopResponse(model)
-  }
-
-  private fun dispatchPendingMessages(model: Model) {
-    val queuedMessages = metaState.value.pendingUserMessages
-    if (queuedMessages.isEmpty() || metaState.value.inProgress) {
-      return
-    }
-
-    val stagedTurn = stageDispatchTurn(userMessages = queuedMessages.map { it.message }, model = model)
-    val persistedIds = queuedMessages.filter { it.persisted }.mapTo(mutableSetOf()) { it.message.id }
-    val queuedIds = queuedMessages.mapTo(mutableSetOf()) { it.message.id }
-    val dispatchStartedAt = elapsedRealtime()
-
-    stopRequested.value = false
-    activeAssistantMessageId = stagedTurn.assistantMessage.id
-    activeDispatchSuperseded = false
-    metaState.update { current ->
-      current.copy(
-        inProgress = true,
-        errorMessage = null,
-      )
-    }
-    logDebug(
-      "dispatch starting sessionId=$sessionId model=${model.name} pendingCount=${queuedMessages.size} persistedCount=${persistedIds.size} combinedLength=${stagedTurn.combinedUserInput.length} assistantMessageId=${stagedTurn.assistantMessage.id}",
-    )
-
-    viewModelScope.launch(ioDispatcher) {
-      val pendingMessage =
-        runRoleplayTurnUseCase.enqueueTurn(
-          sessionId = sessionId,
-          stagedTurn = stagedTurn,
-          persistedUserMessageIds = persistedIds,
-        )
-
-      if (pendingMessage == null) {
-        logDebug(
-          "dispatch queue failed after ${elapsedRealtime() - dispatchStartedAt}ms sessionId=$sessionId",
-        )
-        draft.value = stagedTurn.combinedUserInput
-        stopRequested.value = false
-        activeAssistantMessageId = null
-        metaState.update { current ->
-          current.copy(
-            pendingUserMessages = current.pendingUserMessages.filterNot { it.message.id in queuedIds },
-            inProgress = false,
-            errorMessage = "Session no longer exists.",
-          )
-        }
-        return@launch
-      }
-
-      metaState.update { current ->
-        current.copy(
-          pendingUserMessages =
-            current.pendingUserMessages.map { queued ->
-              if (queued.message.id in queuedIds) {
-                queued.copy(persisted = true)
-              } else {
-                queued
-              }
-            }
-        )
-      }
-      logDebug(
-        "dispatch queued after ${elapsedRealtime() - dispatchStartedAt}ms sessionId=$sessionId assistantMessageId=${stagedTurn.assistantMessage.id}",
-      )
-      val result =
-        runRoleplayTurnUseCase.runPrepared(
-          pendingMessage = pendingMessage,
-          model = model,
-          enableStreamingOutput = dataStoreRepository.isStreamingOutputEnabled(),
-          isStopRequested = { stopRequested.value },
-        )
-      val superseded = activeDispatchSuperseded
-
-      logDebug(
-        "dispatch finished after ${elapsedRealtime() - dispatchStartedAt}ms sessionId=$sessionId interrupted=${result.interrupted} superseded=$superseded error=${result.errorMessage != null}",
-      )
-
-      if (superseded && result.assistantMessage != null) {
-        conversationRepository.updateMessage(
-          result.assistantMessage.copy(
-            content = "",
-            status = MessageStatus.INTERRUPTED,
-            errorMessage = null,
-            updatedAt = System.currentTimeMillis(),
-          )
-        )
-      }
-
-      if (!superseded && result.assistantMessage != null && result.assistantMessage.status == MessageStatus.COMPLETED) {
-        launch(defaultDispatcher) {
-          playReceiveSound()
-        }
-      }
-      if (!superseded && result.errorMessage != null && !result.interrupted) {
-        draft.value = stagedTurn.combinedUserInput
-      }
-
-      stopRequested.value = false
-      activeAssistantMessageId = null
-      activeDispatchSuperseded = false
-      metaState.update { current ->
-        current.copy(
-          pendingUserMessages =
-            if (result.interrupted || superseded) {
-              current.pendingUserMessages
-            } else {
-              current.pendingUserMessages.filterNot { it.message.id in queuedIds }
-            },
-          inProgress = false,
-          errorMessage = if (result.interrupted || superseded) null else result.errorMessage,
-        )
-      }
-      refreshSupplementalState()
-
-      if (metaState.value.pendingUserMessages.isNotEmpty()) {
-        scheduleDispatch(reason = "pending queue remains after completion")
-      }
-    }
-  }
-
-  private fun refreshSupplementalState() {
-    viewModelScope.launch {
-      val session = conversationRepository.getSession(sessionId)
-      if (session == null) {
-        metaState.update { current ->
-          current.copy(
-            summary = null,
-            pinnedMemories = emptyList(),
-            continuityDebug = RoleplayContinuityDebugState(),
-          )
-        }
-        return@launch
-      }
-
-      val summary = conversationRepository.getSummary(sessionId)
-      val pinnedMemories = loadPinnedMemories(session)
-      val continuityDebug = loadContinuityDebugState(sessionId = sessionId)
-      metaState.update { current ->
-        current.copy(
-          summary = summary,
-          pinnedMemories = pinnedMemories,
-          continuityDebug = continuityDebug,
-        )
-      }
-    }
-  }
-
-  private suspend fun loadPinnedMemories(session: Session): List<MemoryItem> {
-    return (memoryRepository.listSessionMemories(session.id) + memoryRepository.listRoleMemories(session.roleId))
-      .filter { it.pinned }
-      .distinctBy { it.normalizedHash }
-      .sortedByDescending { it.updatedAt }
-      .take(8)
-  }
-
-  private fun stagePendingUserMessages(messages: List<ChatMessage>): List<QueuedUserMessage> {
-    val now = System.currentTimeMillis()
-    var nextSeq = (uiState.value.messages.maxOfOrNull { it.seq } ?: 0) + 1
-    val queuedMessages = mutableListOf<QueuedUserMessage>()
-
-    messages.forEach { chatMessage ->
-      when (chatMessage) {
-        is ChatMessageText -> {
-          val input = chatMessage.content.trim()
-          if (input.isBlank()) {
-            return@forEach
-          }
-          val userMessage =
-            Message(
-              id = UUID.randomUUID().toString(),
-              sessionId = sessionId,
-              seq = nextSeq++,
-              branchId = DEFAULT_BRANCH_ID,
-              side = MessageSide.USER,
-              kind = MessageKind.TEXT,
-              status = MessageStatus.COMPLETED,
-              accepted = true,
-              isCanonical = true,
-              content = input,
-              createdAt = now,
-              updatedAt = now,
-            )
-          queuedMessages += QueuedUserMessage(message = userMessage)
-          logDebug("queued text draft sessionId=$sessionId seq=${userMessage.seq} messageId=${userMessage.id}")
-        }
-        is ChatMessageImage -> {
-          if (chatMessage.bitmaps.isEmpty()) {
-            return@forEach
-          }
-          val messageId = UUID.randomUUID().toString()
-          val payload = persistImagePayload(messageId = messageId, bitmaps = chatMessage.bitmaps)
-          val userMessage =
-            Message(
-              id = messageId,
-              sessionId = sessionId,
-              seq = nextSeq++,
-              branchId = DEFAULT_BRANCH_ID,
-              side = MessageSide.USER,
-              kind = MessageKind.IMAGE,
-              status = MessageStatus.COMPLETED,
-              accepted = true,
-              isCanonical = true,
-              content = "Shared ${payload.attachments.size} image(s).",
-              metadataJson = encodeRoleplayMessageMediaPayload(payload),
-              createdAt = now,
-              updatedAt = now,
-            )
-          queuedMessages += QueuedUserMessage(message = userMessage)
-          logDebug(
-            "queued image payload sessionId=$sessionId seq=${userMessage.seq} messageId=${userMessage.id} imageCount=${payload.attachments.size}",
-          )
-        }
-        is ChatMessageAudioClip -> {
-          val messageId = UUID.randomUUID().toString()
-          val payload =
-            persistAudioPayload(
-              messageId = messageId,
-              audioData = chatMessage.audioData,
-              sampleRate = chatMessage.sampleRate,
-            )
-          val userMessage =
-            Message(
-              id = messageId,
-              sessionId = sessionId,
-              seq = nextSeq++,
-              branchId = DEFAULT_BRANCH_ID,
-              side = MessageSide.USER,
-              kind = MessageKind.AUDIO,
-              status = MessageStatus.COMPLETED,
-              accepted = true,
-              isCanonical = true,
-              content = "Shared an audio clip.",
-              metadataJson = encodeRoleplayMessageMediaPayload(payload),
-              createdAt = now,
-              updatedAt = now,
-            )
-          queuedMessages += QueuedUserMessage(message = userMessage)
-          logDebug(
-            "queued audio payload sessionId=$sessionId seq=${userMessage.seq} messageId=${userMessage.id} sampleRate=${chatMessage.sampleRate}",
-          )
-        }
-        else -> Unit
-      }
-    }
-
-    return queuedMessages
-  }
-
-  private fun stageDispatchTurn(userMessages: List<Message>, model: Model): StagedRoleplayTurn {
-    val now = System.currentTimeMillis()
-    val parentMessageId = userMessages.lastOrNull()?.id
-    val assistantMessage =
-      Message(
-        id = UUID.randomUUID().toString(),
-        sessionId = sessionId,
-        seq = (userMessages.maxOfOrNull { it.seq } ?: 0) + 1,
-        branchId = userMessages.lastOrNull()?.branchId ?: DEFAULT_BRANCH_ID,
-        side = MessageSide.ASSISTANT,
-        status = MessageStatus.STREAMING,
-        accepted = false,
-        isCanonical = false,
-        content = "",
-        accelerator = model.getStringConfigValue(key = ConfigKeys.ACCELERATOR, defaultValue = ""),
-        parentMessageId = parentMessageId,
-        regenerateGroupId = parentMessageId,
-        createdAt = now,
-        updatedAt = now,
-      )
-    logDebug(
-      "dispatch turn staged sessionId=$sessionId userMessageCount=${userMessages.size} assistantMessageId=${assistantMessage.id}",
-    )
-    return StagedRoleplayTurn(
-      userMessages = userMessages,
-      assistantMessage = assistantMessage,
-      combinedUserInput =
-        userMessages
-          .filter { it.kind == MessageKind.TEXT }
-          .joinToString(separator = "\n\n") { it.content.trim() },
-    )
-  }
-
-  private fun persistImagePayload(
-    messageId: String,
-    bitmaps: List<Bitmap>,
-  ): RoleplayMessageMediaPayload =
-    persistImagePayload(appContext = appContext, sessionId = sessionId, messageId = messageId, bitmaps = bitmaps)
-
-  private fun persistAudioPayload(
-    messageId: String,
-    audioData: ByteArray,
-    sampleRate: Int,
-  ): RoleplayMessageMediaPayload =
-    persistAudioPayload(
-      appContext = appContext,
-      sessionId = sessionId,
-      messageId = messageId,
-      audioData = audioData,
-      sampleRate = sampleRate,
-    )
-
-  private fun resolveAttachmentFile(messageId: String, fileName: String): File =
-    resolveAttachmentFile(appContext = appContext, sessionId = sessionId, messageId = messageId, fileName = fileName)
-
-  private fun writeBitmapToFile(bitmap: Bitmap, file: File) {
-    selfgemma.talk.feature.roleplay.chat.writeBitmapToFile(bitmap, file)
-  }
-
-  private fun remainingDispatchDelay(): Long {
-    val elapsed = elapsedRealtime() - lastDraftEditAtElapsed
-    return (SEND_DISPATCH_DELAY_MS - elapsed).coerceAtLeast(0L)
-  }
-
-  private fun elapsedRealtime(): Long = elapsedRealtimeProvider()
-
-  private suspend fun retractActiveAssistantBubble() {
-    val assistantMessageId = activeAssistantMessageId ?: return
-    val message =
-      conversationRepository.observeMessages(sessionId).first().lastOrNull { it.id == assistantMessageId }
-        ?: return
-    if (message.side != MessageSide.ASSISTANT) {
-      return
-    }
-    conversationRepository.updateMessage(
-      message.copy(
-        content = "",
-        status = MessageStatus.INTERRUPTED,
-        errorMessage = null,
-        updatedAt = System.currentTimeMillis(),
-      )
-    )
-    logDebug("retracted streaming assistant bubble sessionId=$sessionId messageId=$assistantMessageId")
-  }
-
-  private fun mergeMessages(messages: List<Message>, queuedMessages: List<QueuedUserMessage>): List<Message> {
-    val visiblePersistedMessages = messages.filter(::shouldDisplayMessage)
-    val persistedIds = visiblePersistedMessages.mapTo(mutableSetOf()) { it.id }
-    return (visiblePersistedMessages + queuedMessages.map { it.message }.filterNot { it.id in persistedIds })
-      .sortedWith(compareBy<Message>({ it.seq }, { it.createdAt }, { it.id }))
-  }
-
-  private fun shouldDisplayMessage(message: Message): Boolean {
-    if (message.isCanonical) {
-      return true
-    }
-
-    return when (message.status) {
-      MessageStatus.PENDING,
-      MessageStatus.STREAMING,
-      MessageStatus.FAILED,
-      -> true
-      MessageStatus.INTERRUPTED -> message.content.isNotBlank()
-      MessageStatus.COMPLETED -> false
-    }
-  }
-
-  private fun hasContinuityMutationConflict(): Boolean {
-    return metaState.value.inProgress || metaState.value.pendingUserMessages.isNotEmpty()
-  }
-
-  private suspend fun loadContinuityDebugState(sessionId: String): RoleplayContinuityDebugState {
-    val runtimeState = runtimeStateRepository.getLatestSnapshot(sessionId)
-    val openThreads =
-      openThreadRepository
-        .listBySession(sessionId)
-        .sortedWith(compareByDescending<OpenThread> { it.priority }.thenByDescending { it.updatedAt })
-    val memoryAtoms =
-      memoryAtomRepository
-        .listBySession(sessionId)
-        .filterNot { it.tombstone }
-        .sortedWith(
-          compareByDescending<MemoryAtom> { it.updatedAt }
-            .thenByDescending { it.salience }
-            .thenByDescending { it.confidence }
-        )
-    val recentEvents = conversationRepository.listEvents(sessionId).take(12)
-    val latestMemoryQueryPayload =
-      recentEvents.firstOrNull { it.eventType == SessionEventType.MEMORY_QUERY_EXECUTED }?.payloadJson
-    val latestMemoryPackPayload =
-      recentEvents.firstOrNull { it.eventType == SessionEventType.MEMORY_PACK_COMPILED }?.payloadJson
-    val compactionEntryCount = compactionCacheRepository.listBySession(sessionId).size
-    return RoleplayContinuityDebugState(
-      runtimeState = runtimeState,
-      openThreads = openThreads.take(8),
-      memoryAtoms = memoryAtoms.take(12),
-      recentEvents = recentEvents,
-      latestMemoryQueryPayload = latestMemoryQueryPayload,
-      latestMemoryPackPayload = latestMemoryPackPayload,
-      compactionEntryCount = compactionEntryCount,
-    )
-  }
-
-
-  private fun playSendSound() {
-    if (!dataStoreRepository.areMessageSoundsEnabled()) {
-      return
-    }
-    RoleplaySoundEffectPlayer.playSend(appContext)
-  }
-
-  private fun playReceiveSound() {
-    if (!dataStoreRepository.areMessageSoundsEnabled()) {
-      return
-    }
-    RoleplaySoundEffectPlayer.playReceive(appContext)
-  }
-
-  private fun appString(@StringRes resId: Int, vararg args: Any): String {
-    return stringResolver(resId, args.toList())
-  }
-
-  private fun displaySessionId(sessionId: String): String {
-    return if (sessionId.length <= 12) sessionId else sessionId.take(8)
-  }
-
-  private fun showStatusMessage(message: String) {
-    statusMessageDismissJob?.cancel()
-    logDebug("show status message sessionId=$sessionId message=$message")
-    metaState.update { current ->
-      current.copy(statusMessage = message, errorMessage = null)
-    }
-    statusMessageDismissJob =
-      viewModelScope.launch {
-        delay(CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS)
-        metaState.update { current ->
-          if (current.statusMessage == message) {
-            logDebug("auto-dismiss status message sessionId=$sessionId message=$message")
-            current.copy(statusMessage = null)
-          } else {
-            current
-          }
-        }
-      }
-  }
-
-  private fun showErrorMessage(message: String) {
-    statusMessageDismissJob?.cancel()
-    logWarn("show error message sessionId=$sessionId message=$message")
-    metaState.update { current ->
-      current.copy(statusMessage = null, errorMessage = message)
-    }
-  }
 }
+
