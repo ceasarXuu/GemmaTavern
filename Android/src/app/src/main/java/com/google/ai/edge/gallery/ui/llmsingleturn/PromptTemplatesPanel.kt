@@ -408,98 +408,12 @@ fun PromptTemplatesPanel(
   }
 
   if (showExamplePromptBottomSheet) {
-    ModalBottomSheet(
-      onDismissRequest = { showExamplePromptBottomSheet = false },
+    ExamplePromptsBottomSheet(
+      examplePrompts = selectedPromptTemplateType.examplePrompts,
       sheetState = sheetState,
-      modifier = Modifier.wrapContentHeight(),
-    ) {
-      Column(modifier = Modifier.padding(bottom = 16.dp)) {
-        // Title
-        Text(
-          "Select an example",
-          modifier = Modifier.fillMaxWidth().padding(16.dp),
-          style = MaterialTheme.typography.titleLarge,
-        )
-
-        // Examples
-        for (prompt in selectedPromptTemplateType.examplePrompts) {
-          var textLayoutResultState by remember { mutableStateOf<TextLayoutResult?>(null) }
-          val hasOverflow =
-            remember(textLayoutResultState) { textLayoutResultState?.hasVisualOverflow ?: false }
-          val isExpanded = expandedStates[prompt] ?: false
-
-          Column(
-            modifier =
-              Modifier.fillMaxWidth()
-                .clickable {
-                  curTextInputContent = prompt
-                  scope.launch {
-                    // Give it sometime to show the click effect.
-                    delay(200)
-                    showExamplePromptBottomSheet = false
-                  }
-                }
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-          ) {
-            Row(
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-              Icon(Icons.Outlined.Description, contentDescription = null)
-              Text(
-                prompt,
-                maxLines = if (isExpanded) Int.MAX_VALUE else 3,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.weight(1f),
-                onTextLayout = { textLayoutResultState = it },
-              )
-            }
-
-            if (hasOverflow && !isExpanded) {
-              Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-                horizontalArrangement = Arrangement.End,
-              ) {
-                Box(
-                  modifier =
-                    Modifier.padding(end = 16.dp)
-                      .clip(CircleShape)
-                      .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                      .clickable { expandedStates[prompt] = true }
-                      .padding(vertical = 1.dp, horizontal = 6.dp)
-                ) {
-                  Icon(
-                    Icons.Outlined.ExpandMore,
-                    contentDescription = stringResource(R.string.cd_expand_icon),
-                    modifier = Modifier.size(12.dp),
-                  )
-                }
-              }
-            } else if (isExpanded) {
-              Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-                horizontalArrangement = Arrangement.End,
-              ) {
-                Box(
-                  modifier =
-                    Modifier.padding(end = 16.dp)
-                      .clip(CircleShape)
-                      .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                      .clickable { expandedStates[prompt] = false }
-                      .padding(vertical = 1.dp, horizontal = 6.dp)
-                ) {
-                  Icon(
-                    Icons.Outlined.ExpandLess,
-                    contentDescription = stringResource(R.string.cd_collapse_icon),
-                    modifier = Modifier.size(12.dp),
-                  )
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+      expandedStates = expandedStates,
+      onDismiss = { showExamplePromptBottomSheet = false },
+      onPromptSelected = { curTextInputContent = it },
+    )
   }
 }

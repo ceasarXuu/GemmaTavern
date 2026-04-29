@@ -350,54 +350,6 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     )
   }
 
-  private fun buildOpenThreadVariants(openThreads: List<OpenThread>): MemoryVariants {
-    val rendered =
-      openThreads.map { thread ->
-        "- [${thread.type.name.lowercase()}/${thread.owner.name.lowercase()}/p${thread.priority}] ${thread.content.normalizeWhitespace().take(PMB_MAX_THREAD_LINE_LENGTH)}"
-      }
-    return MemoryVariants(
-      full = rendered.joinToString("\n"),
-      compact = rendered.take(2).joinToString("\n"),
-      minimal = rendered.take(1).joinToString("\n"),
-    )
-  }
-
-  private fun buildExternalFactVariants(externalFacts: List<RoleplayExternalFact>): MemoryVariants {
-    val rendered =
-      externalFacts.map { fact ->
-        "- [${fact.freshnessLabel()}/${fact.sourceToolName.normalizeWhitespace()}] ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace().take(PMB_MAX_EXTERNAL_FACT_LINE_LENGTH)}"
-      }
-    return MemoryVariants(
-      full = rendered.joinToString("\n"),
-      compact = rendered.take(2).joinToString("\n"),
-      minimal = rendered.take(1).joinToString("\n"),
-    )
-  }
-
-  private fun buildMemoryAtomVariants(memoryAtoms: List<MemoryAtom>): MemoryVariants {
-    val rendered =
-      memoryAtoms.map { atom ->
-        "- ${atom.subject.normalizeWhitespace()} ${atom.predicate.normalizeWhitespace()}: ${atom.objectValue.normalizeWhitespace().take(PMB_MAX_MEMORY_LINE_LENGTH)}"
-      }
-    return MemoryVariants(
-      full = rendered.joinToString("\n"),
-      compact = rendered.take(2).joinToString("\n"),
-      minimal = rendered.take(1).joinToString("\n"),
-    )
-  }
-
-  private fun buildMemoryVariants(memories: List<MemoryItem>): MemoryVariants {
-    val rendered =
-      memories.map { memory ->
-        "- ${memory.category.name.lowercase()}: ${memory.content.trim()}"
-      }
-    return MemoryVariants(
-      full = rendered.joinToString("\n"),
-      compact = rendered.take(2).joinToString("\n"),
-      minimal = rendered.take(1).joinToString("\n"),
-    )
-  }
-
   private fun MutableList<PromptSectionCandidate>.addCandidate(candidate: PromptSectionCandidate) {
     if (
       candidate.fullBody.isBlank() &&
@@ -504,13 +456,5 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
 
   companion object {
     private const val MAX_RUNTIME_STATE_VALUE_LENGTH = 180
-  }
-
-  private fun RoleplayExternalFact.freshnessLabel(): String {
-    return when (freshness()) {
-      RoleplayExternalFactFreshness.FRESH -> "fresh"
-      RoleplayExternalFactFreshness.STALE -> "stale"
-      RoleplayExternalFactFreshness.STABLE -> "stable"
-    }
   }
 }
