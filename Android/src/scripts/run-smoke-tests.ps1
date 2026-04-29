@@ -132,8 +132,15 @@ function Wait-ForMainUiHierarchy {
 
   $lastError = $null
   for ($attempt = 1; $attempt -le 30; $attempt++) {
-    & adb @AdbArgs shell uiautomator dump /sdcard/gemmatavern-smoke-window.xml 2>$null | Out-Null
-    & adb @AdbArgs pull /sdcard/gemmatavern-smoke-window.xml $UiDumpPath 2>$null | Out-Null
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+      & adb @AdbArgs shell uiautomator dump /sdcard/gemmatavern-smoke-window.xml *> $null
+      & adb @AdbArgs pull /sdcard/gemmatavern-smoke-window.xml $UiDumpPath *> $null
+    }
+    finally {
+      $ErrorActionPreference = $previousErrorActionPreference
+    }
 
     try {
       Assert-UiHierarchyCaptured -UiDumpPath $UiDumpPath
