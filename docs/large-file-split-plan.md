@@ -53,17 +53,17 @@
 
 | # | 行数 | 文件 | 拆分动作 |
 |---|---|---|---|
-| 19 | 688 | `customtasks/agentchat/AddOrEditSkillBottomSheet.kt` | `AddOrEditSkillSections.kt` |
-| 20 | 681 | `ui/common/chat/ChatPanel.kt` | `ChatPanelInternals.kt` |
+| 19 | 688 | `customtasks/agentchat/AddOrEditSkillBottomSheet.kt` | ✅ 已抽 `AddOrEditSkillScriptsTab.kt`(729→468) |
+| 20 | 681 | `ui/common/chat/ChatPanel.kt` | **延后至 Phase C**:单一 580+ 行 @Composable,与 DownloadAndTryButton 同形态,需 state hoisting。 |
 | 21 | 664 | `data/DataStoreRepository.kt` | **延后至 Phase C**:`DefaultDataStoreRepository` 单一 class ~550 行,Kotlin 不支持 partial class,需要拆为子 Repository 委托才能达标。Phase C 设计:`UserPreferencesRepository` / `BenchmarkResultsRepository` / `SkillsRepository` 委托。 |
 | 22 | 609 | `domain/roleplay/usecase/PromptMaterialBuilder.kt` | **延后至 Phase C**:同包多文件重名 helper(WHITESPACE_REGEX、normalizeWhitespace、toDisplayLabel、toJsonObjectOrNull 等)分别 file-private 在 ExportStV2RoleCardUseCase / ExtractMemoriesUseCase / RoleplayToolTurnMetadata 等内,提升可见性会触发包级冲突。需要先统一重命名为 PMB_ 前缀或抽出独立工具模块。 |
-| 23 | 597 | `feature/roleplay/roles/RoleCatalogScreen.kt` | `RoleCatalogCard.kt` |
-| 24 | 596 | `ui/common/ConfigDialog.kt` | `ConfigDialogFields.kt` |
-| 25 | 594 | `ui/modelmanager/GlobalModelManager.kt` | `GlobalModelManagerInternals.kt` |
+| 23 | 597 | `feature/roleplay/roles/RoleCatalogScreen.kt` | ✅ 已抽 `RoleCatalogScreenInternals.kt`(629→324) |
+| 24 | 596 | `ui/common/ConfigDialog.kt` | ✅ 已抽 `ConfigDialogRows.kt`(638→265) |
+| 25 | 594 | `ui/modelmanager/GlobalModelManager.kt` | **延后至 Phase C**:619 行单一 @Composable,deeply 耦合 state,与 ChatPanel/DownloadAndTryButton 同形态,需 state hoisting。 |
 | 26 | 589 | `ui/llmchat/LlmChatViewModel.kt` | **延后至 Phase C**:`generateResponse` 是单一 ~360 行 launch 内含深层闭包,需要状态抽象 + listener 类化才能拆,Phase A 风险过高。 |
 | 27 | 575 | `ui/common/DownloadAndTryButton.kt` | **延后至 Phase C**:单一 600+ 行 @Composable,需要状态提升 (state hoisting) 才能拆,Phase A 风险过高。Phase C 作为子 Composable 拆分:`DownloadAndTryProgressBar` + `DownloadAndTryDialogs`。 |
-| 28 | 560 | `customtasks/agentchat/AgentChatScreen.kt` | `AgentChatScreenInternals.kt` |
-| 29 | 535 | `feature/roleplay/roles/RoleEditorComponents.kt` | `RoleEditorComponentsExtras.kt` |
+| 28 | 560 | `customtasks/agentchat/AgentChatScreen.kt` | ✅ 已抽 `AgentChatScreenInternals.kt`(583→500) |
+| 29 | 535 | `feature/roleplay/roles/RoleEditorComponents.kt` | ✅ 已抽 `RoleEditorComponentsExtras.kt`(535→420) |
 
 ## 3. 执行顺序
 
@@ -82,7 +82,7 @@
 
 ## 4. 进度
 
-- [ ] Phase A — 第 3 档 11 个
+- [x] Phase A — 第 3 档 11 个:**已完成 6 个**(#19/#23/#24/#28/#29 + ConfigDialog),延后 5 个至 Phase C(#20 ChatPanel、#21 DataStoreRepository、#22 PromptMaterialBuilder、#25 GlobalModelManager、#26 LlmChatViewModel、#27 DownloadAndTryButton)。
 - [ ] Phase B — 第 2 档 9 个
 - [ ] Phase C — 第 1 档 9 个
 - [ ] 最终真机覆盖安装烟测
