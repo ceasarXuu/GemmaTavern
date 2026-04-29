@@ -1,29 +1,11 @@
 ﻿package selfgemma.talk.feature.roleplay.chat
 
-import android.graphics.BitmapFactory
 import android.os.SystemClock
-import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.MotionEvent
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,12 +14,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,50 +25,29 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.BugReport
-import androidx.compose.material.icons.rounded.FolderOpen
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -97,16 +56,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.text.HtmlCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import selfgemma.talk.AppTopBar
@@ -118,22 +70,8 @@ import selfgemma.talk.data.Model
 import selfgemma.talk.data.ModelDownloadStatusType
 import selfgemma.talk.domain.roleplay.model.Message
 import selfgemma.talk.domain.roleplay.model.MessageKind
-import selfgemma.talk.domain.roleplay.model.MessageSide
-import selfgemma.talk.domain.roleplay.model.MessageStatus
-import selfgemma.talk.domain.roleplay.model.MemoryAtom
-import selfgemma.talk.domain.roleplay.model.OpenThread
-import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
-import selfgemma.talk.domain.roleplay.model.SessionEvent
-import selfgemma.talk.domain.roleplay.model.RoleplayMessageAttachmentType
-import selfgemma.talk.domain.roleplay.model.roleplayMessageMediaPayload
 import selfgemma.talk.performance.TrackPerformanceState
 import selfgemma.talk.ui.common.chat.ChatMessage
-import selfgemma.talk.ui.common.chat.ChatMessageAudioClip
-import selfgemma.talk.ui.common.chat.ChatMessageImage
-import selfgemma.talk.ui.common.chat.ChatMessageText
-import selfgemma.talk.ui.common.chat.AudioPlaybackPanel
-import selfgemma.talk.ui.common.chat.MessageInputText
-import selfgemma.talk.ui.common.chat.rememberStreamingTokenSpeed
 import selfgemma.talk.ui.llmchat.LlmModelInstance
 import selfgemma.talk.ui.modelmanager.ModelInitializationStatusType
 import selfgemma.talk.ui.modelmanager.ModelManagerViewModel
@@ -141,8 +79,6 @@ import androidx.compose.ui.res.stringResource
 import selfgemma.talk.R
 import selfgemma.talk.domain.roleplay.model.primaryAvatarUri
 import selfgemma.talk.feature.roleplay.common.RoleAvatar
-import selfgemma.talk.ui.common.TopBarOverflowMenuButton
-import selfgemma.talk.ui.common.MarkdownText
 
 private const val TAG = "RoleplayChatScreen"
 
@@ -206,40 +142,12 @@ fun RoleplayChatScreen(
   val lastTimelineItem = timelineItems.lastOrNull()
   val roleName = uiState.role?.name ?: stringResource(R.string.chat_assistant)
   val userPersonaName = uiState.userPersonaName.ifBlank { stringResource(R.string.chat_you) }
-  val latestAssistantMessage =
-    remember(uiState.messages) {
-      uiState.messages.lastOrNull { it.side == MessageSide.ASSISTANT }
-    }
-  val streamingAssistantText =
-    remember(uiState.messages) {
-      uiState.messages
-        .lastOrNull { it.side == MessageSide.ASSISTANT && it.status == MessageStatus.STREAMING }
-        ?.content
-        .orEmpty()
-    }
-  val tokenSpeed =
-    rememberStreamingTokenSpeed(
-      streamingText = streamingAssistantText,
-      isStreaming = showLiveTokenSpeed && uiState.inProgress,
-      completedText =
-        latestAssistantMessage
-          ?.takeIf { it.status == MessageStatus.COMPLETED }
-          ?.content
-          .orEmpty(),
-      completedLatencyMs =
-        latestAssistantMessage
-          ?.takeIf { it.status == MessageStatus.COMPLETED }
-          ?.latencyMs,
-      completedAtEpochMs =
-        latestAssistantMessage
-          ?.takeIf { it.status == MessageStatus.COMPLETED }
-          ?.updatedAt,
-    )
   val tokenSpeedSubtitle =
-    tokenSpeed
-      ?.takeIf { showLiveTokenSpeed }
-      ?.let { stringResource(R.string.chat_token_speed_format, it) }
-      .orEmpty()
+    rememberRoleplayChatTokenSpeedSubtitle(
+      messages = uiState.messages,
+      showLiveTokenSpeed = showLiveTokenSpeed,
+      inProgress = uiState.inProgress,
+    )
   val imeBottom = WindowInsets.ime.getBottom(density)
   val screenOpenTimestamp = remember { SystemClock.elapsedRealtime() }
   var hasCompletedInitialPositioning by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
@@ -496,77 +404,38 @@ fun RoleplayChatScreen(
         }
       }
 
-      Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        uiState.errorMessage?.let { errorMessage ->
-          Text(
-            text = errorMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
-          )
-        }
-
-        if (llmChatTask != null) {
-          Box(
-            modifier =
-              Modifier.onGloballyPositioned { coordinates ->
-                composerBoundsInWindow = coordinates.boundsInWindow()
-              }
-          ) {
-            MessageInputText(
-              task = llmChatTask,
-              curMessage = uiState.draft,
-              isResettingSession = false,
-              inProgress = uiState.inProgress,
-              imageCount = 0,
-              audioClipMessageCount = 0,
-              modelInitializing = isActiveModelInitializing,
-              modelPreparing = uiState.inProgress && uiState.messages.lastOrNull()?.status == MessageStatus.STREAMING,
-              onValueChanged = viewModel::updateDraft,
-              onSendMessage = { messages ->
-                activeModel?.let { currentModel ->
-                  handleRoleplaySend(
-                    context = context,
-                    sessionId = uiState.session?.id,
-                    messages = messages,
-                    conversationMessages = uiState.messages,
-                    currentModel = currentModel,
-                    isActiveModelInitialized = isActiveModelInitialized,
-                    isActiveModelInitializing = isActiveModelInitializing,
-                    viewModel = viewModel,
-                    modelManagerViewModel = modelManagerViewModel,
-                  )
-                }
-              },
-              onAmplitudeChanged = {},
-              showPromptTemplatesInMenu = false,
-              showSkillsPicker = false,
-              showImagePicker = activeModel?.llmSupportImage == true,
-              showAudioPicker = activeModel?.llmSupportAudio == true,
-              allowTextInputWhenInProgress = true,
-              allowAuxiliaryActionsWhenInProgress = true,
-              forceDisableComposer = activeModel == null,
+      RoleplayChatComposerSection(
+        llmChatTask = llmChatTask,
+        draft = uiState.draft,
+        inProgress = uiState.inProgress,
+        isActiveModelInitialized = isActiveModelInitialized,
+        isActiveModelInitializing = isActiveModelInitializing,
+        lastMessageStatus = uiState.messages.lastOrNull()?.status,
+        errorMessage = uiState.errorMessage,
+        activeModel = activeModel,
+        onUpdateDraft = viewModel::updateDraft,
+        onComposerBoundsChanged = { composerBoundsInWindow = it },
+        onSendMessages = { messages ->
+          activeModel?.let { currentModel ->
+            handleRoleplaySend(
+              context = context,
+              sessionId = uiState.session?.id,
+              messages = messages,
+              conversationMessages = uiState.messages,
+              currentModel = currentModel,
+              isActiveModelInitialized = isActiveModelInitialized,
+              isActiveModelInitializing = isActiveModelInitializing,
+              viewModel = viewModel,
+              modelManagerViewModel = modelManagerViewModel,
             )
           }
-        } else {
-          ChatComposer(
-            draft = uiState.draft,
-            onDraftChange = viewModel::updateDraft,
-            canSend = activeModel != null && uiState.draft.isNotBlank(),
-            modifier =
-              Modifier.onGloballyPositioned { coordinates ->
-                composerBoundsInWindow = coordinates.boundsInWindow()
-              },
-            onSend = {
-              activeModel?.let { currentModel ->
-                viewModel.sendMessage(currentModel)
-              }
-            },
-          )
-        }
-      }
+        },
+        onSendDraft = {
+          activeModel?.let { currentModel ->
+            viewModel.sendMessage(currentModel)
+          }
+        },
+      )
     }
   }
 
