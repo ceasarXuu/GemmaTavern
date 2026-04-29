@@ -1,4 +1,4 @@
-package selfgemma.talk.ui.common.chat
+﻿package selfgemma.talk.ui.common.chat
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
