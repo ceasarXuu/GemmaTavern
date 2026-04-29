@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,11 +29,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,25 +42,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ListAlt
-import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,64 +58,47 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import selfgemma.talk.AppTopBar
 import selfgemma.talk.R
 import selfgemma.talk.data.AppBarAction
 import selfgemma.talk.data.AppBarActionType
-import selfgemma.talk.data.BuiltInTaskId
 import selfgemma.talk.data.Category
 import selfgemma.talk.data.CategoryInfo
 import selfgemma.talk.data.Task
-import selfgemma.talk.ui.common.RevealingText
-import selfgemma.talk.ui.common.SwipingText
-import selfgemma.talk.ui.common.TaskIcon
-import selfgemma.talk.ui.common.buildTrackableUrlAnnotatedString
 import selfgemma.talk.ui.common.rememberDelayedAnimationProgress
-import selfgemma.talk.ui.common.tos.AppTosDialog
 import selfgemma.talk.ui.common.tos.TosViewModel
 import selfgemma.talk.ui.modelmanager.ModelManagerViewModel
 import selfgemma.talk.ui.theme.customColors
-import selfgemma.talk.ui.theme.homePageTitleStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -503,47 +472,17 @@ fun HomeScreen(
     }
   }
 
-  // Show TOS dialog for users to accept.
-  if (showTosDialog) {
-    AppTosDialog(
-      onTosAccepted = {
-        showTosDialog = false
-        tosViewModel.acceptTos()
-      }
-    )
-  }
-
-  // Settings dialog.
-  if (showSettingsDialog) {
-    SettingsDialog(
-      curThemeOverride = modelManagerViewModel.readThemeOverride(),
-      modelManagerViewModel = modelManagerViewModel,
-      onDismissed = { showSettingsDialog = false },
-    )
-  }
-
-  if (uiState.loadingModelAllowlistError.isNotEmpty()) {
-    AlertDialog(
-      icon = {
-        Icon(
-          Icons.Rounded.Error,
-          contentDescription = stringResource(R.string.cd_error),
-          tint = MaterialTheme.colorScheme.error,
-        )
-      },
-      title = { Text(uiState.loadingModelAllowlistError) },
-      text = { Text("Please check your internet connection and try again later.") },
-      onDismissRequest = { modelManagerViewModel.loadModelAllowlist() },
-      confirmButton = {
-        TextButton(onClick = { modelManagerViewModel.loadModelAllowlist() }) { Text("Retry") }
-      },
-      dismissButton = {
-        TextButton(onClick = { modelManagerViewModel.clearLoadModelAllowlistError() }) {
-          Text("Cancel")
-        }
-      },
-    )
-  }
+  HomeScreenOverlayDialogs(
+    showTosDialog = showTosDialog,
+    onTosAccepted = {
+      showTosDialog = false
+      tosViewModel.acceptTos()
+    },
+    showSettingsDialog = showSettingsDialog,
+    onSettingsDismissed = { showSettingsDialog = false },
+    modelManagerViewModel = modelManagerViewModel,
+    loadingModelAllowlistError = uiState.loadingModelAllowlistError,
+  )
 }
 
 
