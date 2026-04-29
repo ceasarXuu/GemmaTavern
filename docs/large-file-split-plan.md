@@ -83,6 +83,39 @@
 ## 4. 进度
 
 - [x] Phase A — 第 3 档 11 个:**已完成 6 个**(#19/#23/#24/#28/#29 + ConfigDialog),延后 5 个至 Phase C(#20 ChatPanel、#21 DataStoreRepository、#22 PromptMaterialBuilder、#25 GlobalModelManager、#26 LlmChatViewModel、#27 DownloadAndTryButton)。
-- [ ] Phase B — 第 2 档 9 个
-- [ ] Phase C — 第 1 档 9 个
-- [ ] 最终真机覆盖安装烟测
+- [ ] Phase B — 第 2 档 9 个:**全部延后**,见下文"5. 架构性阻塞"。
+- [ ] Phase C — 第 1 档 9 个:**全部延后**,见下文"5. 架构性阻塞"。
+- [ ] 最终真机覆盖安装烟测(已对 Phase A 完成,验证通过)
+
+## 5. 架构性阻塞分析(2026-04-29 增补)
+
+第 1 档与第 2 档共 18 个文件经结构扫描后,均无法仅靠"零行为变更 + 同包扩展"达到 ≤500 行,理由如下三类共性缺陷:
+
+### 5.1 单一巨型 @Composable + 深耦合状态(共 11 个文件)
+
+`TinyGardenScreen.MainUi`(525 行)、`MobileActionsScreen.MainUi`(463 行)、`BenchmarkResultsViewer`(651 行)、`SkillManagerBottomSheet`(617 行)、`MyProfileScreen`(单一 825 行 Composable)、`HomeScreen`、`RoleEditorScreen`、`RoleplayChatScreen`、`AppNavHost`(`GalleryNavGraph` 487 行 NavHost 块)、`MessageInputText`、`SkillManagerBottomSheet` 等全部呈现为单一 @Composable + 数十个 `remember`/`mutableStateOf`/`LaunchedEffect`/局部 lambda 闭包,任何子段都需将状态显式提升到调用方才能搬出,这等同于真实重构而非"机械搬运"。
+
+### 5.2 单一巨型 ViewModel / UseCase 类(共 6 个文件)
+
+`SendRoleplayMessageUseCase`(单一 class 1648 行)、`ModelManagerViewModel`、`SkillManagerViewModel`、`RoleplayChatViewModel`、`RoleEditorViewModel`、`ExtractMemoriesUseCase`、`CompileRoleplayMemoryContextUseCase` 等单 class 内含数十个互相调用的私有方法 + 共享 `coroutineScope` / 实例字段。Kotlin 不支持 partial class,需要先把内部职责切成多个委托型 sub-collaborator,签名/依赖注入随之变化,属于设计级重构。
+
+### 5.3 同包多文件 file-private helper 名称冲突(共 3 个文件)
+
+`PromptMaterialBuilder`、`StCharacterBookRuntime`、`ExtractMemoriesUseCase` 三个 use-case 内含 `intOrNull`/`booleanOrNull`/`stringOrNull`/`toJsonObjectOrNull`/`normalizeWhitespace`/`toReadableValue`/`WHITESPACE_REGEX`/`MAX_*_LENGTH` 等通用 JSON / 文本 helper,均为 file-private 重复定义。把任何一个文件的 helper 提升为 `internal` 都会与同包另两个文件的 helper 引发"Conflicting declarations / Overload resolution ambiguity"(已在 PromptMaterialBuilder 实证)。
+
+需要先做一次"包级 JSON helper 收敛"专项:把所有重复 helper 抽成 `selfgemma.talk.domain.roleplay.usecase.internal.JsonHelpers`(独立子包,避免污染同包名字空间)并在所有 use-case 内统一引用。这不是单文件级改动。
+
+### 5.4 共同结论
+
+剩余 18 个文件的拆分都不属于"零行为变更搬运",必须配合以下任一前置工作之一才能继续:
+
+- **A. State Hoisting 设计**:把巨型 Composable 的状态显式抽出为 ViewModel 或 sub-state class,再按 sub-state 边界拆 Composable。
+- **B. Sub-Collaborator 抽取**:把巨型 ViewModel / UseCase 的内部职责拆成多个被注入的小协作者,这需要新接口、新模块、新 DI 绑定。
+- **C. 包级 helper 收敛**:用独立子包统一存放重复 JSON / 文本 helper,所有调用点改 import 路径。
+
+每一项都需要单独立项 + 独立 PR + 单独的契约/性能/真机验证。在没有上述前置 PR 落地前,继续机械拆分会引入"内部 API 误升级"或"行为微调"风险,与本计划"零行为变更"原则冲突。
+
+### 5.5 后续建议
+
+将上述 18 个文件按"3 个前置专项"重新立项,本治理计划的 Phase B / C 待前置专项落地后再执行,届时同一份"同包 sibling 文件"模板即可机械应用。
+
