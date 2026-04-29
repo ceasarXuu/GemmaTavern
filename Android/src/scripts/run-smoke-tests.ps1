@@ -166,6 +166,7 @@ function Invoke-DeviceSmoke {
 
   & adb @adbArgs shell input keyevent 224 | Out-Null
   & adb @adbArgs shell input keyevent 82 | Out-Null
+  & adb @adbArgs shell am force-stop selfgemma.talk | Out-Null
 
   Invoke-LoggedCommand `
     -Executable "adb" `
