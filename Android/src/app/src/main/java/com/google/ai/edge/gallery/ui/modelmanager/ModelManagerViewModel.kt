@@ -19,63 +19,31 @@ package selfgemma.talk.ui.modelmanager
 import android.content.Context
 import android.util.Log
 import androidx.activity.result.ActivityResult
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import selfgemma.talk.AppLifecycleProvider
 import selfgemma.talk.BuildConfig
-import selfgemma.talk.R
-import selfgemma.talk.common.ProjectConfig
-import selfgemma.talk.common.getJsonResponse
 import selfgemma.talk.customtasks.common.CustomTask
 import selfgemma.talk.data.Accelerator
-import selfgemma.talk.data.BuiltInTaskId
 import selfgemma.talk.data.Category
-import selfgemma.talk.data.CategoryInfo
-import selfgemma.talk.data.Config
 import selfgemma.talk.data.ConfigKeys
 import selfgemma.talk.data.DataStoreRepository
-import selfgemma.talk.data.DEFAULT_MAX_TOKEN
-import selfgemma.talk.data.DEFAULT_TEMPERATURE
-import selfgemma.talk.data.DEFAULT_TOPK
-import selfgemma.talk.data.DEFAULT_TOPP
 import selfgemma.talk.data.DownloadRepository
 import selfgemma.talk.data.EMPTY_MODEL
-import selfgemma.talk.data.IMPORTS_DIR
 import selfgemma.talk.data.Model
-import selfgemma.talk.data.ModelAllowlist
 import selfgemma.talk.data.ModelDownloadStatus
 import selfgemma.talk.data.ModelDownloadStatusType
-import selfgemma.talk.data.NumberSliderConfig
-import selfgemma.talk.data.RuntimeType
-import selfgemma.talk.data.SOC
-import selfgemma.talk.data.TMP_FILE_EXT
 import selfgemma.talk.data.Task
-import selfgemma.talk.data.ValueType
-import selfgemma.talk.data.createLlmChatConfigs
 import selfgemma.talk.proto.AccessTokenData
 import selfgemma.talk.proto.ImportedModel
 import selfgemma.talk.proto.Theme
-import selfgemma.talk.runtime.runtimeHelper
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
 import javax.inject.Inject
-import kotlin.collections.sortedWith
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
-import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
-import net.openid.appauth.ResponseTypeValues
 
 private const val TAG = "AGModelManagerViewModel"
 
@@ -165,14 +133,14 @@ data class ModelManagerUiState(
 open class ModelManagerViewModel
 @Inject
 constructor(
-  private val downloadRepository: DownloadRepository,
+  internal val downloadRepository: DownloadRepository,
   val dataStoreRepository: DataStoreRepository,
-  private val lifecycleProvider: AppLifecycleProvider,
-  private val customTasks: Set<@JvmSuppressWildcards CustomTask>,
-  @ApplicationContext private val context: Context,
+  internal val lifecycleProvider: AppLifecycleProvider,
+  internal val customTasks: Set<@JvmSuppressWildcards CustomTask>,
+  @ApplicationContext internal val context: Context,
 ) : ViewModel() {
-  private val externalFilesDir = context.getExternalFilesDir(null)
-  protected val _uiState = MutableStateFlow(createEmptyUiState())
+  internal val externalFilesDir = context.getExternalFilesDir(null)
+  internal val _uiState = MutableStateFlow(createEmptyUiState())
   val uiState = _uiState.asStateFlow()
 
   val authService = AuthorizationService(context)
@@ -262,68 +230,11 @@ constructor(
     }
   }
 
-  fun downloadModel(task: Task?, model: Model) {
-    // Update status.
-    setDownloadStatus(
-      curModel = model,
-      status = ModelDownloadStatus(status = ModelDownloadStatusType.IN_PROGRESS),
-    )
+  fun downloadModel(task: Task?, model: Model) = downloadModelExt(task, model)
 
-    // Delete the model files first.
-    deleteModel(model = model)
+  fun cancelDownloadModel(model: Model) = cancelDownloadModelExt(model)
 
-    // Start to send download request.
-    downloadRepository.downloadModel(
-      task = task,
-      model = model,
-      onStatusUpdated = this::setDownloadStatus,
-    )
-  }
-
-  fun cancelDownloadModel(model: Model) {
-    downloadRepository.cancelDownloadModel(model)
-    deleteModel(model = model)
-  }
-
-  fun deleteModel(model: Model) {
-    if (model.imported) {
-      deleteFilesFromImportDir(model.downloadFileName)
-    } else {
-      deleteDirFromExternalFilesDir(model.normalizedName)
-    }
-
-    // Update model download status to NotDownloaded.
-    val curModelDownloadStatus = uiState.value.modelDownloadStatus.toMutableMap()
-    curModelDownloadStatus[model.name] =
-      ModelDownloadStatus(status = ModelDownloadStatusType.NOT_DOWNLOADED)
-
-    // Delete model from the list if model is imported as a local model.
-    if (model.imported) {
-      for (curTask in uiState.value.tasks) {
-        val index = curTask.models.indexOf(model)
-        if (index >= 0) {
-          curTask.models.removeAt(index)
-        }
-        curTask.updateTrigger.value = System.currentTimeMillis()
-      }
-      curModelDownloadStatus.remove(model.name)
-
-      // Update data store.
-      val importedModels = dataStoreRepository.readImportedModels().toMutableList()
-      val importedModelIndex = importedModels.indexOfFirst { it.fileName == model.name }
-      if (importedModelIndex >= 0) {
-        importedModels.removeAt(importedModelIndex)
-      }
-      dataStoreRepository.saveImportedModels(importedModels = importedModels)
-    }
-    val newUiState =
-      uiState.value.copy(
-        modelDownloadStatus = curModelDownloadStatus,
-        tasks = uiState.value.tasks.toList(),
-        modelImportingUpdateTrigger = System.currentTimeMillis(),
-      )
-    _uiState.update { newUiState }
-  }
+  fun deleteModel(model: Model) = deleteModelExt(model)
 
   fun initializeModel(
     context: Context,
@@ -331,85 +242,7 @@ constructor(
     model: Model,
     force: Boolean = false,
     onDone: () -> Unit = {},
-  ) {
-    viewModelScope.launch(Dispatchers.Default) {
-      // Skip if initialized already.
-      if (
-        !force &&
-          uiState.value.modelInitializationStatus[model.name]?.status ==
-            ModelInitializationStatusType.INITIALIZED
-      ) {
-        Log.d(TAG, "Model '${model.name}' has been initialized. Skipping.")
-        return@launch
-      }
-
-      // Skip if initialization is in progress.
-      if (model.initializing) {
-        model.cleanUpAfterInit = false
-        Log.d(TAG, "Model '${model.name}' is being initialized. Skipping.")
-        return@launch
-      }
-
-      runInitializationAfterOptionalCleanup(
-        hasExistingInstance = model.instance != null,
-        startCleanup = { onCleanupDone ->
-          Log.d(
-            TAG,
-            "Cleaning up existing model '${model.name}' before initialization so the next instance is not raced by stale cleanup.",
-          )
-          cleanupModel(
-            context = context,
-            task = task,
-            model = model,
-            onDone = {
-              viewModelScope.launch(Dispatchers.Default) {
-                onCleanupDone()
-              }
-            },
-          )
-        },
-        startInitialization = {
-          Log.d(TAG, "Initializing model '${model.name}'...")
-          model.initializing = true
-          updateModelInitializationStatus(
-            model = model,
-            status = ModelInitializationStatusType.INITIALIZING,
-          )
-
-          val onDoneFn: (error: String) -> Unit = { error ->
-            model.initializing = false
-            if (model.instance != null) {
-              Log.d(TAG, "Model '${model.name}' initialized successfully")
-              updateModelInitializationStatus(
-                model = model,
-                status = ModelInitializationStatusType.INITIALIZED,
-              )
-              if (model.cleanUpAfterInit) {
-                Log.d(TAG, "Model '${model.name}' needs cleaning up after init.")
-                cleanupModel(context = context, task = task, model = model)
-              }
-              onDone()
-            } else if (error.isNotEmpty()) {
-              Log.d(TAG, "Model '${model.name}' failed to initialize")
-              updateModelInitializationStatus(
-                model = model,
-                status = ModelInitializationStatusType.ERROR,
-                error = error,
-              )
-            }
-          }
-
-          getCustomTaskByTaskId(id = task.id)
-            ?.initializeModelFn(
-              context = context,
-              coroutineScope = viewModelScope,
-              model = model,
-              onDone = onDoneFn,
-            )
-        },
-      )
-    }
-  }
+  ) = initializeModelExt(context, task, model, force, onDone)
 
   fun initializeLlmModel(
     context: Context,
@@ -418,93 +251,7 @@ constructor(
     supportAudio: Boolean,
     force: Boolean = false,
     onDone: () -> Unit = {},
-  ) {
-    viewModelScope.launch(Dispatchers.Default) {
-      if (
-        !force &&
-          uiState.value.modelInitializationStatus[model.name]?.status ==
-            ModelInitializationStatusType.INITIALIZED
-      ) {
-        Log.d(
-          TAG,
-          "Model '${model.name}' has been initialized for multimodal chat. Skipping.",
-        )
-        return@launch
-      }
-
-      if (model.initializing) {
-        model.cleanUpAfterInit = false
-        Log.d(TAG, "Model '${model.name}' is being initialized for multimodal chat. Skipping.")
-        return@launch
-      }
-
-      val llmChatTask = getTaskById(BuiltInTaskId.LLM_CHAT) ?: return@launch
-      runInitializationAfterOptionalCleanup(
-        hasExistingInstance = model.instance != null,
-        startCleanup = { onCleanupDone ->
-          Log.d(
-            TAG,
-            "Cleaning up existing model '${model.name}' before multimodal initialization so the replacement session is not cleared by the previous cleanup callback.",
-          )
-          cleanupModel(
-            context = context,
-            task = llmChatTask,
-            model = model,
-            onDone = {
-              viewModelScope.launch(Dispatchers.Default) {
-                onCleanupDone()
-              }
-            },
-          )
-        },
-        startInitialization = {
-          Log.d(
-            TAG,
-            "Initializing model '${model.name}' for multimodal roleplay supportImage=$supportImage supportAudio=$supportAudio",
-          )
-          model.initializing = true
-          updateModelInitializationStatus(
-            model = model,
-            status = ModelInitializationStatusType.INITIALIZING,
-          )
-
-          val onDoneFn: (String) -> Unit = { error ->
-            model.initializing = false
-            if (model.instance != null) {
-              Log.d(TAG, "Model '${model.name}' initialized successfully for multimodal roleplay")
-              updateModelInitializationStatus(
-                model = model,
-                status = ModelInitializationStatusType.INITIALIZED,
-              )
-              if (model.cleanUpAfterInit) {
-                getTaskById(BuiltInTaskId.LLM_CHAT)?.let { task ->
-                  Log.d(TAG, "Model '${model.name}' needs cleaning up after multimodal init.")
-                  cleanupModel(context = context, task = task, model = model)
-                }
-              }
-              onDone()
-            } else if (error.isNotEmpty()) {
-              Log.d(TAG, "Model '${model.name}' failed multimodal initialization")
-              updateModelInitializationStatus(
-                model = model,
-                status = ModelInitializationStatusType.ERROR,
-                error = error,
-              )
-            }
-          }
-
-          model.runtimeHelper.initialize(
-            context = context,
-            model = model,
-            supportImage = supportImage,
-            supportAudio = supportAudio,
-            onDone = onDoneFn,
-            coroutineScope = viewModelScope,
-          )
-        },
-      )
-    }
-  }
+  ) = initializeLlmModelExt(context, model, supportImage, supportAudio, force, onDone)
 
   fun cleanupModel(
     context: Context,
@@ -512,82 +259,13 @@ constructor(
     model: Model,
     instanceToCleanUp: Any? = model.instance,
     onDone: () -> Unit = {},
-  ) {
-    if (instanceToCleanUp != null && instanceToCleanUp !== model.instance) {
-      Log.d(TAG, "Stale cleanup request for ${model.name}. Aborting.")
-      onDone()
-      return
-    }
+  ) = cleanupModelExt(context, task, model, instanceToCleanUp, onDone)
 
-    if (model.instance != null) {
-      model.cleanUpAfterInit = false
-      Log.d(TAG, "Cleaning up model '${model.name}'...")
-      val onDoneFn: () -> Unit = {
-        model.instance = null
-        model.initializing = false
-        updateModelInitializationStatus(
-          model = model,
-          status = ModelInitializationStatusType.NOT_INITIALIZED,
-        )
-        Log.d(TAG, "Clean up model '${model.name}' done")
-        onDone()
-      }
-      getCustomTaskByTaskId(id = task.id)
-        ?.cleanUpModelFn(
-          context = context,
-          coroutineScope = viewModelScope,
-          model = model,
-          onDone = onDoneFn,
-        )
-    } else {
-      // When model is being initialized and we are trying to clean it up at same time, we mark it
-      // to clean up and it will be cleaned up after initialization is done.
-      if (model.initializing) {
-        Log.d(
-          TAG,
-          "Model '${model.name}' is still initializing.. Will clean up after it is done initializing",
-        )
-        model.cleanUpAfterInit = true
-      }
-    }
-  }
+  fun setDownloadStatus(curModel: Model, status: ModelDownloadStatus) =
+    setDownloadStatusExt(curModel, status)
 
-  fun setDownloadStatus(curModel: Model, status: ModelDownloadStatus) {
-    // Update model download progress.
-    val curModelDownloadStatus = uiState.value.modelDownloadStatus.toMutableMap()
-    curModelDownloadStatus[curModel.name] = status
-    val newUiState = uiState.value.copy(modelDownloadStatus = curModelDownloadStatus)
-
-    // Delete downloaded file if status is failed or not_downloaded.
-    if (
-      status.status == ModelDownloadStatusType.FAILED ||
-        status.status == ModelDownloadStatusType.NOT_DOWNLOADED
-    ) {
-      deleteFileFromExternalFilesDir(curModel.downloadFileName)
-    }
-
-    _uiState.update { newUiState }
-  }
-
-  fun setInitializationStatus(model: Model, status: ModelInitializationStatus) {
-    val curStatus = uiState.value.modelInitializationStatus.toMutableMap()
-    if (curStatus.containsKey(model.name)) {
-      val initializedBackends = curStatus[model.name]?.initializedBackends ?: setOf()
-      val backend =
-        model.getStringConfigValue(
-          key = ConfigKeys.ACCELERATOR,
-          defaultValue = Accelerator.GPU.label,
-        )
-      val newInitializedBackends =
-        if (status.status == ModelInitializationStatusType.INITIALIZED) {
-          initializedBackends + backend
-        } else {
-          initializedBackends
-        }
-      curStatus[model.name] = status.copy(initializedBackends = newInitializedBackends)
-      _uiState.update { _uiState.value.copy(modelInitializationStatus = curStatus) }
-    }
-  }
+  fun setInitializationStatus(model: Model, status: ModelInitializationStatus) =
+    setInitializationStatusExt(model, status)
 
   fun addTextInputHistory(text: String) {
     if (uiState.value.textInputHistory.indexOf(text) < 0) {
@@ -662,940 +340,52 @@ constructor(
       dataStoreRepository.isRoleplayToolDebugOutputEnabled()
   }
 
-  fun getModelUrlResponse(model: Model, accessToken: String? = null): Int {
-    try {
-      val url = URL(model.url)
-      val connection = url.openConnection() as HttpURLConnection
-      if (accessToken != null) {
-        connection.setRequestProperty("Authorization", "Bearer $accessToken")
-      }
-      connection.connect()
+  fun getModelUrlResponse(model: Model, accessToken: String? = null): Int =
+    getModelUrlResponseExt(model, accessToken)
 
-      // Report the result.
-      return connection.responseCode
-    } catch (e: Exception) {
-      Log.e(TAG, "$e")
-      return -1
-    }
-  }
+  fun addImportedLlmModel(info: ImportedModel) = addImportedLlmModelExt(info)
 
-  fun addImportedLlmModel(info: ImportedModel) {
-    Log.d(TAG, "adding imported llm model: $info")
+  fun updateImportedLlmModelConfig(model: Model, values: Map<String, Any>): Boolean =
+    updateImportedLlmModelConfigExt(model, values)
 
-    // Create model.
-    val model = createModelFromImportedModelInfo(info = info)
+  fun getTokenStatusAndData(): TokenStatusAndData = getTokenStatusAndDataExt()
 
-    val setOfTasks =
-      mutableSetOf(
-        BuiltInTaskId.LLM_CHAT,
-        BuiltInTaskId.LLM_ASK_IMAGE,
-        BuiltInTaskId.LLM_ASK_AUDIO,
-        BuiltInTaskId.LLM_PROMPT_LAB,
-        BuiltInTaskId.LLM_TINY_GARDEN,
-        BuiltInTaskId.LLM_MOBILE_ACTIONS,
-        BuiltInTaskId.LLM_AGENT_CHAT,
-      )
-    for (task in getTasksByIds(ids = setOfTasks)) {
-      // Remove duplicated imported model if existed.
-      val modelIndex = task.models.indexOfFirst { info.fileName == it.name && it.imported }
-      if (modelIndex >= 0) {
-        Log.d(TAG, "duplicated imported model found in task. Removing it first")
-        task.models.removeAt(modelIndex)
-      }
-      if (
-        (task.id == BuiltInTaskId.LLM_ASK_IMAGE && model.llmSupportImage) ||
-          (task.id == BuiltInTaskId.LLM_ASK_AUDIO && model.llmSupportAudio) ||
-          (task.id == BuiltInTaskId.LLM_TINY_GARDEN && model.llmSupportTinyGarden) ||
-          (task.id == BuiltInTaskId.LLM_MOBILE_ACTIONS && model.llmSupportMobileActions) ||
-          (task.id != BuiltInTaskId.LLM_ASK_IMAGE &&
-            task.id != BuiltInTaskId.LLM_ASK_AUDIO &&
-            task.id != BuiltInTaskId.LLM_TINY_GARDEN &&
-            task.id != BuiltInTaskId.LLM_MOBILE_ACTIONS)
-      ) {
-        task.models.add(model)
-        if (task.id == BuiltInTaskId.LLM_TINY_GARDEN) {
-          val newConfigs = model.configs.toMutableList()
-          newConfigs.add(RESET_CONVERSATION_TURN_COUNT_CONFIG)
-          model.configs = newConfigs
-          model.preProcess()
-        }
-      }
-      task.updateTrigger.value = System.currentTimeMillis()
-    }
+  fun getAuthorizationRequest(): AuthorizationRequest? = getAuthorizationRequestExt()
 
-    // Add initial status and states.
-    val modelDownloadStatus = uiState.value.modelDownloadStatus.toMutableMap()
-    val modelInstances = uiState.value.modelInitializationStatus.toMutableMap()
-    modelDownloadStatus[model.name] =
-      ModelDownloadStatus(
-        status = ModelDownloadStatusType.SUCCEEDED,
-        receivedBytes = info.fileSize,
-        totalBytes = info.fileSize,
-      )
-    modelInstances[model.name] =
-      ModelInitializationStatus(status = ModelInitializationStatusType.NOT_INITIALIZED)
+  fun handleAuthResult(result: ActivityResult, onTokenRequested: (TokenRequestResult) -> Unit) =
+    handleAuthResultExt(result, onTokenRequested)
 
-    // Update ui state.
-    _uiState.update {
-      uiState.value.copy(
-        tasks = uiState.value.tasks.toList(),
-        modelDownloadStatus = modelDownloadStatus,
-        modelInitializationStatus = modelInstances,
-        modelImportingUpdateTrigger = System.currentTimeMillis(),
-      )
-    }
+  fun saveAccessToken(accessToken: String, refreshToken: String, expiresAt: Long) =
+    saveAccessTokenExt(accessToken, refreshToken, expiresAt)
 
-    // Add to data store.
-    val importedModels = dataStoreRepository.readImportedModels().toMutableList()
-    val importedModelIndex = importedModels.indexOfFirst { info.fileName == it.fileName }
-    if (importedModelIndex >= 0) {
-      Log.d(TAG, "duplicated imported model found in data store. Removing it first")
-      importedModels.removeAt(importedModelIndex)
-    }
-    importedModels.add(info)
-    dataStoreRepository.saveImportedModels(importedModels = importedModels)
-  }
+  fun clearAccessToken() = clearAccessTokenExt()
 
-  fun updateImportedLlmModelConfig(model: Model, values: Map<String, Any>): Boolean {
-    if (!model.imported) {
-      Log.w(TAG, "Ignoring config update for non-imported model '${model.name}'")
-      return false
-    }
+  private fun processPendingDownloads() = processPendingDownloadsExt()
 
-    val importedModels = dataStoreRepository.readImportedModels().toMutableList()
-    val importedModelIndex = importedModels.indexOfFirst { model.name == it.fileName }
-    if (importedModelIndex < 0) {
-      Log.w(TAG, "Cannot update imported model config because '${model.name}' is not in data store")
-      return false
-    }
+  fun loadModelAllowlist() = loadModelAllowlistExt()
 
-    val updatedInfo =
-      updatedImportedModelWithConfigValues(
-        importedModel = importedModels[importedModelIndex],
-        values = values,
-      )
-    importedModels[importedModelIndex] = updatedInfo
-    dataStoreRepository.saveImportedModels(importedModels = importedModels)
-
-    val rebuiltModel = createModelFromImportedModelInfo(info = updatedInfo)
-    val llmChatTask = getTaskById(BuiltInTaskId.LLM_CHAT)
-    var touched = false
-    val updatedModelDownloadStatus = uiState.value.modelDownloadStatus.toMutableMap()
-    val updatedModelInitializationStatus = uiState.value.modelInitializationStatus.toMutableMap()
-    val cleanupRequestedModels = mutableListOf<Model>()
-
-    for (task in uiState.value.tasks) {
-      for (taskModel in task.models) {
-        if (taskModel.name != model.name || !taskModel.imported) {
-          continue
-        }
-        taskModel.prevConfigValues = taskModel.configValues
-        taskModel.configs = rebuiltModel.configs
-        taskModel.configValues = rebuiltModel.configValues
-        taskModel.totalBytes = rebuiltModel.totalBytes
-        task.updateTrigger.value = System.currentTimeMillis()
-        touched = true
-
-        if (taskModel.instance != null || taskModel.initializing) {
-          if (cleanupRequestedModels.any { it === taskModel }) {
-            continue
-          }
-          cleanupRequestedModels.add(taskModel)
-          if (llmChatTask != null) {
-            cleanupModel(context = context, task = llmChatTask, model = taskModel)
-          } else {
-            taskModel.cleanUpAfterInit = true
-          }
-        }
-      }
-    }
-
-    updatedModelDownloadStatus[model.name] =
-      ModelDownloadStatus(
-        status = ModelDownloadStatusType.SUCCEEDED,
-        receivedBytes = updatedInfo.fileSize,
-        totalBytes = updatedInfo.fileSize,
-      )
-    updatedModelInitializationStatus[model.name] =
-      ModelInitializationStatus(status = ModelInitializationStatusType.NOT_INITIALIZED)
-
-    _uiState.update {
-      uiState.value.copy(
-        tasks = uiState.value.tasks.toList(),
-        modelDownloadStatus = updatedModelDownloadStatus,
-        modelInitializationStatus = updatedModelInitializationStatus,
-        modelImportingUpdateTrigger = System.currentTimeMillis(),
-        configValuesUpdateTrigger = System.currentTimeMillis(),
-      )
-    }
-
-    Log.d(
-      TAG,
-      "updated imported model config model=${model.name} touched=$touched " +
-        "maxTokens=${updatedInfo.llmConfig.defaultMaxTokens} topK=${updatedInfo.llmConfig.defaultTopk} " +
-        "topP=${updatedInfo.llmConfig.defaultTopp} temperature=${updatedInfo.llmConfig.defaultTemperature}",
-    )
-    return true
-  }
-
-  fun getTokenStatusAndData(): TokenStatusAndData {
-    // Try to load token data from DataStore.
-    var tokenStatus = TokenStatus.NOT_STORED
-    Log.d(TAG, "Reading token data from data store...")
-    val tokenData = dataStoreRepository.readAccessTokenData()
-
-    // Token exists.
-    if (tokenData != null && tokenData.accessToken.isNotEmpty()) {
-      Log.d(TAG, "Token exists and loaded.")
-
-      // Check expiration (with 5-minute buffer).
-      val curTs = System.currentTimeMillis()
-      val expirationTs = tokenData.expiresAtMs - 5 * 60
-      Log.d(
-        TAG,
-        "Checking whether token has expired or not. Current ts: $curTs, expires at: $expirationTs",
-      )
-      if (curTs >= expirationTs) {
-        Log.d(TAG, "Token expired!")
-        tokenStatus = TokenStatus.EXPIRED
-      } else {
-        Log.d(TAG, "Token not expired.")
-        tokenStatus = TokenStatus.NOT_EXPIRED
-        curAccessToken = tokenData.accessToken
-      }
-    } else {
-      Log.d(TAG, "Token doesn't exists.")
-    }
-
-    return TokenStatusAndData(status = tokenStatus, data = tokenData)
-  }
-
-  fun getAuthorizationRequest(): AuthorizationRequest? {
-    if (!ProjectConfig.isHuggingFaceAuthConfigured) {
-      return null
-    }
-
-    return AuthorizationRequest.Builder(
-        ProjectConfig.authServiceConfig,
-        ProjectConfig.clientId,
-        ResponseTypeValues.CODE,
-        ProjectConfig.redirectUri.toUri(),
-      )
-      .setScope("read-repos")
-      .build()
-  }
-
-  fun handleAuthResult(result: ActivityResult, onTokenRequested: (TokenRequestResult) -> Unit) {
-    val dataIntent = result.data
-    if (dataIntent == null) {
-      onTokenRequested(
-        TokenRequestResult(
-          status = TokenRequestResultType.FAILED,
-          errorMessage = "Empty auth result",
-        )
-      )
-      return
-    }
-
-    val response = AuthorizationResponse.fromIntent(dataIntent)
-    val exception = AuthorizationException.fromIntent(dataIntent)
-
-    when {
-      response?.authorizationCode != null -> {
-        // Authorization successful, exchange the code for tokens
-        var errorMessage: String? = null
-        authService.performTokenRequest(response.createTokenExchangeRequest()) {
-          tokenResponse,
-          tokenEx ->
-          if (tokenResponse != null) {
-            if (tokenResponse.accessToken == null) {
-              errorMessage = "Empty access token"
-            } else if (tokenResponse.refreshToken == null) {
-              errorMessage = "Empty refresh token"
-            } else if (tokenResponse.accessTokenExpirationTime == null) {
-              errorMessage = "Empty expiration time"
-            } else {
-              // Token exchange successful. Store the tokens securely
-              Log.d(TAG, "Token exchange successful. Storing tokens...")
-              saveAccessToken(
-                accessToken = tokenResponse.accessToken!!,
-                refreshToken = tokenResponse.refreshToken!!,
-                expiresAt = tokenResponse.accessTokenExpirationTime!!,
-              )
-              curAccessToken = tokenResponse.accessToken!!
-              Log.d(TAG, "Token successfully saved.")
-            }
-          } else if (tokenEx != null) {
-            errorMessage = "Token exchange failed: ${tokenEx.message}"
-          } else {
-            errorMessage = "Token exchange failed"
-          }
-          if (errorMessage == null) {
-            onTokenRequested(TokenRequestResult(status = TokenRequestResultType.SUCCEEDED))
-          } else {
-            onTokenRequested(
-              TokenRequestResult(
-                status = TokenRequestResultType.FAILED,
-                errorMessage = errorMessage,
-              )
-            )
-          }
-        }
-      }
-
-      exception != null -> {
-        onTokenRequested(
-          TokenRequestResult(
-            status =
-              if (exception.message == "User cancelled flow") TokenRequestResultType.USER_CANCELLED
-              else TokenRequestResultType.FAILED,
-            errorMessage = exception.message,
-          )
-        )
-      }
-
-      else -> {
-        onTokenRequested(TokenRequestResult(status = TokenRequestResultType.USER_CANCELLED))
-      }
-    }
-  }
-
-  fun saveAccessToken(accessToken: String, refreshToken: String, expiresAt: Long) {
-    dataStoreRepository.saveAccessTokenData(
-      accessToken = accessToken,
-      refreshToken = refreshToken,
-      expiresAt = expiresAt,
-    )
-  }
-
-  fun clearAccessToken() {
-    dataStoreRepository.clearAccessTokenData()
-  }
-
-  private fun processPendingDownloads() {
-    // Cancel all pending downloads for the retrieved models.
-    downloadRepository.cancelAll {
-      Log.d(TAG, "All workers are cancelled.")
-
-      viewModelScope.launch(Dispatchers.Main) {
-        val checkedModelNames = mutableSetOf<String>()
-        val tokenStatusAndData = getTokenStatusAndData()
-        for (task in uiState.value.tasks) {
-          for (model in task.models) {
-            if (checkedModelNames.contains(model.name)) {
-              continue
-            }
-
-            // Start download for partially downloaded models.
-            val downloadStatus = uiState.value.modelDownloadStatus[model.name]?.status
-            if (downloadStatus == ModelDownloadStatusType.PARTIALLY_DOWNLOADED) {
-              if (
-                tokenStatusAndData.status == TokenStatus.NOT_EXPIRED &&
-                  tokenStatusAndData.data != null
-              ) {
-                model.accessToken = tokenStatusAndData.data.accessToken
-              }
-              Log.d(TAG, "Sending a new download request for '${model.name}'")
-              downloadRepository.downloadModel(
-                task = task,
-                model = model,
-                onStatusUpdated = this@ModelManagerViewModel::setDownloadStatus,
-              )
-            }
-
-            checkedModelNames.add(model.name)
-          }
-        }
-      }
-    }
-  }
-
-  fun loadModelAllowlist() {
-    _uiState.update {
-      uiState.value.copy(loadingModelAllowlist = true, loadingModelAllowlistError = "")
-    }
-
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
-        // Load model allowlist json.
-        var modelAllowlist: ModelAllowlist? = null
-
-        // Try to read the test allowlist first.
-        Log.d(TAG, "Loading test model allowlist.")
-        modelAllowlist = readModelAllowlistFromDisk(fileName = MODEL_ALLOWLIST_TEST_FILENAME)
-
-        // Local test only.
-        if (TEST_MODEL_ALLOW_LIST.isNotEmpty()) {
-          Log.d(TAG, "Loading local model allowlist for testing.")
-          val gson = Gson()
-          try {
-            modelAllowlist = gson.fromJson(TEST_MODEL_ALLOW_LIST, ModelAllowlist::class.java)
-          } catch (e: JsonSyntaxException) {
-            Log.e(TAG, "Failed to parse local test json", e)
-          }
-        }
-
-        if (modelAllowlist == null) {
-          // Load from github.
-          var version = BuildConfig.VERSION_NAME.replace(".", "_")
-          val url = getAllowlistUrl(version)
-          Log.d(TAG, "Loading model allowlist from internet. Url: $url")
-          val data = getJsonResponse<ModelAllowlist>(url = url)
-          modelAllowlist = data?.jsonObj
-
-          if (modelAllowlist == null) {
-            Log.w(TAG, "Failed to load model allowlist from internet. Trying to load it from disk")
-            modelAllowlist = readModelAllowlistFromDisk()
-          } else {
-            Log.d(TAG, "Done: loading model allowlist from internet")
-            saveModelAllowlistToDisk(modelAllowlistContent = data?.textContent ?: "{}")
-          }
-        }
-
-        if (modelAllowlist == null) {
-          publishModelAllowlistFailure("Failed to load model list")
-          return@launch
-        }
-
-        Log.d(TAG, "Allowlist: $modelAllowlist")
-
-        // Convert models in the allowlist.
-        val curTasks = getActiveCustomTasks().map { it.task }
-        val nameToModel = mutableMapOf<String, Model>()
-        for (allowedModel in modelAllowlist.models) {
-          if (allowedModel.disabled == true) {
-            continue
-          }
-
-          // Ignore the allowedModel if its accelerator is only npu and this device's soc is not in
-          // its socToModelFiles.
-          val accelerators = allowedModel.defaultConfig.accelerators ?: ""
-          val acceleratorList = accelerators.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-          if (acceleratorList.size == 1 && acceleratorList[0] == "npu") {
-            val socToModelFiles = allowedModel.socToModelFiles
-            if (socToModelFiles != null && !socToModelFiles.containsKey(SOC)) {
-              Log.d(
-                TAG,
-                "Ignoring model '${allowedModel.name}' because it's NPU-only and not supported on SOC: $SOC",
-              )
-              continue
-            }
-          }
-
-          val model = allowedModel.toModel()
-          nameToModel.put(model.name, model)
-          for (taskType in allowedModel.taskTypes) {
-            val task = curTasks.find { it.id == taskType }
-            task?.models?.add(model)
-
-            if (task?.id == BuiltInTaskId.LLM_TINY_GARDEN) {
-              val newConfigs = model.configs.toMutableList()
-              newConfigs.add(RESET_CONVERSATION_TURN_COUNT_CONFIG)
-              model.configs = newConfigs
-            }
-          }
-        }
-
-        // Find models from allowlist if a task's `modelNames` field is not empty.
-        for (task in curTasks) {
-          if (task.modelNames.isNotEmpty()) {
-            for (modelName in task.modelNames) {
-              val model = nameToModel[modelName]
-              if (model == null) {
-                Log.w(TAG, "Model '${modelName}' in task '${task.label}' not found in allowlist.")
-                continue
-              }
-              task.models.add(model)
-            }
-          }
-        }
-
-        // Process all tasks.
-        processTasks()
-
-        // Update UI state.
-        _uiState.update {
-          createUiState()
-            .copy(
-              loadingModelAllowlist = false,
-              tasks = curTasks,
-              tasksByCategory = groupTasksByCategory(),
-            )
-        }
-
-        preloadLastUsedLlmModel()
-
-        // Process pending downloads.
-        processPendingDownloads()
-      } catch (e: Exception) {
-        Log.e(TAG, "Failed to load model allowlist", e)
-        publishModelAllowlistFailure("Failed to load model list")
-      }
-    }
-  }
-
-  private fun publishModelAllowlistFailure(message: String) {
-    val curTasks = getActiveCustomTasks().map { it.task }
-    processTasks()
-    _uiState.update {
-      createUiState()
-        .copy(
-          loadingModelAllowlist = false,
-          tasks = curTasks,
-          loadingModelAllowlistError = message,
-          tasksByCategory = groupTasksByCategory(),
-        )
-    }
-    preloadLastUsedLlmModel()
-  }
-
-  fun clearLoadModelAllowlistError() {
-    val curTasks = getActiveCustomTasks().map { it.task }
-    processTasks()
-    _uiState.update {
-      createUiState()
-        .copy(
-          loadingModelAllowlist = false,
-          tasks = curTasks,
-          loadingModelAllowlistError = "",
-          tasksByCategory = groupTasksByCategory(),
-        )
-    }
-  }
+  fun clearLoadModelAllowlistError() = clearLoadModelAllowlistErrorExt()
 
   fun setAppInForeground(foreground: Boolean) {
     lifecycleProvider.isAppInForeground = foreground
   }
 
-  private fun saveModelAllowlistToDisk(modelAllowlistContent: String) {
-    try {
-      Log.d(TAG, "Saving model allowlist to disk...")
-      val file = File(externalFilesDir, MODEL_ALLOWLIST_FILENAME)
-      file.writeText(modelAllowlistContent)
-      Log.d(TAG, "Done: saving model allowlist to disk.")
-    } catch (e: Exception) {
-      Log.e(TAG, "failed to write model allowlist to disk", e)
-    }
-  }
-
-  private fun readModelAllowlistFromDisk(
-    fileName: String = MODEL_ALLOWLIST_FILENAME
-  ): ModelAllowlist? {
-    try {
-      Log.d(TAG, "Reading model allowlist from disk: $fileName")
-      val baseDir =
-        if (fileName == MODEL_ALLOWLIST_TEST_FILENAME) File("/data/local/tmp") else externalFilesDir
-      val file = File(baseDir, fileName)
-      if (file.exists()) {
-        val content = file.readText()
-        Log.d(TAG, "Model allowlist content from local file: $content")
-
-        val gson = Gson()
-        return gson.fromJson(content, ModelAllowlist::class.java)
-      }
-    } catch (e: Exception) {
-      Log.e(TAG, "failed to read model allowlist from disk", e)
-      return null
-    }
-
-    return null
-  }
-
-  private fun isModelPartiallyDownloaded(model: Model): Boolean {
-    if (model.localModelFilePathOverride.isNotEmpty()) {
-      return false
-    }
-
-    // A model is partially downloaded when the tmp file exists.
-    val tmpFilePath =
-      model.getPath(context = context, fileName = "${model.downloadFileName}.$TMP_FILE_EXT")
-    return File(tmpFilePath).exists()
-  }
-
-  private fun createEmptyUiState(): ModelManagerUiState {
-    return ModelManagerUiState(
-      tasks = listOf(),
-      tasksByCategory = mapOf(),
-      modelDownloadStatus = mapOf(),
-      modelInitializationStatus = mapOf(),
-    )
-  }
-
-  private fun createUiState(): ModelManagerUiState {
-    val modelDownloadStatus: MutableMap<String, ModelDownloadStatus> = mutableMapOf()
-    val modelInstances: MutableMap<String, ModelInitializationStatus> = mutableMapOf()
-    val tasks: MutableMap<String, Task> = mutableMapOf()
-    val checkedModelNames = mutableSetOf<String>()
-    for (customTask in getActiveCustomTasks()) {
-      val task = customTask.task
-      tasks.put(key = task.id, value = task)
-      for (model in task.models) {
-        if (checkedModelNames.contains(model.name)) {
-          continue
-        }
-        modelDownloadStatus[model.name] = getModelDownloadStatus(model = model)
-        modelInstances[model.name] =
-          ModelInitializationStatus(status = ModelInitializationStatusType.NOT_INITIALIZED)
-        checkedModelNames.add(model.name)
-      }
-    }
-
-    // Load imported models.
-    for (importedModel in dataStoreRepository.readImportedModels()) {
-      Log.d(TAG, "stored imported model: $importedModel")
-
-      // Create model.
-      val model = createModelFromImportedModelInfo(info = importedModel)
-
-      // Add to task.
-      tasks.get(key = BuiltInTaskId.LLM_CHAT)?.models?.add(model)
-      tasks.get(key = BuiltInTaskId.LLM_PROMPT_LAB)?.models?.add(model)
-      tasks.get(key = BuiltInTaskId.LLM_AGENT_CHAT)?.models?.add(model)
-      if (model.llmSupportImage) {
-        tasks.get(key = BuiltInTaskId.LLM_ASK_IMAGE)?.models?.add(model)
-      }
-      if (model.llmSupportAudio) {
-        tasks.get(key = BuiltInTaskId.LLM_ASK_AUDIO)?.models?.add(model)
-      }
-      if (model.llmSupportTinyGarden) {
-        tasks.get(key = BuiltInTaskId.LLM_TINY_GARDEN)?.models?.add(model)
-        val newConfigs = model.configs.toMutableList()
-        newConfigs.add(RESET_CONVERSATION_TURN_COUNT_CONFIG)
-        model.configs = newConfigs
-        model.preProcess()
-      }
-      if (model.llmSupportMobileActions) {
-        tasks.get(key = BuiltInTaskId.LLM_MOBILE_ACTIONS)?.models?.add(model)
-      }
-
-      // Update status.
-      modelDownloadStatus[model.name] =
-        ModelDownloadStatus(
-          status = ModelDownloadStatusType.SUCCEEDED,
-          receivedBytes = importedModel.fileSize,
-          totalBytes = importedModel.fileSize,
-        )
-      modelInstances[model.name] =
-        ModelInitializationStatus(status = ModelInitializationStatusType.NOT_INITIALIZED)
-    }
-
-    val textInputHistory = dataStoreRepository.readTextInputHistory()
-    Log.d(TAG, "text input history: $textInputHistory")
-
-    Log.d(TAG, "model download status: $modelDownloadStatus")
-    return ModelManagerUiState(
-      tasks = getActiveCustomTasks().map { it.task }.toList(),
-      tasksByCategory = mapOf(),
-      modelDownloadStatus = modelDownloadStatus,
-      modelInitializationStatus = modelInstances,
-      textInputHistory = textInputHistory,
-    )
-  }
-
-  private fun createModelFromImportedModelInfo(info: ImportedModel): Model {
-    val accelerators: MutableList<Accelerator> =
-      info.llmConfig.compatibleAcceleratorsList
-        .mapNotNull { acceleratorLabel ->
-          when (acceleratorLabel.trim()) {
-            Accelerator.GPU.label -> Accelerator.GPU
-            Accelerator.CPU.label -> Accelerator.CPU
-            Accelerator.NPU.label -> Accelerator.NPU
-            else -> null // Ignore unknown accelerator labels
-          }
-        }
-        .toMutableList()
-    val llmMaxToken = info.llmConfig.defaultMaxTokens
-    val llmSupportImage = info.llmConfig.supportImage
-    val llmSupportAudio = info.llmConfig.supportAudio
-    val llmSupportTinyGarden = info.llmConfig.supportTinyGarden
-    val llmSupportMobileActions = info.llmConfig.supportMobileActions
-    val llmSupportThinking = info.llmConfig.supportThinking
-    val configs: MutableList<Config> =
-      createLlmChatConfigs(
-          defaultMaxToken = llmMaxToken,
-          defaultMaxContextLength = IMPORTED_MODEL_MAX_CONTEXT_LENGTH,
-          defaultTopK = info.llmConfig.defaultTopk,
-          defaultTopP = info.llmConfig.defaultTopp,
-          defaultTemperature = info.llmConfig.defaultTemperature,
-          accelerators = accelerators,
-          supportThinking = llmSupportThinking,
-          defaultEnableThinking = info.llmConfig.defaultEnableThinking,
-        )
-        .toMutableList()
-    val model =
-      Model(
-        name = info.fileName,
-        url = "",
-        configs = configs,
-        sizeInBytes = info.fileSize,
-        downloadFileName = "$IMPORTS_DIR/${info.fileName}",
-        showBenchmarkButton = false,
-        showRunAgainButton = false,
-        imported = true,
-        llmSupportImage = llmSupportImage,
-        llmSupportAudio = llmSupportAudio,
-        llmSupportTinyGarden = llmSupportTinyGarden,
-        llmSupportMobileActions = llmSupportMobileActions,
-        llmSupportThinking = llmSupportThinking,
-        llmMaxToken = llmMaxToken,
-        accelerators = accelerators,
-        // We assume all imported models are LLM for now.
-        isLlm = true,
-        runtimeType = RuntimeType.LITERT_LM,
-      )
-    model.preProcess()
-
-    return model
-  }
-
-  private fun groupTasksByCategory(): Map<String, List<Task>> {
-    val tasks = getActiveCustomTasks().map { it.task }
-
-    val categoryMap: Map<String, CategoryInfo> =
-      tasks.associateBy { it.category.id }.mapValues { it.value.category }
-
-    val groupedTasks = tasks.groupBy { it.category.id }
-    val groupedSortedTasks: MutableMap<String, List<Task>> = mutableMapOf()
-    // Sort the tasks in categories by pre-defined order. Sort other tasks by label.
-    for (categoryId in groupedTasks.keys) {
-      val sortedTasks =
-        groupedTasks[categoryId]!!.sortedWith { a, b ->
-          if (categoryId == Category.LLM.id) {
-            val order: List<String> =
-              when (categoryId) {
-                Category.LLM.id -> PREDEFINED_LLM_TASK_ORDER
-                else -> listOf()
-              }
-            val indexA = order.indexOf(a.id)
-            val indexB = order.indexOf(b.id)
-            if (indexA != -1 && indexB != -1) {
-              indexA.compareTo(indexB)
-            } else if (indexA != -1) {
-              -1
-            } else if (indexB != -1) {
-              1
-            } else {
-              val ca = categoryMap[a.id]!!
-              val cb = categoryMap[b.id]!!
-              val caLabel = getCategoryLabel(context = context, category = ca)
-              val cbLabel = getCategoryLabel(context = context, category = cb)
-              caLabel.compareTo(cbLabel)
-            }
-          } else {
-            a.label.compareTo(b.label)
-          }
-        }
-      for ((index, task) in sortedTasks.withIndex()) {
-        task.index = index
-      }
-      groupedSortedTasks[categoryId] = sortedTasks
-    }
-
-    return groupedSortedTasks
-  }
-
-  private fun preloadLastUsedLlmModel() {
-    val lastUsedModelId = dataStoreRepository.getLastUsedLlmModelId()
-    if (lastUsedModelId.isNullOrBlank()) {
-      Log.d(TAG, "Skipping startup preload because no last used LLM model is stored")
-      return
-    }
-
-    val model = getModelByName(lastUsedModelId)
-    if (model == null) {
-      Log.w(TAG, "Skipping startup preload because model '$lastUsedModelId' was not found")
-      return
-    }
-
-    if (!model.isLlm) {
-      Log.w(TAG, "Skipping startup preload because model '$lastUsedModelId' is not an LLM")
-      return
-    }
-
-    val llmChatTask = getTaskById(BuiltInTaskId.LLM_CHAT)
-    if (llmChatTask == null) {
-      Log.w(TAG, "Skipping startup preload because LLM chat task is unavailable")
-      return
-    }
-
-    val downloadStatus = uiState.value.modelDownloadStatus[model.name]?.status
-    if (downloadStatus != ModelDownloadStatusType.SUCCEEDED) {
-      Log.d(
-        TAG,
-        "Skipping startup preload for '${model.name}' because download status is $downloadStatus",
-      )
-      return
-    }
-
-    val initStatus = uiState.value.modelInitializationStatus[model.name]?.status
-    if (
-      initStatus == ModelInitializationStatusType.INITIALIZED ||
-        initStatus == ModelInitializationStatusType.INITIALIZING ||
-        model.initializing
-    ) {
-      Log.d(TAG, "Skipping startup preload for '${model.name}' because it is already warm")
-      return
-    }
-
-    Log.d(TAG, "Preloading last used LLM model during startup animation: ${model.name}")
-    selectModel(model)
-    initializeModel(context = context, task = llmChatTask, model = model)
-  }
-
-  private fun getCategoryLabel(context: Context, category: CategoryInfo): String {
-    val stringRes = category.labelStringRes
-    val label = category.label
-    if (stringRes != null) {
-      return context.getString(stringRes)
-    } else if (label != null) {
-      return label
-    }
-    return context.getString(R.string.category_unlabeled)
-  }
-
-  /**
-   * Retrieves the download status of a model.
-   *
-   * This function determines the download status of a given model by checking if it's fully
-   * downloaded, partially downloaded, or not downloaded at all. It also retrieves the received and
-   * total bytes for partially downloaded models.
-   */
-  private fun getModelDownloadStatus(model: Model): ModelDownloadStatus {
-    Log.d(TAG, "Checking model ${model.name} download status...")
-
-    if (model.localFileRelativeDirPathOverride.isNotEmpty()) {
-      Log.d(TAG, "Model has localFileRelativeDirPathOverride set. Set status to SUCCEEDED")
-      return ModelDownloadStatus(
-        status = ModelDownloadStatusType.SUCCEEDED,
-        receivedBytes = 0,
-        totalBytes = 0,
-      )
-    }
-
-    var status = ModelDownloadStatusType.NOT_DOWNLOADED
-    var receivedBytes = 0L
-    var totalBytes = 0L
-
-    // Partially downloaded.
-    if (isModelPartiallyDownloaded(model = model)) {
-      status = ModelDownloadStatusType.PARTIALLY_DOWNLOADED
-      val tmpFilePath =
-        model.getPath(context = context, fileName = "${model.downloadFileName}.$TMP_FILE_EXT")
-      val tmpFile = File(tmpFilePath)
-      receivedBytes = tmpFile.length()
-      totalBytes = model.totalBytes
-      Log.d(TAG, "${model.name} is partially downloaded. $receivedBytes/$totalBytes")
-    }
-    // Fully downloaded.
-    else if (isModelDownloaded(model = model)) {
-      status = ModelDownloadStatusType.SUCCEEDED
-      Log.d(TAG, "${model.name} has been downloaded.")
-    }
-    // Not downloaded.
-    else {
-      Log.d(TAG, "${model.name} has not been downloaded.")
-    }
-
-    return ModelDownloadStatus(
-      status = status,
-      receivedBytes = receivedBytes,
-      totalBytes = totalBytes,
-    )
-  }
-
-  private fun isFileInExternalFilesDir(fileName: String): Boolean {
-    if (externalFilesDir != null) {
-      val file = File(externalFilesDir, fileName)
-      return file.exists()
-    } else {
-      return false
-    }
-  }
-
-  private fun isFileInDataLocalTmpDir(fileName: String): Boolean {
-    val file = File("/data/local/tmp", fileName)
-    return file.exists()
-  }
-
-  private fun deleteFileFromExternalFilesDir(fileName: String) {
-    if (isFileInExternalFilesDir(fileName)) {
-      val file = File(externalFilesDir, fileName)
-      file.delete()
-    }
-  }
-
-  /**
-   * Deletes files from the the model imports directory whose absolute paths start with a given
-   * prefix.
-   */
-  private fun deleteFilesFromImportDir(fileName: String) {
-    val dir = context.getExternalFilesDir(null) ?: return
-
-    val prefixAbsolutePath = "${context.getExternalFilesDir(null)}${File.separator}$fileName"
-    val filesToDelete =
-      File(dir, IMPORTS_DIR).listFiles { dirFile, name ->
-        File(dirFile, name).absolutePath.startsWith(prefixAbsolutePath)
-      } ?: arrayOf()
-    for (file in filesToDelete) {
-      Log.d(TAG, "Deleting file: ${file.name}")
-      file.delete()
-    }
-  }
-
-  private fun deleteDirFromExternalFilesDir(dir: String) {
-    if (isFileInExternalFilesDir(dir)) {
-      val file = File(externalFilesDir, dir)
-      file.deleteRecursively()
-    }
-  }
+  private fun createEmptyUiState(): ModelManagerUiState = createEmptyUiStateExt()
+  private fun createUiState(): ModelManagerUiState = createUiStateExt()
+  private fun createModelFromImportedModelInfo(info: ImportedModel): Model =
+    createModelFromImportedModelInfoExt(info)
+  private fun groupTasksByCategory(): Map<String, List<Task>> = groupTasksByCategoryExt()
+  private fun preloadLastUsedLlmModel() = preloadLastUsedLlmModelExt()
+  private fun getModelDownloadStatus(model: Model): ModelDownloadStatus =
+    getModelDownloadStatusExt(model)
 
   private fun updateModelInitializationStatus(
     model: Model,
     status: ModelInitializationStatusType,
     error: String = "",
-  ) {
-    val curModelInstance = uiState.value.modelInitializationStatus.toMutableMap()
-    val initializedBackends = curModelInstance[model.name]?.initializedBackends ?: setOf()
-    val backend =
-      model.getStringConfigValue(key = ConfigKeys.ACCELERATOR, defaultValue = Accelerator.GPU.label)
-    val newInitializedBackends =
-      if (status == ModelInitializationStatusType.INITIALIZED) {
-        initializedBackends + backend
-      } else {
-        initializedBackends
-      }
-    curModelInstance[model.name] =
-      ModelInitializationStatus(
-        status = status,
-        error = error,
-        initializedBackends = newInitializedBackends,
-      )
-    val newUiState = uiState.value.copy(modelInitializationStatus = curModelInstance)
-    _uiState.update { newUiState }
-  }
-
-  private fun isModelDownloaded(model: Model): Boolean {
-    val modelRelativePath =
-      listOf(model.normalizedName, model.version, model.downloadFileName)
-        .joinToString(File.separator)
-    val downloadedFileExists =
-      model.downloadFileName.isNotEmpty() &&
-        ((model.localModelFilePathOverride.isEmpty() &&
-          isFileInExternalFilesDir(modelRelativePath)) ||
-          (model.localModelFilePathOverride.isNotEmpty() &&
-            File(model.localModelFilePathOverride).exists()))
-
-    val unzippedDirectoryExists =
-      model.isZip &&
-        model.unzipDir.isNotEmpty() &&
-        isFileInExternalFilesDir(
-          listOf(model.normalizedName, model.version, model.unzipDir).joinToString(File.separator)
-        )
-
-    return downloadedFileExists || unzippedDirectoryExists
-  }
+  ) = updateModelInitializationStatusExt(model = model, status = status, error = error)
 }
 
-private fun getAllowlistUrl(version: String): String {
+internal fun getAllowlistUrl(version: String): String {
   return "$ALLOWLIST_BASE_URL/${version}.json"
 }
