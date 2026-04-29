@@ -77,79 +77,10 @@ import selfgemma.talk.ui.common.chat.ChatMessageImage
 import selfgemma.talk.ui.common.chat.ChatMessageText
 import selfgemma.talk.ui.common.chat.ChatSide
 
-data class RoleplayContinuityDebugState(
-  val runtimeState: RuntimeStateSnapshot? = null,
-  val openThreads: List<OpenThread> = emptyList(),
-  val memoryAtoms: List<MemoryAtom> = emptyList(),
-  val recentEvents: List<SessionEvent> = emptyList(),
-  val latestMemoryQueryPayload: String? = null,
-  val latestMemoryPackPayload: String? = null,
-  val compactionEntryCount: Int = 0,
-)
-
-data class RoleplayChatUiState(
-  val loading: Boolean = true,
-  val session: Session? = null,
-  val role: RoleCard? = null,
-  val messages: List<Message> = emptyList(),
-  val draft: String = "",
-  val userPersonaSlotId: String = "",
-  val userPersonaName: String = "",
-  val userPersonaAvatarUri: String? = null,
-  val userPersonaDescription: String = "",
-  val summary: SessionSummary? = null,
-  val pinnedMemories: List<MemoryItem> = emptyList(),
-  val toolInvocations: List<ToolInvocation> = emptyList(),
-  val continuityDebug: RoleplayContinuityDebugState = RoleplayContinuityDebugState(),
-  val inProgress: Boolean = false,
-  val hasPendingSends: Boolean = false,
-  val statusMessage: String? = null,
-  val errorMessage: String? = null,
-)
-
 private const val TAG = "RoleplayChatViewModel"
 private const val DEFAULT_BRANCH_ID = "main"
 private const val SEND_DISPATCH_DELAY_MS = 2_000L
 internal const val CHAT_STATUS_MESSAGE_AUTO_DISMISS_MS = 2_000L
-
-private fun logDebug(message: String) {
-  runCatching {
-    Log.d(TAG, message)
-  }
-}
-
-private fun logWarn(message: String) {
-  runCatching {
-    Log.w(TAG, message)
-  }
-}
-
-private fun logError(message: String, error: Throwable) {
-  runCatching {
-    Log.e(TAG, message, error)
-  }
-}
-
-private data class QueuedUserMessage(
-  val message: Message,
-  val persisted: Boolean = false,
-)
-
-private data class RoleplayChatMetaState(
-  val summary: SessionSummary? = null,
-  val pinnedMemories: List<MemoryItem> = emptyList(),
-  val continuityDebug: RoleplayContinuityDebugState = RoleplayContinuityDebugState(),
-  val pendingUserMessages: List<QueuedUserMessage> = emptyList(),
-  val inProgress: Boolean = false,
-  val statusMessage: String? = null,
-  val errorMessage: String? = null,
-)
-
-private data class RoleplayChatTransientState(
-  val draft: String,
-  val meta: RoleplayChatMetaState,
-  val toolInvocations: List<ToolInvocation>,
-)
 
 @HiltViewModel
 class RoleplayChatViewModel
@@ -868,64 +799,27 @@ constructor(
   private fun persistImagePayload(
     messageId: String,
     bitmaps: List<Bitmap>,
-  ): RoleplayMessageMediaPayload {
-    val attachments =
-      bitmaps.mapIndexed { index, bitmap ->
-        val targetFile = resolveAttachmentFile(messageId = messageId, fileName = "image-${index + 1}.png")
-        writeBitmapToFile(bitmap = bitmap, file = targetFile)
-        RoleplayMessageAttachment(
-          type = RoleplayMessageAttachmentType.IMAGE,
-          filePath = targetFile.absolutePath,
-          mimeType = "image/png",
-          width = bitmap.width,
-          height = bitmap.height,
-          fileSizeBytes = targetFile.length(),
-        )
-      }
-    return RoleplayMessageMediaPayload(attachments = attachments)
-  }
+  ): RoleplayMessageMediaPayload =
+    persistImagePayload(appContext = appContext, sessionId = sessionId, messageId = messageId, bitmaps = bitmaps)
 
   private fun persistAudioPayload(
     messageId: String,
     audioData: ByteArray,
     sampleRate: Int,
-  ): RoleplayMessageMediaPayload {
-    val targetFile = resolveAttachmentFile(messageId = messageId, fileName = "audio-1.pcm")
-    targetFile.writeBytes(audioData)
-    val durationMs =
-      if (sampleRate > 0) {
-        ((audioData.size / 2.0) / sampleRate * 1000).toLong()
-      } else {
-        null
-      }
-    return RoleplayMessageMediaPayload(
-      attachments =
-        listOf(
-          RoleplayMessageAttachment(
-            type = RoleplayMessageAttachmentType.AUDIO,
-            filePath = targetFile.absolutePath,
-            mimeType = "audio/raw",
-            sampleRate = sampleRate,
-            durationMs = durationMs,
-            fileSizeBytes = targetFile.length(),
-          )
-        )
+  ): RoleplayMessageMediaPayload =
+    persistAudioPayload(
+      appContext = appContext,
+      sessionId = sessionId,
+      messageId = messageId,
+      audioData = audioData,
+      sampleRate = sampleRate,
     )
-  }
 
-  private fun resolveAttachmentFile(messageId: String, fileName: String): File {
-    val directory = File(appContext.filesDir, "roleplay-media/$sessionId/$messageId")
-    if (!directory.exists()) {
-      directory.mkdirs()
-    }
-    return File(directory, fileName)
-  }
+  private fun resolveAttachmentFile(messageId: String, fileName: String): File =
+    resolveAttachmentFile(appContext = appContext, sessionId = sessionId, messageId = messageId, fileName = fileName)
 
   private fun writeBitmapToFile(bitmap: Bitmap, file: File) {
-    FileOutputStream(file).use { output ->
-      bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
-      output.flush()
-    }
+    selfgemma.talk.feature.roleplay.chat.writeBitmapToFile(bitmap, file)
   }
 
   private fun remainingDispatchDelay(): Long {
@@ -1012,9 +906,6 @@ constructor(
     )
   }
 
-  private fun String.escapeJson(): String {
-    return replace("\\", "\\\\").replace("\"", "\\\"")
-  }
 
   private fun playSendSound() {
     if (!dataStoreRepository.areMessageSoundsEnabled()) {
