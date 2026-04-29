@@ -461,13 +461,6 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     return "$sectionLabel: ${fields.joinToString(", ").take(MAX_RUNTIME_STATE_VALUE_LENGTH)}"
   }
 
-  private fun String?.toJsonObjectOrNull(): JsonObject? {
-    if (this.isNullOrBlank()) {
-      return null
-    }
-    return runCatching { JsonParser.parseString(this).asJsonObject }.getOrNull()
-  }
-
   private fun com.google.gson.JsonElement.toReadableValue(): String? {
     return when {
       isJsonNull -> null
@@ -509,10 +502,6 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     return null
   }
 
-  private fun String.normalizeWhitespace(): String {
-    return trim().replace(WHITESPACE_REGEX, " ")
-  }
-
   private data class ConversationVariants(
     val full: String,
     val compact: String,
@@ -537,7 +526,6 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   )
 
   companion object {
-    private val WHITESPACE_REGEX = Regex("\\s+")
     private val CAMEL_CASE_REGEX = Regex("([a-z])([A-Z])")
     private val SCENE_FIELD_ORDER =
       listOf(
@@ -636,10 +624,6 @@ private fun CharacterKernel.renderWorldviewPrompt(): String {
 
 private fun CharacterKernel.renderMicroExemplarPrompt(): String {
   return microExemplar.trim().takeIf(String::isNotBlank)?.let { "Micro exemplar: $it" }.orEmpty()
-}
-
-private fun String.toJsonObjectOrNull(): JsonObject? {
-  return runCatching { JsonParser.parseString(this).asJsonObject }.getOrNull()
 }
 
 private fun JsonArray?.toStringList(): List<String> {

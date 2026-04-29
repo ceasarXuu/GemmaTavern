@@ -371,14 +371,6 @@ class PromptAssembler @Inject constructor(private val tokenEstimator: TokenEstim
     }
   }
 
-  private fun Int?.toPromptRoleName(): String {
-    return when (this) {
-      1 -> "user"
-      2 -> "assistant"
-      else -> "system"
-    }
-  }
-
   companion object {
   }
 }

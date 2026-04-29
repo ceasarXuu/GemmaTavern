@@ -859,14 +859,6 @@ private fun JsonObject.stringListOrEmpty(key: String): List<String> {
     .orEmpty()
 }
 
-private fun Int?.toPromptRoleName(): String {
-  return when (this) {
-    1 -> "user"
-    2 -> "assistant"
-    else -> "system"
-  }
-}
-
 internal fun Int.toWorldInfoPosition(): StWorldInfoPosition {
   return when (this) {
     0 -> StWorldInfoPosition.BEFORE

@@ -245,7 +245,6 @@ constructor(
   }
 
   companion object {
-    private val WHITESPACE_REGEX = Regex("\\s+")
     private val SCENE_SHIFT_PATTERNS =
       listOf("later", "hours later", "meanwhile", "back at", "arrive at", "now at", "at dawn", "at dusk", "scene changes")
   }

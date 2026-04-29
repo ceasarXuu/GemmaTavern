@@ -28,10 +28,3 @@ class ExportStV2RoleCardUseCase @Inject constructor() {
     return serializer.serialize(merged)
   }
 }
-
-private fun String?.toJsonObjectOrNull(): JsonObject? {
-  if (this.isNullOrBlank()) {
-    return null
-  }
-  return runCatching { JsonParser.parseString(this).asJsonObject }.getOrNull()
-}

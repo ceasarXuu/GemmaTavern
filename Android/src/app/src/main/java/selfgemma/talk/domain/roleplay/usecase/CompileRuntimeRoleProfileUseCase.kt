@@ -441,12 +441,7 @@ class CompileRuntimeRoleProfileUseCase @Inject constructor(private val tokenEsti
     return split(SENTENCE_SPLIT_REGEX).map { value -> value.normalizeWhitespace() }.filter(String::isNotBlank)
   }
 
-  private fun String?.normalizeWhitespace(): String {
-    return this.orEmpty().trim().replace(WHITESPACE_REGEX, " ")
-  }
-
   companion object {
-    private val WHITESPACE_REGEX = Regex("\\s+")
     private val SENTENCE_SPLIT_REGEX = Regex("[\\n.!?]")
     private val MOTIVE_PATTERNS =
       listOf("protect", "solve", "survive", "seek", "pursue", "want", "needs", "need", "must", "mission", "goal")

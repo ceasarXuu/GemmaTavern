@@ -11,8 +11,4 @@ class TokenEstimator @Inject constructor() {
     val normalized = text.trim().replace(WHITESPACE_REGEX, " ")
     return maxOf(1, normalized.length / 4)
   }
-
-  companion object {
-    private val WHITESPACE_REGEX = Regex("\\s+")
-  }
 }

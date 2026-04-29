@@ -1652,10 +1652,6 @@ constructor(
     return normalizedText.contains(normalizedPhrase, ignoreCase = true)
   }
 
-  private fun String.toJsonObjectOrNull(): JsonObject? {
-    return runCatching { JsonParser.parseString(this).asJsonObject }.getOrNull()
-  }
-
   private fun JsonArray?.toStringList(): List<String> {
     return this
       ?.mapNotNull { item -> item.takeIf { it.isJsonPrimitive }?.asString?.trim()?.takeIf(String::isNotBlank) }

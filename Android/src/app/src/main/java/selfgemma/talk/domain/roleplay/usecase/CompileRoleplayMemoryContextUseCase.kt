@@ -905,10 +905,6 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
     )
   }
 
-  private fun String.normalizeWhitespace(): String {
-    return trim().replace(WHITESPACE_REGEX, " ")
-  }
-
   private fun String.toQueryTerms(): List<String> {
     return split(WHITESPACE_REGEX)
       .map(::normalizeTerm)
@@ -932,7 +928,6 @@ class CompileRoleplayMemoryContextUseCase @Inject constructor(
   }
 
   companion object {
-    private val WHITESPACE_REGEX = Regex("\\s+")
     private val NON_QUERY_CHAR_REGEX = Regex("[^\\p{L}\\p{N}]+")
     private val TITLE_CASE_ENTITY_REGEX = Regex("\\b[A-Z][A-Za-z0-9'\\-]{2,}\\b")
     private val QUOTED_ENTITY_REGEX = Regex("[\"“”'']([^\"“”'']{2,40})[\"“”'']")
