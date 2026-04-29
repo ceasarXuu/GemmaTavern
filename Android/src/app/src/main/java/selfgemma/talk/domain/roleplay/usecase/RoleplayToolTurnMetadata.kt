@@ -45,10 +45,4 @@ internal fun mergeRoleplayToolTurnMetadata(
   return root.toString()
 }
 
-private fun List<String>.toJsonArray(): JsonArray {
-  return JsonArray().apply {
-    this@toJsonArray.forEach(::add)
-  }
-}
-
 private const val ROLEPLAY_TOOL_TURN_KEY = "roleplayToolTurn"
