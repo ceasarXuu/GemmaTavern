@@ -322,118 +322,38 @@ fun RoleplayChatScreen(
     handleNavigateUp()
   }
 
-  LaunchedEffect(activeModel?.name) {
-    if (activeModel != null) {
-      Log.d(TAG, "sync active chat model to recent selection model=${activeModel.name}")
-      modelManagerViewModel.selectModel(activeModel)
-    }
-  }
+  RoleplayChatModelWarmupEffects(
+    context = context,
+    sessionId = uiState.session?.id,
+    activeModel = activeModel,
+    activeModelDownloadStatus = activeModelDownloadStatus,
+    activeModelStatus = activeModelStatus,
+    activeModelHasInstance = activeModelInstance != null,
+    activeModelSupportsImage = activeModelInstance?.supportImage == true,
+    activeModelSupportsAudio = activeModelInstance?.supportAudio == true,
+    isActiveModelInitializing = isActiveModelInitializing,
+    needsImage = historicalWarmupRequirements.needsImage,
+    needsAudio = historicalWarmupRequirements.needsAudio,
+    llmChatTask = llmChatTask,
+    modelManagerViewModel = modelManagerViewModel,
+  )
 
-  LaunchedEffect(
-    activeModel?.name,
-    activeModelDownloadStatus,
-    activeModelStatus,
-    activeModelInstance?.supportImage,
-    activeModelInstance?.supportAudio,
-    historicalWarmupRequirements.needsImage,
-    historicalWarmupRequirements.needsAudio,
-  ) {
-    val currentModel = activeModel ?: return@LaunchedEffect
-    val warmupAction =
-      resolveRoleplayWarmupAction(
-        downloadStatus = activeModelDownloadStatus,
-        isInitializing = isActiveModelInitializing,
-        hasInstance = activeModelInstance != null,
-        supportImage = activeModelInstance?.supportImage == true,
-        supportAudio = activeModelInstance?.supportAudio == true,
-        needsImage = historicalWarmupRequirements.needsImage,
-        needsAudio = historicalWarmupRequirements.needsAudio,
-      )
-    when (warmupAction) {
-      RoleplayWarmupAction.NONE -> Unit
-      RoleplayWarmupAction.TEXT_ONLY -> {
-        val task = llmChatTask ?: return@LaunchedEffect
-        Log.d(
-          TAG,
-          "warm roleplay active model on screen entry sessionId=${uiState.session?.id} model=${currentModel.name} mode=text-only",
-        )
-        modelManagerViewModel.initializeModel(
-          context = context,
-          task = task,
-          model = currentModel,
-          force = activeModelStatus == ModelInitializationStatusType.INITIALIZED,
-        )
-      }
-      RoleplayWarmupAction.MULTIMODAL -> {
-        Log.d(
-          TAG,
-          "warm roleplay active model on screen entry sessionId=${uiState.session?.id} model=${currentModel.name} mode=multimodal needsImage=${historicalWarmupRequirements.needsImage} needsAudio=${historicalWarmupRequirements.needsAudio}",
-        )
-        modelManagerViewModel.initializeLlmModel(
-          context = context,
-          model = currentModel,
-          supportImage = historicalWarmupRequirements.needsImage,
-          supportAudio = historicalWarmupRequirements.needsAudio,
-          force =
-            activeModelInstance != null ||
-              activeModelStatus == ModelInitializationStatusType.INITIALIZED,
-        )
-      }
-    }
-  }
-
-  LaunchedEffect(imeBottom, latestListItemIndex, hasCompletedInitialPositioning) {
-    if (
-      hasCompletedInitialPositioning &&
-        imeBottom > 0 &&
-        latestListItemIndex >= 0 &&
-        shouldKeepLatestMessageVisible(listState, latestListItemIndex)
-    ) {
-      scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = false)
-    }
-  }
-
-  LaunchedEffect(latestListItemIndex, timelineItems.size) {
-    if (latestListItemIndex < 0) {
-      previousTimelineItemCount = 0
-      return@LaunchedEffect
-    }
-
-    if (!hasCompletedInitialPositioning) {
-      scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = false)
-      hasCompletedInitialPositioning = true
-      previousTimelineItemCount = timelineItems.size
-      if (!hasLoggedInitialPositioning) {
-        hasLoggedInitialPositioning = true
-        Log.d(
-          TAG,
-          "initial chat positioned sessionId=${uiState.session?.id} itemCount=${timelineItems.size} elapsed=${SystemClock.elapsedRealtime() - screenOpenTimestamp}ms",
-        )
-      }
-      return@LaunchedEffect
-    }
-
-    val timelineItemCountIncreased = timelineItems.size > previousTimelineItemCount
-    previousTimelineItemCount = timelineItems.size
-    if (timelineItemCountIncreased) {
-      Log.d(
-        TAG,
-        "auto scroll to latest after timeline append sessionId=${uiState.session?.id} itemCount=${timelineItems.size} latestItemIndex=$latestListItemIndex",
-      )
-      scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = true)
-    }
-  }
-
-  LaunchedEffect(lastTimelineItem?.stableId, lastMessage?.status, hasCompletedInitialPositioning) {
-    if (
-      hasCompletedInitialPositioning &&
-        !listState.isScrollInProgress &&
-        latestListItemIndex >= 0 &&
-        shouldKeepLatestMessageVisible(listState, latestListItemIndex)
-    ) {
-      scrollToItem(listState = listState, itemIndex = latestListItemIndex, animate = false)
-    }
-  }
+  RoleplayChatScrollEffects(
+    sessionId = uiState.session?.id,
+    imeBottom = imeBottom,
+    latestListItemIndex = latestListItemIndex,
+    timelineItemCount = timelineItems.size,
+    lastTimelineStableId = lastTimelineItem?.stableId,
+    lastMessageStatusKey = lastMessage?.status?.name,
+    hasCompletedInitialPositioning = hasCompletedInitialPositioning,
+    hasLoggedInitialPositioning = hasLoggedInitialPositioning,
+    previousTimelineItemCount = previousTimelineItemCount,
+    screenOpenTimestamp = screenOpenTimestamp,
+    listState = listState,
+    onMarkInitialPositioned = { hasCompletedInitialPositioning = true },
+    onMarkLoggedInitialPositioning = { hasLoggedInitialPositioning = true },
+    onUpdatePreviousTimelineItemCount = { previousTimelineItemCount = it },
+  )
 
   LaunchedEffect(showToolDebugOutput, uiState.toolInvocations.size) {
     if (showToolDebugOutput) {
@@ -651,35 +571,17 @@ fun RoleplayChatScreen(
   }
 
   selectedMessageForAction?.let { selectedMessage ->
-    RoleplayMessageActionsDialog(
-      message = selectedMessage,
-      onDismiss = {
-        Log.d(TAG, "dismiss message actions sessionId=${uiState.session?.id} messageId=${selectedMessage.id}")
-        selectedMessageActionId = null
-      },
-      onPinMessage = { actionMessage ->
-        Log.d(TAG, "pin message action sessionId=${uiState.session?.id} messageId=${actionMessage.id}")
-        selectedMessageActionId = null
-        viewModel.pinMessage(actionMessage)
-      },
-      onRollbackToMessage = { actionMessage ->
-        Log.d(TAG, "rollback message action sessionId=${uiState.session?.id} messageId=${actionMessage.id}")
-        selectedMessageActionId = null
-        viewModel.rollbackToMessage(actionMessage.id)
-      },
-      onRegenerateAssistantMessage = { actionMessage ->
-        val currentModel = activeModel ?: return@RoleplayMessageActionsDialog
-        Log.d(TAG, "regenerate message action sessionId=${uiState.session?.id} messageId=${actionMessage.id} model=${currentModel.name}")
-        selectedMessageActionId = null
-        viewModel.regenerateAssistantMessage(actionMessage.id, currentModel)
-      },
-      onEditMessage = { actionMessage ->
-        Log.d(TAG, "edit message action sessionId=${uiState.session?.id} messageId=${actionMessage.id}")
-        selectedMessageActionId = null
-        viewModel.editMessageFromHere(actionMessage.id)
-      },
-      allowContinuityActions = !uiState.inProgress && !uiState.hasPendingSends,
-      allowRegenerate = activeModel != null && !uiState.inProgress && !uiState.hasPendingSends,
+    RoleplayChatMessageActionsDialogHost(
+      selectedMessage = selectedMessage,
+      sessionId = uiState.session?.id,
+      activeModel = activeModel,
+      inProgress = uiState.inProgress,
+      hasPendingSends = uiState.hasPendingSends,
+      onDismiss = { selectedMessageActionId = null },
+      onPin = viewModel::pinMessage,
+      onRollback = viewModel::rollbackToMessage,
+      onRegenerate = { messageId, model -> viewModel.regenerateAssistantMessage(messageId, model) },
+      onEdit = viewModel::editMessageFromHere,
     )
   }
 
