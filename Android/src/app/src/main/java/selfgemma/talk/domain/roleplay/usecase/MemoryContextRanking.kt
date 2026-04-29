@@ -9,6 +9,7 @@ import selfgemma.talk.domain.roleplay.model.OpenThread
 import selfgemma.talk.domain.roleplay.model.OpenThreadType
 import selfgemma.talk.domain.roleplay.model.RoleplayExternalFact
 import selfgemma.talk.domain.roleplay.model.RuntimeStateSnapshot
+import selfgemma.talk.domain.roleplay.model.SessionSummary
 import selfgemma.talk.domain.roleplay.model.freshness
 
 /**
@@ -274,4 +275,176 @@ internal fun overlapCount(text: String, terms: List<String>): Int {
     return 0
   }
   return terms.count { term -> term.isNotBlank() && text.contains(term) }
+}
+
+internal fun String.toQueryTerms(): List<String> {
+  return split(MCR_WHITESPACE_REGEX)
+    .map(::normalizeTerm)
+    .filter { it.length >= 3 }
+    .distinct()
+}
+
+internal fun rankOpenThreads(
+  openThreads: List<OpenThread>,
+  retrievalIntent: RoleplayMemoryRetrievalIntent,
+): List<OpenThread> {
+  val queryTerms = retrievalIntent.query.toQueryTerms()
+  val entityTerms = retrievalIntent.entities.map(::normalizeTerm)
+  return openThreads.sortedWith(
+    compareByDescending<OpenThread> { thread ->
+      scoreOpenThread(thread = thread, queryTerms = queryTerms, entityTerms = entityTerms, retrievalIntent = retrievalIntent)
+    }.thenByDescending { it.updatedAt },
+  )
+}
+
+internal fun rankMemoryAtoms(
+  memoryAtoms: List<MemoryAtom>,
+  retrievalIntent: RoleplayMemoryRetrievalIntent,
+): List<MemoryAtom> {
+  val queryTerms = retrievalIntent.query.toQueryTerms()
+  val entityTerms = retrievalIntent.entities.map(::normalizeTerm)
+  return memoryAtoms.sortedWith(
+    compareByDescending<MemoryAtom> { atom ->
+      scoreMemoryAtom(atom = atom, queryTerms = queryTerms, entityTerms = entityTerms, retrievalIntent = retrievalIntent)
+    }.thenByDescending { it.updatedAt },
+  )
+}
+
+internal fun rankLegacyMemories(
+  memories: List<MemoryItem>,
+  retrievalIntent: RoleplayMemoryRetrievalIntent,
+): List<MemoryItem> {
+  val queryTerms = retrievalIntent.query.toQueryTerms()
+  val entityTerms = retrievalIntent.entities.map(::normalizeTerm)
+  return memories.sortedWith(
+    compareByDescending<MemoryItem> { memory ->
+      scoreLegacyMemory(memory = memory, queryTerms = queryTerms, entityTerms = entityTerms)
+    }.thenByDescending { it.updatedAt },
+  )
+}
+
+internal fun rankCompactionEntries(
+  entries: List<CompactionCacheEntry>,
+  retrievalIntent: RoleplayMemoryRetrievalIntent,
+): List<CompactionCacheEntry> {
+  val queryTerms = retrievalIntent.query.toQueryTerms()
+  val entityTerms = retrievalIntent.entities.map(::normalizeTerm)
+  return entries.sortedWith(
+    compareByDescending<CompactionCacheEntry> { entry ->
+      scoreCompactionEntry(entry = entry, queryTerms = queryTerms, entityTerms = entityTerms, retrievalIntent = retrievalIntent)
+    }.thenByDescending { it.updatedAt },
+  )
+}
+
+internal fun applyPackBudget(
+  retrievalIntent: RoleplayMemoryRetrievalIntent,
+  externalFacts: List<RoleplayExternalFact>,
+  runtimeState: RuntimeStateSnapshot?,
+  openThreads: List<OpenThread>,
+  memoryAtoms: List<MemoryAtom>,
+  compactionEntries: List<CompactionCacheEntry>,
+  fallbackSummary: SessionSummary?,
+  fallbackMemories: List<MemoryItem>,
+  contextProfile: ModelContextProfile?,
+  budgetMode: PromptBudgetMode,
+  tokenEstimator: TokenEstimator,
+): RoleplayMemoryContextPack {
+  val targetTokens = contextProfile?.let { resolveMemoryPackTargetTokens(it, budgetMode) } ?: Int.MAX_VALUE
+  val categoryBudget = resolveCategoryBudget(targetTokens = targetTokens, budgetMode = budgetMode)
+  val selectedExternalFacts =
+    selectItemsWithinBudget(
+      rankedItems = externalFacts,
+      itemLimit = 3,
+      tokenBudget = categoryBudget.externalFactTokens,
+      guaranteedCount = if (externalFacts.isNotEmpty()) 1 else 0,
+      tokenEstimate = { fact -> tokenEstimator.estimate(renderExternalFact(fact)) },
+    )
+  val selectedExternalFactTokens =
+    tokenEstimator.estimate(selectedExternalFacts.joinToString("\n") { renderExternalFact(it) })
+  val runtimeStateTokens = tokenEstimator.estimate(renderRuntimeState(runtimeState))
+  var remainingTokens =
+    if (targetTokens == Int.MAX_VALUE) {
+      Int.MAX_VALUE
+    } else {
+      (targetTokens - selectedExternalFactTokens - runtimeStateTokens).coerceAtLeast(0)
+    }
+  val selectedOpenThreads =
+    selectItemsWithinBudget(
+      rankedItems = openThreads,
+      itemLimit = retrievalIntent.openThreadLimit,
+      tokenBudget = minOf(categoryBudget.openThreadTokens, remainingTokens),
+      guaranteedCount = if (retrievalIntent.includeOpenThreads) 1 else 0,
+      tokenEstimate = { thread -> tokenEstimator.estimate(renderOpenThread(thread)) },
+    )
+  val selectedOpenThreadTokens = tokenEstimator.estimate(selectedOpenThreads.joinToString("\n") { renderOpenThread(it) })
+  remainingTokens = consumeRemainingTokens(remainingTokens, selectedOpenThreadTokens)
+  val selectedMemoryAtoms =
+    selectItemsWithinBudget(
+      rankedItems = memoryAtoms,
+      itemLimit = retrievalIntent.memoryAtomLimit,
+      tokenBudget = minOf(categoryBudget.memoryAtomTokens, remainingTokens),
+      guaranteedCount = if (retrievalIntent.includeSemanticRecall && memoryAtoms.isNotEmpty()) 1 else 0,
+      tokenEstimate = { atom -> tokenEstimator.estimate(renderMemoryAtom(atom)) },
+    )
+  val selectedMemoryAtomTokens = tokenEstimator.estimate(selectedMemoryAtoms.joinToString("\n") { renderMemoryAtom(it) })
+  remainingTokens = consumeRemainingTokens(remainingTokens, selectedMemoryAtomTokens)
+  val shouldKeepSummary =
+    fallbackSummary != null &&
+      (selectedOpenThreads.isEmpty() || selectedMemoryAtoms.isEmpty() || runtimeState == null)
+  val fallbackSummaryTokens = tokenEstimator.estimate(fallbackSummary?.summaryText.orEmpty())
+  val selectedFallbackSummary =
+    fallbackSummary?.takeIf {
+      shouldKeepSummary && canFitOptionalSection(fallbackSummaryTokens, minOf(categoryBudget.fallbackSummaryTokens, remainingTokens))
+    }
+  val selectedFallbackSummaryTokens = tokenEstimator.estimate(selectedFallbackSummary?.summaryText.orEmpty())
+  remainingTokens = consumeRemainingTokens(remainingTokens, selectedFallbackSummaryTokens)
+  val selectedFallbackMemories =
+    selectItemsWithinBudget(
+      rankedItems = fallbackMemories,
+      itemLimit = retrievalIntent.fallbackMemoryLimit,
+      tokenBudget = minOf(categoryBudget.fallbackMemoryTokens, remainingTokens),
+      guaranteedCount = 0,
+      tokenEstimate = { memory -> tokenEstimator.estimate(renderLegacyMemory(memory)) },
+    )
+  val selectedFallbackMemoryTokens =
+    tokenEstimator.estimate(selectedFallbackMemories.joinToString("\n") { renderLegacyMemory(it) })
+  val budgetReport =
+    if (contextProfile == null) {
+      null
+    } else {
+      RoleplayMemoryPackBudgetReport(
+        targetTokens = targetTokens,
+        estimatedTokens =
+          selectedExternalFactTokens +
+          runtimeStateTokens +
+            selectedOpenThreadTokens +
+            selectedMemoryAtomTokens +
+            selectedFallbackSummaryTokens +
+            selectedFallbackMemoryTokens,
+        mode = budgetMode,
+        externalFactTokens = selectedExternalFactTokens,
+        runtimeStateTokens = runtimeStateTokens,
+        openThreadTokens = selectedOpenThreadTokens,
+        memoryAtomTokens = selectedMemoryAtomTokens,
+        fallbackSummaryTokens = selectedFallbackSummaryTokens,
+        fallbackMemoryTokens = selectedFallbackMemoryTokens,
+        droppedExternalFactCount = (externalFacts.size - selectedExternalFacts.size).coerceAtLeast(0),
+        droppedOpenThreadCount = (openThreads.size - selectedOpenThreads.size).coerceAtLeast(0),
+        droppedMemoryAtomCount = (memoryAtoms.size - selectedMemoryAtoms.size).coerceAtLeast(0),
+        droppedFallbackMemoryCount = (fallbackMemories.size - selectedFallbackMemories.size).coerceAtLeast(0),
+        droppedFallbackSummary = fallbackSummary != null && selectedFallbackSummary == null,
+      )
+    }
+
+  return RoleplayMemoryContextPack(
+    retrievalIntent = retrievalIntent,
+    externalFacts = selectedExternalFacts,
+    runtimeState = runtimeState,
+    openThreads = selectedOpenThreads,
+    memoryAtoms = selectedMemoryAtoms,
+    compactionEntries = compactionEntries,
+    fallbackSummary = selectedFallbackSummary,
+    fallbackMemories = selectedFallbackMemories,
+    budgetReport = budgetReport,
+  )
 }
