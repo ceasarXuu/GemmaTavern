@@ -55,13 +55,13 @@
 |---|---|---|---|
 | 19 | 688 | `customtasks/agentchat/AddOrEditSkillBottomSheet.kt` | `AddOrEditSkillSections.kt` |
 | 20 | 681 | `ui/common/chat/ChatPanel.kt` | `ChatPanelInternals.kt` |
-| 21 | 664 | `data/DataStoreRepository.kt` | `DataStoreSerializers.kt` + `DataStoreInternals.kt` |
-| 22 | 609 | `domain/roleplay/usecase/PromptMaterialBuilder.kt` | `PromptMaterialInternals.kt` |
+| 21 | 664 | `data/DataStoreRepository.kt` | **延后至 Phase C**:`DefaultDataStoreRepository` 单一 class ~550 行,Kotlin 不支持 partial class,需要拆为子 Repository 委托才能达标。Phase C 设计:`UserPreferencesRepository` / `BenchmarkResultsRepository` / `SkillsRepository` 委托。 |
+| 22 | 609 | `domain/roleplay/usecase/PromptMaterialBuilder.kt` | **延后至 Phase C**:同包多文件重名 helper(WHITESPACE_REGEX、normalizeWhitespace、toDisplayLabel、toJsonObjectOrNull 等)分别 file-private 在 ExportStV2RoleCardUseCase / ExtractMemoriesUseCase / RoleplayToolTurnMetadata 等内,提升可见性会触发包级冲突。需要先统一重命名为 PMB_ 前缀或抽出独立工具模块。 |
 | 23 | 597 | `feature/roleplay/roles/RoleCatalogScreen.kt` | `RoleCatalogCard.kt` |
 | 24 | 596 | `ui/common/ConfigDialog.kt` | `ConfigDialogFields.kt` |
 | 25 | 594 | `ui/modelmanager/GlobalModelManager.kt` | `GlobalModelManagerInternals.kt` |
-| 26 | 589 | `ui/llmchat/LlmChatViewModel.kt` | `LlmChatInternals.kt` |
-| 27 | 575 | `ui/common/DownloadAndTryButton.kt` | `DownloadAndTryInternals.kt` |
+| 26 | 589 | `ui/llmchat/LlmChatViewModel.kt` | **延后至 Phase C**:`generateResponse` 是单一 ~360 行 launch 内含深层闭包,需要状态抽象 + listener 类化才能拆,Phase A 风险过高。 |
+| 27 | 575 | `ui/common/DownloadAndTryButton.kt` | **延后至 Phase C**:单一 600+ 行 @Composable,需要状态提升 (state hoisting) 才能拆,Phase A 风险过高。Phase C 作为子 Composable 拆分:`DownloadAndTryProgressBar` + `DownloadAndTryDialogs`。 |
 | 28 | 560 | `customtasks/agentchat/AgentChatScreen.kt` | `AgentChatScreenInternals.kt` |
 | 29 | 535 | `feature/roleplay/roles/RoleEditorComponents.kt` | `RoleEditorComponentsExtras.kt` |
 
