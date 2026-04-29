@@ -1,5 +1,6 @@
 package selfgemma.talk.domain.roleplay.usecase
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 
@@ -43,4 +44,15 @@ internal fun Int?.toPromptRoleName(): String {
     2 -> "assistant"
     else -> "system"
   }
+}
+
+/**
+ * Maps a [JsonArray] (nullable) to a list of trimmed non-blank strings, ignoring non-primitive
+ * elements. Mirrors the previously duplicated `JsonArray?.toStringList()` helpers in
+ * [PromptMaterialBuilder], [SendRoleplayMessageUseCase] and [RoleplayToolTurnMetadata].
+ */
+internal fun JsonArray?.toStringList(): List<String> {
+  return this
+    ?.mapNotNull { element -> element.takeIf { it.isJsonPrimitive }?.asString?.trim()?.takeIf(String::isNotBlank) }
+    .orEmpty()
 }

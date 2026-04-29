@@ -1,4 +1,4 @@
-package selfgemma.talk.domain.roleplay.usecase
+﻿package selfgemma.talk.domain.roleplay.usecase
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -309,8 +309,8 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     val relationshipJson = snapshot.relationshipJson.toJsonObjectOrNull()
     val fullLines =
       buildList {
-        addAll(renderNamedFields("Scene", snapshot.sceneJson, SCENE_FIELD_ORDER))
-        addAll(renderNamedFields("Relationship", snapshot.relationshipJson, RELATIONSHIP_FIELD_ORDER))
+        addAll(renderNamedFields("Scene", snapshot.sceneJson, PMB_SCENE_FIELD_ORDER))
+        addAll(renderNamedFields("Relationship", snapshot.relationshipJson, PMB_RELATIONSHIP_FIELD_ORDER))
         renderEntitySummary(snapshot.activeEntitiesJson)?.let(::add)
       }
 
@@ -353,7 +353,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   private fun buildOpenThreadVariants(openThreads: List<OpenThread>): MemoryVariants {
     val rendered =
       openThreads.map { thread ->
-        "- [${thread.type.name.lowercase()}/${thread.owner.name.lowercase()}/p${thread.priority}] ${thread.content.normalizeWhitespace().take(MAX_THREAD_LINE_LENGTH)}"
+        "- [${thread.type.name.lowercase()}/${thread.owner.name.lowercase()}/p${thread.priority}] ${thread.content.normalizeWhitespace().take(PMB_MAX_THREAD_LINE_LENGTH)}"
       }
     return MemoryVariants(
       full = rendered.joinToString("\n"),
@@ -365,7 +365,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   private fun buildExternalFactVariants(externalFacts: List<RoleplayExternalFact>): MemoryVariants {
     val rendered =
       externalFacts.map { fact ->
-        "- [${fact.freshnessLabel()}/${fact.sourceToolName.normalizeWhitespace()}] ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace().take(MAX_EXTERNAL_FACT_LINE_LENGTH)}"
+        "- [${fact.freshnessLabel()}/${fact.sourceToolName.normalizeWhitespace()}] ${fact.title.normalizeWhitespace()}: ${fact.content.normalizeWhitespace().take(PMB_MAX_EXTERNAL_FACT_LINE_LENGTH)}"
       }
     return MemoryVariants(
       full = rendered.joinToString("\n"),
@@ -377,7 +377,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   private fun buildMemoryAtomVariants(memoryAtoms: List<MemoryAtom>): MemoryVariants {
     val rendered =
       memoryAtoms.map { atom ->
-        "- ${atom.subject.normalizeWhitespace()} ${atom.predicate.normalizeWhitespace()}: ${atom.objectValue.normalizeWhitespace().take(MAX_MEMORY_LINE_LENGTH)}"
+        "- ${atom.subject.normalizeWhitespace()} ${atom.predicate.normalizeWhitespace()}: ${atom.objectValue.normalizeWhitespace().take(PMB_MAX_MEMORY_LINE_LENGTH)}"
       }
     return MemoryVariants(
       full = rendered.joinToString("\n"),
@@ -487,7 +487,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
   }
 
   private fun String.toDisplayLabel(): String {
-    return replace(CAMEL_CASE_REGEX, "$1 $2").lowercase()
+    return replace(PMB_CAMEL_CASE_REGEX, "$1 $2").lowercase()
   }
 
   private fun JsonObject.resolveRuntimeField(keyAliases: String): ResolvedRuntimeField? {
@@ -502,46 +502,7 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
     return null
   }
 
-  private data class ConversationVariants(
-    val full: String,
-    val compact: String,
-    val minimal: String,
-  )
-
-  private data class RuntimeStateVariants(
-    val full: String = "",
-    val compact: String = "",
-    val minimal: String = "",
-  )
-
-  private data class ResolvedRuntimeField(
-    val label: String,
-    val value: String,
-  )
-
-  private data class MemoryVariants(
-    val full: String,
-    val compact: String,
-    val minimal: String,
-  )
-
   companion object {
-    private val CAMEL_CASE_REGEX = Regex("([a-z])([A-Z])")
-    private val SCENE_FIELD_ORDER =
-      listOf(
-        "location",
-        "time|timeOfDay",
-        "currentGoal|goal",
-        "dangerLevel|hazards",
-        "importantItems|inventory",
-        "activeTopic",
-        "recentAction",
-      )
-    private val RELATIONSHIP_FIELD_ORDER =
-      listOf("trust", "intimacy", "tension", "dependence", "initiative|dominance", "respect", "fear", "currentMood", "lastShiftReason")
-    private const val MAX_THREAD_LINE_LENGTH = 180
-    private const val MAX_MEMORY_LINE_LENGTH = 180
-    private const val MAX_EXTERNAL_FACT_LINE_LENGTH = 220
     private const val MAX_RUNTIME_STATE_VALUE_LENGTH = 180
   }
 
@@ -552,84 +513,4 @@ internal class PromptMaterialBuilder @Inject constructor(private val tokenEstima
       RoleplayExternalFactFreshness.STABLE -> "stable"
     }
   }
-}
-
-private fun CharacterKernel.renderCoreCharacterPrompt(): String {
-  val identity = identityJson.toJsonObjectOrNull() ?: return ""
-  val invariants = invariantsJson.toJsonObjectOrNull()?.getAsJsonArray("rules").toStringList()
-  return buildList {
-    add(identity.entrySet().joinToString(separator = "\n") { (key, value) ->
-      "${key.replace('_', ' ').replaceFirstChar { char -> char.uppercase() }}: ${value.asString}"
-    })
-    if (invariants.isNotEmpty()) {
-      add(
-        buildString {
-          appendLine("Invariants:")
-          invariants.take(4).forEach { invariant -> appendLine("- $invariant") }
-        }.trim()
-      )
-    }
-  }.joinToString(separator = "\n").trim()
-}
-
-private fun CharacterKernel.renderMinimalCoreCharacterPrompt(): String {
-  val identity = identityJson.toJsonObjectOrNull() ?: return renderCoreCharacterPrompt()
-  val name = identity.get("name")?.asString.orEmpty()
-  val role = identity.get("role")?.asString.orEmpty()
-  val motive = identity.get("core_motive")?.asString.orEmpty()
-  return buildList {
-    if (name.isNotBlank()) add("Name: $name")
-    if (role.isNotBlank()) add("Role: $role")
-    if (motive.isNotBlank()) add("Core motive: $motive")
-  }.joinToString(separator = "\n")
-}
-
-private fun CharacterKernel.renderIdentitySummaryPrompt(): String {
-  val identity = identityJson.toJsonObjectOrNull() ?: return ""
-  return buildList {
-    identity.get("role")?.asString?.takeIf(String::isNotBlank)?.let(::add)
-    identity.get("core_motive")?.asString?.takeIf(String::isNotBlank)?.let { add("Motive: $it") }
-    identity.get("worldview")?.asString?.takeIf(String::isNotBlank)?.let { add("Worldview: $it") }
-  }.joinToString(separator = " | ")
-}
-
-private fun CharacterKernel.renderSpeechStylePrompt(): String {
-  val speechStyle = speechStyleJson.toJsonObjectOrNull() ?: return ""
-  val tabooWords = speechStyle.getAsJsonArray("taboo_words").toStringList()
-  val recurringPatterns = speechStyle.getAsJsonArray("recurring_patterns").toStringList()
-  return buildList {
-    speechStyle.get("tone")?.asString?.takeIf(String::isNotBlank)?.let { add("Tone: $it") }
-    speechStyle.get("sentence_length")?.asString?.takeIf(String::isNotBlank)?.let { add("Sentence length: $it") }
-    speechStyle.get("directness")?.asString?.takeIf(String::isNotBlank)?.let { add("Directness: $it") }
-    if (tabooWords.isNotEmpty()) {
-      add("Avoid: ${tabooWords.joinToString(", ")}")
-    }
-    if (recurringPatterns.isNotEmpty()) {
-      add("Recurring patterns: ${recurringPatterns.joinToString(" | ")}")
-    }
-  }.joinToString(separator = "\n")
-}
-
-private fun CharacterKernel.renderMinimalSpeechStylePrompt(): String {
-  val speechStyle = speechStyleJson.toJsonObjectOrNull() ?: return renderSpeechStylePrompt()
-  return buildList {
-    speechStyle.get("tone")?.asString?.takeIf(String::isNotBlank)?.let { add("Tone: $it") }
-    speechStyle.get("directness")?.asString?.takeIf(String::isNotBlank)?.let { add("Directness: $it") }
-  }.joinToString(separator = "\n")
-}
-
-private fun CharacterKernel.renderWorldviewPrompt(): String {
-  return identityJson.toJsonObjectOrNull()?.get("worldview")?.asString?.trim().orEmpty()
-}
-
-private fun CharacterKernel.renderMicroExemplarPrompt(): String {
-  return microExemplar.trim().takeIf(String::isNotBlank)?.let { "Micro exemplar: $it" }.orEmpty()
-}
-
-private fun JsonArray?.toStringList(): List<String> {
-  return this?.mapNotNull { item -> item.takeIf { it.isJsonPrimitive }?.asString?.trim()?.takeIf(String::isNotBlank) }.orEmpty()
-}
-
-private fun mergePromptFragments(vararg fragments: String?): String {
-  return fragments.map(String?::orEmpty).map(String::trim).filter(String::isNotBlank).joinToString(separator = "\n")
 }

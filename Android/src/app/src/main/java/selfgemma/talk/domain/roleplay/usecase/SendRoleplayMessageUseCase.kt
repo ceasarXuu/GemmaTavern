@@ -1652,12 +1652,6 @@ constructor(
     return normalizedText.contains(normalizedPhrase, ignoreCase = true)
   }
 
-  private fun JsonArray?.toStringList(): List<String> {
-    return this
-      ?.mapNotNull { item -> item.takeIf { it.isJsonPrimitive }?.asString?.trim()?.takeIf(String::isNotBlank) }
-      .orEmpty()
-  }
-
   private fun List<String>.toJsonArray(): JsonArray {
     return JsonArray().apply {
       this@toJsonArray.forEach(::add)

@@ -45,12 +45,6 @@ internal fun mergeRoleplayToolTurnMetadata(
   return root.toString()
 }
 
-private fun JsonArray?.toStringList(): List<String> {
-  return this
-    ?.mapNotNull { element -> element.takeIf { it.isJsonPrimitive }?.asString?.trim()?.takeIf(String::isNotBlank) }
-    .orEmpty()
-}
-
 private fun List<String>.toJsonArray(): JsonArray {
   return JsonArray().apply {
     this@toJsonArray.forEach(::add)
