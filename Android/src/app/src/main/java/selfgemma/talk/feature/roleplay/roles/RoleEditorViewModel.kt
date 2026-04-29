@@ -50,105 +50,28 @@ import selfgemma.talk.domain.roleplay.repository.RoleRepository
 
 private const val TAG = "RoleEditorViewModel"
 
-private data class ParseResult<T>(
-  val value: T? = null,
-  val valid: Boolean = true,
-)
-
-enum class RoleEditorTab {
-  CARD,
-  PROMPT,
-  LOREBOOK,
-  METADATA,
-  MEDIA,
-  INTEROP,
-}
-
-data class RoleEditorCharacterBookEntryState(
-  val editorId: String = UUID.randomUUID().toString(),
-  val idText: String = "",
-  val keysText: String = "",
-  val secondaryKeysText: String = "",
-  val comment: String = "",
-  val content: String = "",
-  val constant: Boolean = false,
-  val selective: Boolean = false,
-  val insertionOrderText: String = "",
-  val enabled: Boolean = true,
-  val position: String = "",
-  val useRegex: Boolean = false,
-  val preservedCharacterFilterJson: String? = null,
-  val preservedExtensionsJson: String? = null,
-)
-
-data class RoleEditorCharacterBookState(
-  val name: String = "",
-  val description: String = "",
-  val scanDepthText: String = "",
-  val tokenBudgetText: String = "",
-  val recursiveScanning: Boolean = false,
-  val entries: List<RoleEditorCharacterBookEntryState> = emptyList(),
-)
-
-data class RoleEditorUiState(
-  val loading: Boolean = true,
-  val roleId: String? = null,
-  val isNewRole: Boolean = true,
-  val builtIn: Boolean = false,
-  val selectedTab: RoleEditorTab = RoleEditorTab.CARD,
-  val stCard: StCharacterCard = emptyEditorStCard(),
-  val name: String = "",
-  val description: String = "",
-  val personality: String = "",
-  val scenario: String = "",
-  val firstMessage: String = "",
-  val messageExample: String = "",
-  val systemPrompt: String = "",
-  val postHistoryInstructions: String = "",
-  val alternateGreetingsText: String = "",
-  val creatorNotes: String = "",
-  val creator: String = "",
-  val characterVersion: String = "",
-  val tagsText: String = "",
-  val talkativenessText: String = "",
-  val fav: Boolean = false,
-  val characterBook: RoleEditorCharacterBookState = RoleEditorCharacterBookState(),
-  val safetyPolicy: String = "",
-  val defaultModelId: String? = null,
-  val avatarUri: String? = null,
-  val coverUri: String? = null,
-  val avatarSource: RoleMediaSource? = null,
-  val coverSource: RoleMediaSource? = null,
-  val galleryAssets: List<RoleMediaAsset> = emptyList(),
-  val spriteAssets: List<RoleSpriteAsset> = emptyList(),
-  val importedFromStPng: Boolean = false,
-  val sourceFormat: RoleCardSourceFormat = RoleCardSourceFormat.INTERNAL,
-  val sourceSpec: String? = null,
-  val sourceSpecVersion: String? = null,
-  val compatibilityWarnings: List<String> = emptyList(),
-  val statusMessage: String? = null,
-  val errorMessage: String? = null,
-  val canUndo: Boolean = false,
-  val canRedo: Boolean = false,
-)
-
 @HiltViewModel
 class RoleEditorViewModel
 @Inject
 constructor(
   savedStateHandle: SavedStateHandle,
-  @ApplicationContext private val appContext: Context,
-  private val roleRepository: RoleRepository,
+  @ApplicationContext internal val appContext: Context,
+  internal val roleRepository: RoleRepository,
   private val importStRoleCardFromUriUseCase: ImportStRoleCardFromUriUseCase,
   private val compileRuntimeRoleProfileUseCase: CompileRuntimeRoleProfileUseCase,
   private val exportStRoleCardToUriUseCase: ExportStRoleCardToUriUseCase,
 ) : ViewModel() {
   private val undoHistory = ArrayDeque<RoleEditorUiState>()
   private val redoHistory = ArrayDeque<RoleEditorUiState>()
-  private val editingRoleId: String? = savedStateHandle.get<String?>("roleId")?.takeIf { it.isNotBlank() }
-  private val _uiState = MutableStateFlow(RoleEditorUiState())
-  val uiState: StateFlow<RoleEditorUiState> = _uiState.asStateFlow()
-  private var loadedRole: RoleCard? = null
+  internal val editingRoleIdInternal: String? = savedStateHandle.get<String?>("roleId")?.takeIf { it.isNotBlank() }
+  private val editingRoleId: String? get() = editingRoleIdInternal
+  internal val mutableUiState = MutableStateFlow(RoleEditorUiState())
+  private val _uiState get() = mutableUiState
+  val uiState: StateFlow<RoleEditorUiState> = mutableUiState.asStateFlow()
+  internal var loadedRoleSnapshot: RoleCard? = null
+  private var loadedRole: RoleCard?
+    get() = loadedRoleSnapshot
+    set(value) { loadedRoleSnapshot = value }
 
   init {
     loadRole()
@@ -300,194 +223,29 @@ constructor(
   fun updateCharacterBookEntryUseRegex(editorId: String, value: Boolean) =
     updateCharacterBookEntry(editorId) { it.copy(useRegex = value) }
 
-  fun updateAvatarUri(value: String?) {
-    val now = System.currentTimeMillis()
-    mutateEditorState {
-      it.copy(
-        avatarUri = value,
-        avatarSource = if (value.isNullOrBlank()) null else RoleMediaSource.LOCAL_PICKER,
-        errorMessage = null,
-        statusMessage =
-          if (value.isNullOrBlank()) {
-            appContext.getString(R.string.role_editor_status_avatar_cleared)
-          } else {
-            appContext.getString(R.string.role_editor_status_avatar_updated)
-          },
-        importedFromStPng = false,
-      )
-    }
-    syncPrimaryAvatarAsset(uri = value, source = RoleMediaSource.LOCAL_PICKER, now = now)
-  }
+  fun updateAvatarUri(value: String?) = updateAvatarUriAction(value)
 
-  fun updateCoverUri(value: String?) {
-    val now = System.currentTimeMillis()
-    mutateEditorState {
-      it.copy(
-        coverUri = value,
-        coverSource = if (value.isNullOrBlank()) null else RoleMediaSource.LOCAL_PICKER,
-        errorMessage = null,
-        statusMessage =
-          if (value.isNullOrBlank()) {
-            appContext.getString(R.string.role_editor_status_cover_cleared)
-          } else {
-            appContext.getString(R.string.role_editor_status_cover_updated)
-          },
-      )
-    }
-    syncCoverImageAsset(uri = value, now = now)
-  }
+  fun updateCoverUri(value: String?) = updateCoverUriAction(value)
 
-  fun addGalleryAssets(uris: List<String>) {
-    if (uris.isEmpty()) {
-      return
-    }
-    val now = System.currentTimeMillis()
-    val newAssets =
-      uris.distinct().map { uri ->
-        RoleMediaAsset(
-          id = UUID.randomUUID().toString(),
-          kind = RoleMediaKind.GALLERY,
-          uri = uri,
-          displayName = uri.substringAfterLast('/').substringBefore('?').ifBlank { null },
-          source = RoleMediaSource.LOCAL_PICKER,
-          createdAt = now,
-          updatedAt = now,
-        )
-      }
-    mutateEditorState {
-      it.copy(
-        galleryAssets = it.galleryAssets + newAssets,
-        statusMessage = appContext.getString(R.string.role_editor_status_gallery_added, newAssets.size),
-        errorMessage = null,
-      )
-    }
-  }
+  fun addGalleryAssets(uris: List<String>) = addGalleryAssetsAction(uris)
 
-  fun removeGalleryAsset(assetId: String) {
-    mutateEditorState {
-      val removedAsset = it.galleryAssets.firstOrNull { asset -> asset.id == assetId }
-      it.copy(
-        galleryAssets = it.galleryAssets.filterNot { asset -> asset.id == assetId },
-        avatarUri = if (removedAsset?.uri == it.avatarUri) null else it.avatarUri,
-        avatarSource = if (removedAsset?.uri == it.avatarUri) null else it.avatarSource,
-        coverUri = if (removedAsset?.uri == it.coverUri) null else it.coverUri,
-        coverSource = if (removedAsset?.uri == it.coverUri) null else it.coverSource,
-        importedFromStPng = if (removedAsset?.uri == it.avatarUri) false else it.importedFromStPng,
-        statusMessage = appContext.getString(R.string.role_editor_status_gallery_removed),
-        errorMessage = null,
-      )
-    }
-  }
+  fun removeGalleryAsset(assetId: String) = removeGalleryAssetAction(assetId)
 
-  fun updateGalleryAssetName(assetId: String, value: String) {
-    updateGalleryAsset(assetId) { asset ->
-      asset.copy(displayName = value.ifBlank { null }, updatedAt = System.currentTimeMillis())
-    }
-  }
+  fun updateGalleryAssetName(assetId: String, value: String) = updateGalleryAssetNameAction(assetId, value)
 
-  fun updateGalleryAssetUsage(assetId: String, usage: RoleMediaUsage) {
-    updateGalleryAsset(assetId) { asset ->
-      asset.copy(usage = usage, updatedAt = System.currentTimeMillis())
-    }
-  }
+  fun updateGalleryAssetUsage(assetId: String, usage: RoleMediaUsage) = updateGalleryAssetUsageAction(assetId, usage)
 
-  fun setGalleryAssetAsAvatar(assetId: String) {
-    val asset = _uiState.value.galleryAssets.firstOrNull { it.id == assetId } ?: return
-    val now = System.currentTimeMillis()
-    mutateEditorState {
-      it.copy(
-        avatarUri = asset.uri,
-        avatarSource = asset.source,
-        statusMessage = appContext.getString(R.string.role_editor_status_gallery_avatar),
-        errorMessage = null,
-        importedFromStPng = asset.source == RoleMediaSource.ST_PNG_IMPORT,
-      )
-    }
-    syncPrimaryAvatarAsset(uri = asset.uri, source = asset.source, now = now)
-  }
+  fun setGalleryAssetAsAvatar(assetId: String) = setGalleryAssetAsAvatarAction(assetId)
 
-  fun setGalleryAssetAsCover(assetId: String) {
-    val asset = _uiState.value.galleryAssets.firstOrNull { it.id == assetId } ?: return
-    val now = System.currentTimeMillis()
-    mutateEditorState {
-      it.copy(
-        coverUri = asset.uri,
-        coverSource = asset.source,
-        statusMessage = appContext.getString(R.string.role_editor_status_gallery_cover),
-        errorMessage = null,
-      )
-    }
-    syncCoverImageAsset(uri = asset.uri, now = now, source = asset.source)
-  }
+  fun setGalleryAssetAsCover(assetId: String) = setGalleryAssetAsCoverAction(assetId)
 
-  fun addSpriteAssets(uris: List<String>) {
-    if (uris.isEmpty()) {
-      return
-    }
-    val now = System.currentTimeMillis()
-    val newAssets =
-      uris.distinct().map { uri ->
-        val displayName = uri.substringAfterLast('/').substringBefore('?').ifBlank { null }
-        RoleSpriteAsset(
-          id = UUID.randomUUID().toString(),
-          uri = uri,
-          displayName = displayName,
-          stateTag = displayName?.substringBeforeLast('.')?.ifBlank { "neutral" } ?: "neutral",
-          source = RoleMediaSource.LOCAL_PICKER,
-          createdAt = now,
-          updatedAt = now,
-        )
-      }
-    mutateEditorState {
-      it.copy(
-        spriteAssets = it.spriteAssets + newAssets,
-        statusMessage = appContext.getString(R.string.role_editor_status_sprite_added, newAssets.size),
-        errorMessage = null,
-      )
-    }
-  }
+  fun addSpriteAssets(uris: List<String>) = addSpriteAssetsAction(uris)
 
-  fun removeSpriteAsset(assetId: String) {
-    mutateEditorState {
-      it.copy(
-        spriteAssets = it.spriteAssets.filterNot { asset -> asset.id == assetId },
-        statusMessage = appContext.getString(R.string.role_editor_status_sprite_removed),
-        errorMessage = null,
-      )
-    }
-  }
+  fun removeSpriteAsset(assetId: String) = removeSpriteAssetAction(assetId)
 
-  fun updateSpriteAssetName(assetId: String, value: String) {
-    mutateEditorState {
-      it.copy(
-        spriteAssets =
-          it.spriteAssets.map { asset ->
-            if (asset.id == assetId) {
-              asset.copy(displayName = value.ifBlank { null }, updatedAt = System.currentTimeMillis())
-            } else {
-              asset
-            }
-          },
-        errorMessage = null,
-      )
-    }
-  }
+  fun updateSpriteAssetName(assetId: String, value: String) = updateSpriteAssetNameAction(assetId, value)
 
-  fun updateSpriteStateTag(assetId: String, value: String) {
-    mutateEditorState {
-      it.copy(
-        spriteAssets =
-          it.spriteAssets.map { asset ->
-            if (asset.id == assetId) {
-              asset.copy(stateTag = value.ifBlank { "neutral" }, updatedAt = System.currentTimeMillis())
-            } else {
-              asset
-            }
-          },
-        errorMessage = null,
-      )
-    }
-  }
+  fun updateSpriteStateTag(assetId: String, value: String) = updateSpriteStateTagAction(assetId, value)
 
   fun importStCardFromUri(uri: String) {
     viewModelScope.launch {
@@ -523,7 +281,7 @@ constructor(
   }
 
   fun exportStCardToUri(uri: String) {
-    val snapshot = buildRoleSnapshot() ?: return
+    val snapshot = buildRoleSnapshotForSave() ?: return
     viewModelScope.launch {
       runCatching {
         exportStRoleCardToUriUseCase.exportToUri(
@@ -551,7 +309,7 @@ constructor(
   }
 
   fun saveRole(onSaved: (String) -> Unit) {
-    val role = buildRoleSnapshot() ?: return
+    val role = buildRoleSnapshotForSave() ?: return
 
     viewModelScope.launch {
       Log.i(
@@ -562,227 +320,6 @@ constructor(
       roleRepository.saveRole(compiledRole)
       onSaved(compiledRole.id)
     }
-  }
-
-  private fun buildRoleSnapshot(): RoleCard? {
-    val snapshot = _uiState.value
-    val roleName = snapshot.name.trim()
-    if (roleName.isBlank()) {
-      _uiState.update {
-        it.copy(errorMessage = appContext.getString(R.string.role_editor_error_required_fields))
-      }
-      return null
-    }
-
-    val talkativeness = parseOptionalDouble(snapshot.talkativenessText, R.string.role_editor_talkativeness_label)
-    if (!talkativeness.valid) {
-      return null
-    }
-    val scanDepth = parseOptionalInt(snapshot.characterBook.scanDepthText, R.string.role_editor_lorebook_scan_depth_label)
-    if (!scanDepth.valid) {
-      return null
-    }
-    val tokenBudget = parseOptionalInt(snapshot.characterBook.tokenBudgetText, R.string.role_editor_lorebook_token_budget_label)
-    if (!tokenBudget.valid) {
-      return null
-    }
-    val characterBookEntries =
-      snapshot.characterBook.entries.mapNotNull { entry ->
-        buildCharacterBookEntry(entry) ?: return null
-      }
-
-    val alternateGreetings = snapshot.alternateGreetingsText.toLineList()
-    val tags = snapshot.tagsText.toTagList()
-    val existingRole = loadedRole
-    val baseCard = snapshot.stCard
-    val baseData = baseCard.cardDataOrEmpty()
-    val characterBook =
-      if (
-        snapshot.characterBook.name.isBlank() &&
-          snapshot.characterBook.description.isBlank() &&
-          snapshot.characterBook.scanDepthText.isBlank() &&
-          snapshot.characterBook.tokenBudgetText.isBlank() &&
-          characterBookEntries.isEmpty()
-      ) {
-        null
-      } else {
-        (baseData.character_book ?: StCharacterBook()).copy(
-          name = snapshot.characterBook.name.trim().ifBlank { null },
-          description = snapshot.characterBook.description.trim().ifBlank { null },
-          scan_depth = scanDepth.value,
-          token_budget = tokenBudget.value,
-          recursive_scanning = snapshot.characterBook.recursiveScanning,
-          entries = characterBookEntries,
-        )
-      }
-
-    val data =
-      baseData.copy(
-        name = roleName,
-        description = snapshot.description.trim().ifBlank { null },
-        personality = snapshot.personality.trim().ifBlank { null },
-        scenario = snapshot.scenario.trim().ifBlank { null },
-        first_mes = snapshot.firstMessage.trim().ifBlank { null },
-        mes_example = snapshot.messageExample.trim().ifBlank { null },
-        creator_notes = snapshot.creatorNotes.trim().ifBlank { null },
-        system_prompt = snapshot.systemPrompt.trim().ifBlank { null },
-        post_history_instructions = snapshot.postHistoryInstructions.trim().ifBlank { null },
-        alternate_greetings = alternateGreetings.ifEmpty { null },
-        tags = tags.ifEmpty { null },
-        creator = snapshot.creator.trim().ifBlank { null },
-        character_version = snapshot.characterVersion.trim().ifBlank { null },
-        character_book = characterBook,
-      )
-
-    val stCard =
-      baseCard.copy(
-        spec = baseCard.spec ?: "chara_card_v2",
-        spec_version = baseCard.spec_version ?: "2.0",
-        name = roleName,
-        description = snapshot.description.trim().ifBlank { null },
-        personality = snapshot.personality.trim().ifBlank { null },
-        scenario = snapshot.scenario.trim().ifBlank { null },
-        first_mes = snapshot.firstMessage.trim().ifBlank { null },
-        mes_example = snapshot.messageExample.trim().ifBlank { null },
-        creatorcomment = snapshot.creatorNotes.trim().ifBlank { null },
-        talkativeness = talkativeness.value,
-        fav = snapshot.fav,
-        creator = snapshot.creator.trim().ifBlank { null },
-        tags = tags.ifEmpty { null },
-        data = data,
-      )
-
-    val now = System.currentTimeMillis()
-    val roleId = editingRoleId ?: UUID.randomUUID().toString()
-    return RoleCard(
-      id = roleId,
-      stCard = stCard,
-      safetyPolicy = snapshot.safetyPolicy.trim(),
-      defaultModelId = snapshot.defaultModelId,
-      builtIn = snapshot.builtIn,
-      createdAt = existingRole?.createdAt ?: now,
-      updatedAt = now,
-      defaultTemperature = existingRole?.defaultTemperature,
-      defaultTopP = existingRole?.defaultTopP,
-      defaultTopK = existingRole?.defaultTopK,
-      enableThinking = existingRole?.enableThinking ?: false,
-      summaryTurnThreshold = existingRole?.summaryTurnThreshold ?: 6,
-      memoryEnabled = existingRole?.memoryEnabled ?: true,
-      memoryMaxItems = existingRole?.memoryMaxItems ?: 32,
-      avatarUri = snapshot.avatarUri ?: existingRole?.primaryAvatarUri(),
-      coverUri = snapshot.coverUri ?: existingRole?.coverImageUri(),
-      runtimeProfile = existingRole?.runtimeProfile,
-      mediaProfile =
-        RoleMediaProfile(
-          primaryAvatar =
-            snapshot.avatarUri?.let { uri ->
-              RoleMediaAsset(
-                id = existingRole?.mediaProfile?.primaryAvatar?.id ?: UUID.randomUUID().toString(),
-                kind = RoleMediaKind.PRIMARY_AVATAR,
-                uri = uri,
-                source =
-                  snapshot.avatarSource ?: existingRole?.mediaProfile?.primaryAvatar?.source ?: RoleMediaSource.LOCAL_PICKER,
-                createdAt = existingRole?.mediaProfile?.primaryAvatar?.createdAt ?: now,
-                updatedAt = now,
-              )
-            },
-          coverImage =
-            snapshot.coverUri?.let { uri ->
-              RoleMediaAsset(
-                id = existingRole?.mediaProfile?.coverImage?.id ?: UUID.randomUUID().toString(),
-                kind = RoleMediaKind.COVER,
-                uri = uri,
-                source = snapshot.coverSource ?: existingRole?.mediaProfile?.coverImage?.source ?: RoleMediaSource.LOCAL_PICKER,
-                createdAt = existingRole?.mediaProfile?.coverImage?.createdAt ?: now,
-                updatedAt = now,
-              )
-            },
-          galleryAssets = snapshot.galleryAssets,
-          spriteAssets = snapshot.spriteAssets,
-          exportPolicy = existingRole?.mediaProfile?.exportPolicy ?: RoleMediaExportPolicy(),
-          importState =
-            existingRole?.mediaProfile?.importState
-              ?: RoleMediaImportState(importedFromStPng = snapshot.importedFromStPng),
-        ),
-      interopState = existingRole?.interopState,
-      archived = false,
-    )
-  }
-
-  private fun buildCharacterBookEntry(
-    entry: RoleEditorCharacterBookEntryState,
-  ): StCharacterBookEntry? {
-    val entryId = parseOptionalInt(entry.idText, R.string.role_editor_lorebook_entry_id_label)
-    if (!entryId.valid) {
-      return null
-    }
-    val insertionOrder = parseOptionalInt(entry.insertionOrderText, R.string.role_editor_lorebook_entry_order_label)
-    if (!insertionOrder.valid) {
-      return null
-    }
-    val keys = entry.keysText.toCommaSeparatedList()
-    val secondaryKeys = entry.secondaryKeysText.toCommaSeparatedList()
-    val content = entry.content.trim()
-    if (keys.isEmpty() && content.isBlank() && entry.comment.isBlank()) {
-      return null
-    }
-    return StCharacterBookEntry(
-      id = entryId.value,
-      keys = keys.ifEmpty { null },
-      secondary_keys = secondaryKeys.ifEmpty { null },
-      character_filter = entry.preservedCharacterFilterJson.toJsonObjectOrNull(),
-      comment = entry.comment.trim().ifBlank { null },
-      content = content.ifBlank { null },
-      constant = entry.constant,
-      selective = entry.selective,
-      insertion_order = insertionOrder.value,
-      enabled = entry.enabled,
-      position = entry.position.trim().ifBlank { null },
-      use_regex = entry.useRegex,
-      extensions = entry.preservedExtensionsJson.toJsonObjectOrNull(),
-    )
-  }
-
-  private fun parseOptionalInt(value: String, labelRes: Int): ParseResult<Int> {
-    val trimmed = value.trim()
-    if (trimmed.isBlank()) {
-      return ParseResult(value = null, valid = true)
-    }
-    val parsed = trimmed.toIntOrNull()
-    if (parsed == null) {
-      _uiState.update {
-        it.copy(
-          errorMessage =
-            appContext.getString(
-              R.string.role_editor_error_invalid_integer,
-              appContext.getString(labelRes),
-            ),
-        )
-      }
-      return ParseResult(value = null, valid = false)
-    }
-    return ParseResult(value = parsed, valid = true)
-  }
-
-  private fun parseOptionalDouble(value: String, labelRes: Int): ParseResult<Double> {
-    val trimmed = value.trim()
-    if (trimmed.isBlank()) {
-      return ParseResult(value = null, valid = true)
-    }
-    val parsed = trimmed.toDoubleOrNull()
-    if (parsed == null) {
-      _uiState.update {
-        it.copy(
-          errorMessage =
-            appContext.getString(
-              R.string.role_editor_error_invalid_decimal,
-              appContext.getString(labelRes),
-            ),
-        )
-      }
-      return ParseResult(value = null, valid = false)
-    }
-    return ParseResult(value = parsed, valid = true)
   }
 
   private fun loadRole() {
@@ -851,7 +388,7 @@ constructor(
     }
   }
 
-  private fun mutateEditorState(
+  internal fun mutateEditorState(
     recordHistory: Boolean = true,
     transformer: (RoleEditorUiState) -> RoleEditorUiState,
   ) {
@@ -892,7 +429,7 @@ constructor(
     }
   }
 
-  private fun syncPrimaryAvatarAsset(uri: String?, source: RoleMediaSource, now: Long) {
+  internal fun syncPrimaryAvatarAsset(uri: String?, source: RoleMediaSource, now: Long) {
     val existingProfile = loadedRole?.mediaProfile
     loadedRole =
       loadedRole?.copy(
@@ -919,7 +456,7 @@ constructor(
       )
   }
 
-  private fun syncCoverImageAsset(
+  internal fun syncCoverImageAsset(
     uri: String?,
     now: Long,
     source: RoleMediaSource = RoleMediaSource.LOCAL_PICKER,
@@ -943,135 +480,4 @@ constructor(
           ),
       )
   }
-}
-
-private fun String.toTagList(): List<String> {
-  return split(",")
-    .map { it.trim() }
-    .filter { it.isNotBlank() }
-    .distinct()
-}
-
-private fun String.toCommaSeparatedList(): List<String> {
-  return split(",")
-    .map { it.trim() }
-    .filter { it.isNotBlank() }
-}
-
-private fun String.toLineList(): List<String> {
-  return lines().map { it.trim() }.filter { it.isNotBlank() }
-}
-
-private fun String?.toJsonObjectOrNull(): JsonObject? {
-  if (this.isNullOrBlank()) {
-    return null
-  }
-  return runCatching { JsonParser.parseString(this).asJsonObject }.getOrNull()
-}
-
-private fun emptyEditorStCard(systemPrompt: String = ""): StCharacterCard {
-  return StCharacterCard(
-    spec = "chara_card_v2",
-    spec_version = "2.0",
-    data = StCharacterCardData(system_prompt = systemPrompt),
-  )
-}
-
-private fun emptyEditorRoleUiState(systemPrompt: String): RoleEditorUiState {
-  return RoleEditorUiState(
-    loading = false,
-    roleId = null,
-    isNewRole = true,
-    stCard = emptyEditorStCard(systemPrompt),
-    systemPrompt = systemPrompt,
-  )
-}
-
-private fun RoleEditorUiState.toHistorySnapshot(): RoleEditorUiState {
-  return copy(
-    selectedTab = RoleEditorTab.CARD,
-    statusMessage = null,
-    errorMessage = null,
-    canUndo = false,
-    canRedo = false,
-  )
-}
-
-private fun StCharacterBook?.toEditorState(): RoleEditorCharacterBookState {
-  if (this == null) {
-    return RoleEditorCharacterBookState()
-  }
-  return RoleEditorCharacterBookState(
-    name = name.orEmpty(),
-    description = description.orEmpty(),
-    scanDepthText = scan_depth?.toString().orEmpty(),
-    tokenBudgetText = token_budget?.toString().orEmpty(),
-    recursiveScanning = recursive_scanning ?: false,
-    entries = entries.orEmpty().map { it.toEditorState() },
-  )
-}
-
-private fun StCharacterBookEntry.toEditorState(): RoleEditorCharacterBookEntryState {
-  return RoleEditorCharacterBookEntryState(
-    idText = id?.toString().orEmpty(),
-    keysText = keys.orEmpty().joinToString(", "),
-    secondaryKeysText = secondary_keys.orEmpty().joinToString(", "),
-    comment = comment.orEmpty(),
-    content = content.orEmpty(),
-    constant = constant ?: false,
-    selective = selective ?: false,
-    insertionOrderText = insertion_order?.toString().orEmpty(),
-    enabled = enabled ?: true,
-    position = position.orEmpty(),
-    useRegex = use_regex ?: false,
-    preservedCharacterFilterJson = character_filter?.toString(),
-    preservedExtensionsJson = extensions?.toString(),
-  )
-}
-
-internal fun RoleCard.toEditorUiState(
-  isNewRole: Boolean,
-  statusMessage: String? = null,
-): RoleEditorUiState {
-  val data = stCard.cardDataOrEmpty()
-  val interopState = interopState ?: RoleInteropState()
-  return RoleEditorUiState(
-    loading = false,
-    roleId = id,
-    isNewRole = isNewRole,
-    builtIn = builtIn,
-    stCard = stCard,
-    name = name,
-    description = resolvedSummary(),
-    personality = resolvedPersonaDescription(),
-    scenario = resolvedWorldSettings(),
-    firstMessage = resolvedOpeningLine(),
-    messageExample = stCard.resolvedMessageExample(),
-    systemPrompt = resolvedSystemPrompt(),
-    postHistoryInstructions = data.post_history_instructions.orEmpty(),
-    alternateGreetingsText = data.alternate_greetings.orEmpty().joinToString("\n"),
-    creatorNotes = data.creator_notes ?: stCard.creatorcomment.orEmpty(),
-    creator = data.creator ?: stCard.creator.orEmpty(),
-    characterVersion = data.character_version.orEmpty(),
-    tagsText = resolvedTags().joinToString(", "),
-    talkativenessText = stCard.talkativeness?.toString().orEmpty(),
-    fav = stCard.fav ?: false,
-    characterBook = data.character_book.toEditorState(),
-    safetyPolicy = safetyPolicy,
-    defaultModelId = defaultModelId,
-    avatarUri = primaryAvatarUri(),
-    coverUri = coverImageUri(),
-    avatarSource = mediaProfile?.primaryAvatar?.source,
-    coverSource = mediaProfile?.coverImage?.source,
-    galleryAssets = mediaProfile?.galleryAssets.orEmpty(),
-    spriteAssets = mediaProfile?.spriteAssets.orEmpty(),
-    importedFromStPng =
-      mediaProfile?.importState?.importedFromStPng
-        ?: (interopState.sourceFormat == RoleCardSourceFormat.ST_PNG),
-    sourceFormat = interopState.sourceFormat,
-    sourceSpec = interopState.sourceSpec ?: stCard.spec,
-    sourceSpecVersion = interopState.sourceSpecVersion ?: stCard.spec_version,
-    compatibilityWarnings = interopState.compatibilityWarnings,
-    statusMessage = statusMessage,
-  )
 }
