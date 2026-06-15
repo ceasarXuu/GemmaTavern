@@ -65,7 +65,7 @@ class WriteRoleplayDebugBundleAndroidTest {
       exportedAt = 1_713_888_000_000L,
       app =
         RoleplayDebugExportAppInfo(
-          applicationId = "selfgemma.talk",
+          applicationId = "com.xuyutech.gemmatavern",
           versionName = "0.test",
           versionCode = 1,
           debugBuild = true,

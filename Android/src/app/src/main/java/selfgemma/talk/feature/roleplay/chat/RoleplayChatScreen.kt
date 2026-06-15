@@ -142,6 +142,7 @@ fun RoleplayChatScreen(
   val lastTimelineItem = timelineItems.lastOrNull()
   val roleName = uiState.role?.name ?: stringResource(R.string.chat_assistant)
   val userPersonaName = uiState.userPersonaName.ifBlank { stringResource(R.string.chat_you) }
+  val localModelLoadingMessage = stringResource(R.string.chat_local_model_loading)
   val tokenSpeedSubtitle =
     rememberRoleplayChatTokenSpeedSubtitle(
       messages = uiState.messages,
@@ -152,6 +153,7 @@ fun RoleplayChatScreen(
   val screenOpenTimestamp = remember { SystemClock.elapsedRealtime() }
   var hasCompletedInitialPositioning by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
   var hasLoggedInitialPositioning by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
+  var hasShownLocalModelLoadingToast by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }
   var previousTimelineItemCount by rememberSaveable(uiState.session?.id) { mutableStateOf(0) }
   var composerBoundsInWindow by remember { mutableStateOf<Rect?>(null) }
   val latestListItemIndex =
@@ -175,6 +177,13 @@ fun RoleplayChatScreen(
   val isActiveModelInitializing =
     activeModel != null &&
       (activeModel.initializing || activeModelStatus == ModelInitializationStatusType.INITIALIZING)
+  LaunchedEffect(uiState.session?.id, isActiveModelInitializing, isActiveModelInitialized) {
+    if (hasShownLocalModelLoadingToast || uiState.session == null || !isActiveModelInitializing || isActiveModelInitialized) {
+      return@LaunchedEffect
+    }
+    Toast.makeText(context, localModelLoadingMessage, Toast.LENGTH_SHORT).show()
+    hasShownLocalModelLoadingToast = true
+  }
   var showMenu by remember { mutableStateOf(false) }
   var showModelPicker by remember { mutableStateOf(false) }
   var showContinuityDebug by rememberSaveable(uiState.session?.id) { mutableStateOf(false) }

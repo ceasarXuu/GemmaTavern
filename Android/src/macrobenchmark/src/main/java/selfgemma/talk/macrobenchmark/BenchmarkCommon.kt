@@ -8,7 +8,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import kotlin.math.roundToInt
 
-internal const val TARGET_PACKAGE = "selfgemma.talk"
+internal const val TARGET_PACKAGE = "com.xuyutech.gemmatavern"
 internal const val STARTUP_ITERATIONS = 8
 internal const val FLOW_ITERATIONS = 6
 internal const val STRESS_ITERATIONS = 6

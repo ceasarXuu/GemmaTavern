@@ -205,6 +205,7 @@
   <!-- Chat Screen -->
   <string name="chat_title">聊天</string>
   <string name="chat_loading_session">加载会话中...</string>
+  <string name="chat_local_model_loading">本地模型加载中</string>
   <string name="chat_missing_model_title">缺少本地模型</string>
   <string name="chat_missing_model_content">此会话引用的模型当前不可用。请打开模型库下载或导入本地大语言模型，或切换到设备上已有的其他模型。</string>
   <string name="chat_use_model">使用%s</string>

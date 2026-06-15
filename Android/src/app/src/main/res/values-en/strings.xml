@@ -206,6 +206,7 @@
   <!-- Chat Screen -->
   <string name="chat_title">Chat</string>
   <string name="chat_loading_session">Loading session...</string>
+  <string name="chat_local_model_loading">Local model is loading</string>
   <string name="chat_missing_model_title">Missing local model</string>
   <string name="chat_missing_model_content">The session references a model that is not currently available. Open the model library and download or import a local LLM, or switch to another model already on device.</string>
   <string name="chat_use_model">Use %s</string>

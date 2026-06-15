@@ -37,7 +37,7 @@ fun parseBooleanGradleProperty(value: String?): Boolean =
 
 fun resolveAuthRedirectScheme(redirectUri: String): String {
   val scheme = redirectUri.substringBefore(':', "")
-  return if (scheme.isBlank()) "selfgemma.talk.auth" else scheme
+  return if (scheme.isBlank()) "com.xuyutech.gemmatavern.auth" else scheme
 }
 
 val appVersionCode = 26
@@ -61,7 +61,7 @@ android {
   compileSdk = 35
 
   defaultConfig {
-    applicationId = "selfgemma.talk"
+    applicationId = "com.xuyutech.gemmatavern"
     minSdk = 31
     targetSdk = 35
     versionCode = appVersionCode
