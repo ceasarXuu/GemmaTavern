@@ -108,6 +108,9 @@ android {
       buildConfigField("boolean", "ENABLE_BENCHMARK_UI", "false")
       isMinifyEnabled = true
       isShrinkResources = true
+      ndk {
+        debugSymbolLevel = "SYMBOL_TABLE"
+      }
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig =
         if (releaseSigningConfigured) {
@@ -125,6 +128,9 @@ android {
       matchingFallbacks += listOf("release")
       buildConfigField("boolean", "ENABLE_INTERNAL_DIAGNOSTICS", "true")
       buildConfigField("boolean", "ENABLE_BENCHMARK_UI", "true")
+      ndk {
+        debugSymbolLevel = "SYMBOL_TABLE"
+      }
       signingConfig = signingConfigs.getByName("debug")
     }
   }
