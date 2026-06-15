@@ -106,6 +106,25 @@ After launch, inspect startup crashes before publishing the APK:
 If release minification is enabled, treat any startup `FATAL EXCEPTION` as a release blocker even when
 `am start -W` returns `Status: ok`.
 
+## Google Play internal testing upload
+
+Use the Android Publisher API for repeatable uploads after Play Console API
+access has been granted to a local service account JSON key. Keep the JSON key
+outside git; this repository ignores `gemmatavern-*.json`.
+
+1. Build the signed release bundle:
+   `Set-Location .\Android\src; .\gradlew.bat :app:bundleRelease`
+2. Validate API access without uploading:
+   `python ..\..\scripts\google_play_publish.py --service-account ..\..\gemmatavern-8f41c3d4e64d.json`
+3. Upload the AAB to the internal track as a draft release:
+   `python ..\..\scripts\google_play_publish.py --service-account ..\..\gemmatavern-8f41c3d4e64d.json --commit`
+
+The script defaults to package `com.xuyutech.gemmatavern`, track `internal`,
+release status `draft`, and AAB
+`Android/src/app/build/outputs/bundle/release/app-release.aab`. Use
+`--status completed` only after Play Console store listing, data safety,
+content rating, target audience, and testing setup are ready.
+
 ## Repository hygiene before tagging
 
 - Do not commit Android build outputs or backup artifacts.
